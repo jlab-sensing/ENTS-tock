@@ -1,0 +1,24 @@
+{
+    "Logger ID": 200,
+    "Cell ID": 1383,
+    "Upload Method": "WiFi",
+    "Days": 0,
+    "Hours": 0,
+    "Minutes": 0,
+    "Seconds": 10,
+    "Enabled Sensors": {
+        "Voltage": true,
+        "Current": false,
+        "Teros12": false,
+        "Teros21": false,
+        "BME280": false
+    },
+    "Calibration V Slope": -0.00039342,
+    "Calibration V Offset": 0.00045826,
+    "Calibration I Slope": -1.1881177e-10,
+    "Calibration I Offset": 4.00158701e-05,
+    "WiFi SSID": "HARE_Lab",
+    "WiFi Password": "",
+    "API Endpoint URL": "http://dirtviz.jlab.ucsc.edu/api/sensor/",
+    "API Port": 443
+}

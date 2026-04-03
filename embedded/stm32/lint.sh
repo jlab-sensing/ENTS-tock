@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+NUM_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || 4)
+
+set -e
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+
+# only check unstaged if not in CI
+if [ "${CI-}" != "true" ]; then
+    $SCRIPT_DIR/../libtock-c/tools/check_unstaged.sh || exit
+    export TOCK_NO_CHECK_UNSTAGED=1
+fi
+
+
+# First compile external dependencies
+# Build dependencies without error checking 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build external dependencies"
+fi
+
+echo "Building external libraries"
+pushd $SCRIPT_DIR/../external > /dev/null
+./build_all.sh
+popd > /dev/null
+echo ""
+
+echo "Building libtock"
+pushd $SCRIPT_DIR/../libtock-c/libtock > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building libtock-sync"
+pushd $SCRIPT_DIR/../libtock-c/libtock-sync > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building RadioLib"
+pushd $SCRIPT_DIR/../libtock-c/RadioLib > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+
+if [ "${CI-}" == "true" ]; then
+	echo "::endgroup::"
+fi
+
+
+echo ""
+echo "${bold}Linting stm32${normal}"
+
+for mkfile in `find . -maxdepth 5 -name Makefile`; do
+	dir=`dirname $mkfile`
+	if [ $dir == "." ]; then continue; fi
+	# Skip directories with leading _'s, useful for leaving test apps around
+	if [[ $(basename $dir) == _* ]]; then continue; fi
+
+	if [ "${CI-}" == "true" ]; then
+		echo "::group::Linting for $dir"
+	fi
+
+
+	pushd $dir > /dev/null
+
+  echo ""
+  echo "${bold}Generating compile_commands.json${normal}"
+  rm -rf build/
+  bear -- make -j $NUM_JOBS
+
+  echo ""
+  echo "${bold}Running clang-tidy${normal}"
+	if [ "${CI-}" == "true" ]; then
+    run-clang-tidy -j $NUM_JOBS
+	else
+    run-clang-tidy -fix -j $NUM_JOBS
+  fi
+
+  # TODO Add option to automatically fix and re-run if there is an error
+
+
+	popd > /dev/null
+
+	if [ "${CI-}" == "true" ]; then
+		echo "::endgroup::"
+	fi
+done
+
+echo ""
+echo "${bold}All done.${normal}"

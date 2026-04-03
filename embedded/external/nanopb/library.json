@@ -1,0 +1,14 @@
+{
+    "name": "Nanopb",
+    "version": "0.4.9",
+    "description": "Pio package for sharing nanopb version.",
+    "framework": "*",
+    "platform": "*",
+    "build": {
+        "srcFilter": [
+            "-<*>",
+            "+<nanopb/*.c>",
+            "+<nanopb/*.h>"
+        ]
+    }
+}
