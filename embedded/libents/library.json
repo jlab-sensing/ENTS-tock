@@ -1,0 +1,21 @@
+{
+    "name": "Embedded ENTS Library",
+    "version": "2.3.7",
+    "description": "Library for interacting with ENTS boards.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/jlab-sensing/ENTS-tock.git"
+    },
+    "authors":
+    [
+        {
+            "name": "John Madden",
+            "email": "jtmadden@ucsc.edu",
+            "maintainer": true
+        }
+    ],
+    "license": "MIT",
+    "framework": "*",
+    "platform": "*"
+}
