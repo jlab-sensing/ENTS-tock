@@ -1,0 +1,24 @@
+{
+    "Logger ID": 149,
+    "Cell ID": 1516,
+    "Upload Method": "WiFi",
+    "Days": 0,
+    "Hours": 0,
+    "Minutes": 5,
+    "Seconds": 0,
+    "Enabled Sensors": {
+        "Voltage": true,
+        "Current": false,
+        "Teros12": true,
+        "Teros21": false,
+        "BME280": false
+    },
+    "Calibration V Slope": -0.00039339,
+    "Calibration V Offset": -0.0042964,
+    "Calibration I Slope": -1.18466104e-10,
+    "Calibration I Offset": 3.68225565e-05,
+    "WiFi SSID": "GTother",
+    "WiFi Password": "GeorgeP@1927",
+    "API Endpoint URL": "http://dirtviz.jlab.ucsc.edu/api/sensor/",
+    "API Port": 443
+}
