@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+/* Data shared between all measurement messages */
+message MeasurementMetadata {
+  // id of the cell measured
+  uint32 cell_id = 1;
+  // id of the logging device
+  uint32 logger_id = 2;
+  // timestamp of the measurement
+  uint32 ts = 3;
+}
+
+/**
+ * Power measurement message. Voltage and current can be digitially combined to
+ * obtain power.
+ *
+ * @deprecated Use individual voltage and current measurements instead.
+ *
+ * @see VoltageMeasurement
+ * @see CurrentMeasurement
+ */
+message PowerMeasurement {
+  // voltage
+  double voltage = 2;
+  // current
+  double current = 3;
+}
+
+/** Voltage measurement with support for delta encoding */
+message VoltageDeltaMeasurement {
+  uint32 voltage = 1;
+}
+
+/** Current measurement with support for delta encoding */
+message CurrentDeltaMeasurement {
+  uint32 current = 1;
+}
+
+/** Voltage measurement */
+message VoltageMeasurement {
+  double voltage = 1;
+}
+
+/** Current measurement */
+message CurrentMeasurement {
+  double current = 1;
+}
+
+/**
+ * Power deltas measurement message. Voltage and current deltas can be
+ * digitially combined to obtain power.
+ *
+ * @deprecated Use individual voltage and current delta measurements instead.
+ *
+ * @see VoltageDeltaMeasurement
+ * @see CurrentDeltaMeasurement
+ */
+message PowerDeltaEntry {
+  uint32 ts = 1;
+  uint32 voltage_delta = 2;
+  uint32 current_delta = 3;
+}
+
+/**
+ * Stores power measurements for delta encoding
+ *
+ * @deprecated Use individual voltage and current delta measurements instead.
+ *
+ * @see VoltageDeltaMeasurement
+ * @see CurrentDeltaMeasurement
+ */
+message PowerMeasurementDelta {
+  // voltage
+  uint32 voltage_delta = 2;
+  // current
+  uint32 current_delta = 3;
+}
+
+/**
+ * Repeated delta power measurements.
+ *
+ * @deprecated Use RepeatedMeasurements instead.
+ *
+ * @see VoltageDeltaMeasurement
+ * @see CurrentDeltaMeasurement
+ */
+message RepeatedPowerDeltas {
+  // Shared metadata
+  uint32 logger_id = 1;
+  uint32 cell_id = 2;
+
+  // Repeating entries
+  repeated PowerDeltaEntry entries = 3;
+}
+
+/* Teros12 measurement message */
+message Teros12Measurement {
+  // raw volumetric water content
+  double vwc_raw = 2;
+  // calibrated volumetric water content
+  double vwc_adj = 3;
+  // temperature in celcious
+  double temp = 4;
+  // electrical conductivity
+  uint32 ec = 5;
+}
+
+message Teros21Measurement {
+  // Matric potential of soil in kPa
+  double matric_pot = 1;
+  // temperature in celcius
+  double temp = 2;
+}
+
+/* Phytos measurement */
+message Phytos31Measurement {
+  // raw adc voltage
+  double voltage = 1;
+  // calibrated leaf wetness
+  double leaf_wetness = 2;
+}
+
+message BME280Measurement {
+  // pressure
+  uint32 pressure = 1;
+  // temperature
+  int32 temperature = 2;
+  // humidity
+  uint32 humidity = 3;
+}
+
+/* Capacitive Soil Moisture Sensor */
+message SEN0308Measurement {
+  // voltage
+  double voltage = 1;
+  // humidity
+  double humidity = 2;
+}
+
+/* Water Pressure Sensor */
+message SEN0257Measurement {
+  // voltage
+  double voltage = 1;
+  // pressure
+  double pressure = 2;
+}
+
+/* Water Flow Sensor */
+message YFS210CMeasurement {
+  // flow
+  double flow = 1;
+}
+
+/* Capacitance Sensor */
+message PCAP02Measurement {
+  // capacitance
+  double capacitance = 1;
+}
+
+/* Top level measurement message */
+message Measurement {
+  // Metadata
+  MeasurementMetadata meta = 1;
+
+  // Possible measurements
+  oneof measurement {
+    PowerMeasurement power = 2;
+    Teros12Measurement teros12 = 3;
+    Phytos31Measurement phytos31 = 4;
+    BME280Measurement bme280 = 5;
+    Teros21Measurement teros21 = 6;
+    SEN0308Measurement sen0308 = 7;
+    SEN0257Measurement sen0257 = 8;
+    YFS210CMeasurement yfs210c = 9;
+    PCAP02Measurement pcap02 = 10;
+  }
+}
+
+/* Acknowledge Packet */
+message Response {
+  /* Response codes from server */
+  enum ResponseType {
+    /* Data was successfully uploaded */
+    SUCCESS = 0;
+    /* General Error */
+    ERROR = 1;
+  }
+
+  /* Response from server */
+  ResponseType resp = 1;
+}
+
+message adcValue {
+  uint32 adc = 1;
+}

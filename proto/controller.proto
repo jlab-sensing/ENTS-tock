@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+import "user_config.proto";
+import "measurement.proto";
+
+message Esp32Command {
+  oneof command {
+    PageCommand page_command = 1;
+    TestCommand test_command = 2;
+    WiFiCommand wifi_command = 3;
+    MicroSDCommand microsd_command = 4;
+    IrrigationCommand irrigation_command = 5;
+    UserConfigCommand user_config_command = 6;
+    PowerCommand power_command = 7;
+  }
+}
+
+message PageCommand {
+  /* Type of request */
+  enum RequestType {
+    OPEN = 0;
+    CLOSE = 1;
+    READ = 2;
+    WRITE = 3;
+  }
+
+  /* File request type */
+  RequestType file_request = 1;
+  /* Integer for file descriptor */
+  uint32 file_descriptor = 2;
+  /* Block size of read/write */
+  uint32 block_size = 3;
+  /* Number of bytes */
+  uint32 num_bytes = 4;
+}
+
+message TestCommand {
+  enum ChangeState {
+    /* Data is received by the module */
+    RECEIVE = 0;
+    /* Data is received by the module indicating data for subsequent request */
+    RECEIVE_REQUEST = 1;
+    /* Data is sent my the module */
+    REQUEST = 2;
+  }
+
+  /* State to put module into */
+  ChangeState state = 1;
+  /* Data field for test command data */
+  int32 data = 2;
+}
+
+message WiFiCommand {
+  enum Type {
+    /* Connect to WiFi network*/
+    CONNECT = 0;
+    /* Post data to endpoint */
+    POST = 1;
+    /* Check HTTP code and response from POST */
+    CHECK = 2;
+    /* Timesync request */
+    TIME = 3;
+    /* Disconnect from WiFi network */
+    DISCONNECT = 4;
+    /* Get WiFi status */
+    CHECK_WIFI = 5;
+    /* Check connectivity to API */
+    CHECK_API = 6;
+    /* Force NTP sync */
+    NTP_SYNC = 7;
+    /* Host a WiFi network */
+    HOST = 8;
+    /* Stop hosting a WiFi network */
+    STOP_HOST = 9;
+    /* Get host info */
+    HOST_INFO = 10;
+  }
+
+  /* Command type */
+  Type type = 1;
+
+  /* Group for Connect */
+  /* WiFI SSID */
+  string ssid = 2;
+  /* WiFi Password */
+  string passwd = 3;
+  /* Endpoint url */
+  string url = 4;
+  /* Port */
+  uint32 port = 8;
+
+  /* Group for request repsonses */
+  /* Return code */
+  uint32 rc = 5;
+  /* Timestamp n unix epochs */
+  uint32 ts = 6;
+  // binary data response
+  bytes resp = 7;
+
+  /* MAC address */
+  string mac = 9;
+
+  /* Number of connected devices */
+  uint32 clients = 10;
+}
+
+message UserConfigCommand {
+  enum RequestType {
+    /* controller requests config from target */
+    REQUEST_CONFIG = 0;
+    /* controller sends config to target */
+    RESPONSE_CONFIG = 1;
+    /* starts the user config webserver */
+    START = 2;
+  }
+
+  /* type of command */
+  RequestType type = 1;
+
+  /* configuration data */
+  UserConfiguration config_data = 2;
+}
+
+message MicroSDCommand {
+  enum Type {
+    /* Decode and save data to a CSV file on the microSD card */
+    SAVE = 0;
+    /* Send UserConfig for CSV header creation */
+    USERCONFIG = 1;
+  }
+  enum ReturnCode {
+    SUCCESS = 0;
+    ERROR_GENERAL = 1;
+    ERROR_MICROSD_NOT_INSERTED = 2;
+    ERROR_FILE_SYSTEM_NOT_MOUNTABLE = 3;
+    ERROR_PAYLOAD_NOT_DECODED = 4;
+    ERROR_FILE_NOT_OPENED = 5;
+  }
+
+  /* Command type */
+  Type type = 1;
+  /* Filename */
+  string filename = 2;
+  /* Return code */
+  ReturnCode rc = 3;
+
+  oneof data {
+    /* measurement to be saved */
+    Measurement meas = 4;
+    /* userConfig to be saved */
+    UserConfiguration uc = 5;
+  }
+}
+
+message IrrigationCommand {
+  enum Type {
+    CHECK = 0;
+  }
+
+  enum State {
+    // needs to be opened to prevent open defined twice
+    OPEN = 0;
+    CLOSE = 1;
+  }
+
+  Type type = 1;
+
+  State state = 2;
+}
+
+message PowerCommand {
+  enum Type {
+    /* Put the device to sleep */
+    SLEEP = 0;
+    /* Check functionality after wakeup */
+    WAKEUP = 1;
+  }
+
+  // copied from idf library
+  enum WakeupReason {
+    POWER_WAKEUP_EXT0 = 0;
+    POWER_WAKEUP_EXT1 = 1;
+    POWER_WAKEUP_TIMER = 2;
+    POWER_WAKEUP_TOUCHPAD = 3;
+    POWER_WAKEUP_ULP = 4;
+    POWER_WAKEUP_GPIO = 5;
+    POWER_WAKEUP_UART = 6;
+    POWER_WAKEUP_WIFI = 7;
+    POWER_WAKEUP_COCPU = 8;
+    POWER_WAKEUP_COCPU_TRAP_TRIG = 9;
+    POWER_WAKEUP_BT = 10;
+  }
+
+  Type type = 1;
+
+  WakeupReason reason = 2;
+
+  uint32 boot_count = 3;
+}
