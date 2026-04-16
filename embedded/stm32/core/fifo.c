@@ -51,7 +51,7 @@ static uint16_t get_remaining_space(void) {
   return remaining_space;
 }
 
-fram_status fifo_put(const uint8_t *data, const size_t num_bytes) {
+fram_status fifo_put(const uint8_t *data, const uint8_t num_bytes) {
   // check remaining space
   if (num_bytes > get_remaining_space()) {
     return FRAM_BUFFER_FULL;
@@ -94,7 +94,7 @@ fram_status fifo_put(const uint8_t *data, const size_t num_bytes) {
   // increment buffer length
   ++buffer_len;
 
-  fram_save_buffer_state(read_addr, write_addr, buffer_len);
+  fifo_save_buffer_state();
   return FRAM_OK;
 }
 
@@ -139,7 +139,7 @@ fram_status fifo_get(uint8_t *data, uint8_t *len) {
   // Decrement buffer length
   --buffer_len;
 
-  fram_save_buffer_state(read_addr, write_addr, buffer_len);
+  fifo_save_buffer_state();
   return FRAM_OK;
 }
 
@@ -225,50 +225,59 @@ fram_status fifo_drop(void) {
   // Decrement buffer length
   --buffer_len;
 
-  fifo_save_buffer_state(read_addr, write_addr, buffer_len);
+  fifo_save_buffer_state();
   return FRAM_OK;
 }
 
 uint16_t fifo_buffer_len(void) { return buffer_len; }
 
-fram_status fram_buffer_clear(void) {
+fram_status fifo_buffer_clear(void) {
   // Set read and write addresses to their default values
   read_addr = FRAM_BUFFER_START;
   write_addr = FRAM_BUFFER_START;
 
   // reset buffer len
   buffer_len = 0;
-  fifo_save_buffer_state(read_addr, write_addr, buffer_len);
+  fifo_save_buffer_state();
 
   return FRAM_OK;
 }
 
 
-fram_status fifo_save_buffer_state(uint16_t read_addr, uint16_t write_addr,
-                               uint16_t buffer_len) {
-  uint8_t *read_addr_bytes = (uint8_t *)&read_addr;
-  uint8_t *write_addr_bytes = (uint8_t *)&write_addr;
-  uint8_t *buffer_len_bytes = (uint8_t *)&buffer_len;
+fram_status fifo_save_buffer_state(void) {
+
+  uint8_t buffer[2] = {};
+  
+  buffer[1] = read_addr >> 8;
+  buffer[0] = read_addr & 0xFF;
 
   // Save read_addr
   fram_status status =
-      fram_write(FRAM_BUFFER_READ_ADDR, read_addr_bytes, sizeof(read_addr));
+      fram_write(FRAM_BUFFER_READ_ADDR, buffer, sizeof(read_addr));
   if (status != FRAM_OK) {
     // APP_PRINTF("Failed to save read address. FRAM Status: %d\n", status);
     return status;
   }
+  
+
+  buffer[1] = write_addr >> 8;
+  buffer[0] = write_addr & 0xFF;
 
   // Save write_addr
   status =
-      fram_write(FRAM_BUFFER_WRITE_ADDR, write_addr_bytes, sizeof(write_addr));
+      fram_write(FRAM_BUFFER_WRITE_ADDR, buffer, sizeof(write_addr));
   if (status != FRAM_OK) {
     // APP_PRINTF("Failed to save write address. FRAM Status: %d\n", status);
     return status;
   }
+  
+
+  buffer[1] = buffer_len >> 8;
+  buffer[0] = buffer_len & 0xFF;
 
   // Save buffer_len
   status =
-      fram_write(FRAM_BUFFER_LEN_ADDR, buffer_len_bytes, sizeof(buffer_len));
+      fram_write(FRAM_BUFFER_LEN_ADDR, buffer, sizeof(buffer_len));
   if (status != FRAM_OK) {
     // APP_PRINTF("Failed to save buffer length. FRAM Status: %d\n", status);
     return status;
@@ -283,48 +292,60 @@ fram_status fifo_save_buffer_state(uint16_t read_addr, uint16_t write_addr,
   return status;
 }
 
-fram_status fifo_load_buffer_state(uint16_t *read_addr, uint16_t *write_addr,
-                               uint16_t *buffer_len) {
-  fram_status status;
+fram_status fifo_load_buffer_state(void) {
+  fram_status status = FRAM_OK;
+
+  uint8_t buffer[2] = {};
 
   // Load read_addr and print each byte
   status =
-      fram_read(FRAM_BUFFER_READ_ADDR, sizeof(*read_addr), (uint8_t *)read_addr);
+      fram_read(FRAM_BUFFER_READ_ADDR, sizeof(read_addr), buffer);
   if (status != FRAM_OK) return status;
+
+  read_addr = 0;
+  read_addr = (buffer[1] << 8) | buffer[0];
   // APP_PRINTF("Loaded Read Address: 0x%02X 0x%02X (%d)\n", ((uint8_t
   // *)read_addr)[0],
   //       ((uint8_t *)read_addr)[1], *read_addr);
 
   // Load write_addr and print each byte
-  status = fram_read(FRAM_BUFFER_WRITE_ADDR, sizeof(*write_addr),
-                    (uint8_t *)write_addr);
+  status = fram_read(FRAM_BUFFER_WRITE_ADDR, sizeof(write_addr),
+                    buffer);
   if (status != FRAM_OK) return status;
   // APP_PRINTF("Loaded Write Address: 0x%02X 0x%02X (%d)\n",
   //       ((uint8_t *)write_addr)[0], ((uint8_t *)write_addr)[1], *write_addr);
+  
+  write_addr = 0;
+  write_addr = (buffer[1] << 8) | buffer[0];
 
   // Load buffer_len and print each byte
-  status = fram_read(FRAM_BUFFER_LEN_ADDR, sizeof(*buffer_len),
-                    (uint8_t *)buffer_len);
+  status = fram_read(FRAM_BUFFER_LEN_ADDR, sizeof(buffer_len),
+                    buffer);
   if (status != FRAM_OK) return status;
   // APP_PRINTF("Loaded Buffer Length: 0x%02X 0x%02X (%d)\n",
   //       ((uint8_t *)buffer_len)[0], ((uint8_t *)buffer_len)[1], *buffer_len);
+
+  buffer_len = 0;
+  buffer_len = (buffer[1] << 8) | buffer[0];
 
   return FRAM_OK;
 }
 
 fram_status fifo_init(void) {
-  fram_status status = fifo_load_buffer_state(&read_addr, &write_addr, &buffer_len);
+  fram_status status = fifo_load_buffer_state();
   if (status != FRAM_OK) {
     // APP_PRINTF("Failed to load FIFO state. FRAM Status: %d\n", status);
     // If loading the buffer state fails, assume it's an empty state
     // APP_PRINTF("Initialized to empty buffer state.\n");
-    return fram_buffer_clear();
+    return fifo_buffer_clear();
   } else {
     if (read_addr == FRAM_BUFFER_START && write_addr == FRAM_BUFFER_START &&
         buffer_len == 0) {
-      APP_PRINTF("Buffer is empty or freshly initialized.\n");
+      //APP_PRINTF("Buffer is empty or freshly initialized.\n");
+      return FRAM_OK;
     } else {
-      APP_PRINTF("Buffer contains data. Ready to resume operations.\n");
+      //APP_PRINTF("Buffer contains data. Ready to resume operations.\n");
+      return FRAM_OK;
     }
   }
   return FRAM_OK;

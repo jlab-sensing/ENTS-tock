@@ -80,7 +80,7 @@ extern "C" {
  * @param    num_bytes The number of bytes to be written.
  * @return   See fram_status
  */
-fram_status fifo_put(const uint8_t *data, size_t num_bytes);
+fram_status fifo_put(const uint8_t *data, uint8_t num_bytes);
 
 /**
  * @brief    Reads a measurement from the queue
@@ -133,25 +133,17 @@ fram_status fifo_buffer_clear(void);
  * @brief Saves the buffer state (read address, write address, and buffer
  * length) to FRAM.
  *
- * @param read_addr Current read address of the circular buffer.
- * @param write_addr Current write address of the circular buffer.
- * @param buffer_len Current length of the circular buffer.
  * @return fram_status, status of the FRAM operation.
  */
-fram_status fifo_save_buffer_state(uint16_t read_addr, uint16_t write_addr,
-                               uint16_t buffer_len);
+fram_status fifo_save_buffer_state(void);
 
 /**
  * @brief Loads the buffer state (read address, write address, and buffer
  * length) from FRAM.
  *
- * @param read_addr Pointer to store the retrieved read address.
- * @param write_addr Pointer to store the retrieved write address.
- * @param buffer_len Pointer to store the retrieved buffer length.
  * @return fram_status, status of the FRAM operation.
  */
-fram_status fifo_load_buffer_state(uint16_t *read_addr, uint16_t *write_addr,
-                               uint16_t *buffer_len);
+fram_status fifo_load_buffer_state(void);
 
 /**
  * @brief Initializes the FIFO buffer by loading the buffer state (read address,

@@ -33,6 +33,8 @@ typedef enum {
   FRAM_OK           =  0,
   FRAM_ERROR        = -1,
   FRAM_OUT_OF_RANGE = -2,
+  FRAM_BUFFER_FULL  = -3,
+  FRAM_BUFFER_EMPTY = -4,
 } fram_status;
 
 /** Address type (flat address space) */

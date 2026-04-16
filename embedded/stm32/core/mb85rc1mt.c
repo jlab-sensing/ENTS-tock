@@ -17,10 +17,12 @@
  * Copyright (c) 2026 jLab, UCSC
  */
 
+#include "mb85rc1mt.h"
+
+#include <string.h>
 #include <libtock/peripherals/i2c_master.h>
 
 #include "fram.h"
-#include "mb85rc1mt.h"
 
 /** Base address of chip */
 static const uint8_t g_base_addr = 0b10100000;
@@ -101,7 +103,7 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       write_len = len;
     }
 
-    for (int i = 0; i < write_len; i++) {
+    for (size_t i = 0; i < write_len; i++) {
       // transmit data
       int tock_status = RETURNCODE_SUCCESS;
 
@@ -112,7 +114,7 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
 
       if (tock_status < 0) {
-        return RETURNCODE_SUCCESS
+        return FRAM_OK;
       }
     }
 
@@ -180,15 +182,19 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
 fram_status mb85rc1mt_wakeup(mb85rc1mt_address addr) {
   // TODO: Implement wakeup
 
+  (void) addr;
+
   return FRAM_OK;
 }
 
 fram_status mb85rc1mt_sleep(mb85rc1mt_address addr) {
   // TODO: Implement sleep
 
+  (void) addr;
+
   return FRAM_OK;
 }
 
-fram_addr fram_size(void) {
+fram_addr mb85rc1mt_size(void) {
   return mb85rc1mt_pages * mb85rc1mt_seg_size;
 }
