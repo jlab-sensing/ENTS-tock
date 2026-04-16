@@ -1,7 +1,7 @@
 #include "communication.h"
 
 #include <stdlib.h>
-#include <libtock/peripherials/i2c_master.h>
+#include <libtock/peripherals/i2c_master.h>
 
 /**
  * @brief Mutex lock to prevent subsequent transmissions
@@ -39,7 +39,7 @@ static Buffer rx = {0};
  */
 void ControllerWakeupEsp32(void);
 
-ControllerStatus ControllerTransmit(unsigned int timeout) {
+ControllerStatus ControllerTransmit(void) {
   // Lock mutex
   g_controller_mutex_lock = true;
 
@@ -97,9 +97,8 @@ ControllerStatus ControllerTransmit(unsigned int timeout) {
   return cont_status;
 }
 
-ControllerStatus ControllerReceive(unsigned int timeout) {
+ControllerStatus ControllerReceive(void) {
   int tock_status = RETURNCODE_SUCCESS;
-  HAL_StatusTypeDef hal_status = HAL_OK;
 
   ControllerStatus cont_status = CONTROLLER_SUCCESS;
 
@@ -169,18 +168,18 @@ ControllerStatus ControllerReceive(unsigned int timeout) {
   return cont_status;
 }
 
-ControllerStatus ControllerTransaction(unsigned int timeout) {
+ControllerStatus ControllerTransaction(void) {
   // status code
   ControllerStatus status = CONTROLLER_SUCCESS;
 
   // transmit, stop early if error
-  status = ControllerTransmit(timeout);
+  status = ControllerTransmit();
   if (status != CONTROLLER_SUCCESS) {
     return status;
   }
 
   // Receive
-  status = ControllerReceive(timeout);
+  status = ControllerReceive();
   return status;
 }
 

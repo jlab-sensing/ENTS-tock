@@ -2,15 +2,15 @@
 
 #include <stdlib.h>
 
-#include <libtock/peripherrals/gpio.h>
+#include <libtock/peripherals/gpio.h>
 #include <libtock-sync/services/alarm.h>
 
 #include "communication.h"
-#include "../../proto/soil_power_sensor.pb.h"
+#include "../proto/soil_power_sensor.pb.h"
 
 
 // TODO: Update with correct value.
-const static uint8_t esp32_wakeup_pin = 5;
+static const uint8_t esp32_wakeup_pin = 5;
 
 
 void ControllerInit(void) {

@@ -175,15 +175,13 @@ SensorStatus DecodeRepeatedSensorMeasurements(const uint8_t* data, const size_t 
  * sending responses back to the device.
  *
  * @param responses Array of SensorResponses to encode.
- * @param count Number of responses in the array.
  * @param buffer Pointer to the output buffer.
  * @param size Pointer to the size of the output buffer. On success, updated to
  * the number of bytes written.
  *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeRepeatedSensorResponses(const RepeatedSensorResponses responses,
-    size_t count, uint8_t* buffer, size_t* size);
+SensorStatus EncodeRepeatedSensorResponses(const RepeatedSensorResponses responses, uint8_t* buffer, size_t* size);
 
 
 

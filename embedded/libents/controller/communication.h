@@ -45,24 +45,20 @@ typedef struct {
 
 /**
  * @brief Send bytes to esp32
- *
- * @param timeout Timeout duration in ms
  */
-ControllerStatus ControllerTransmit(unsigned int timeout);
+ControllerStatus ControllerTransmit(void);
 
 /**
  * @brief Receive bytes from esp32
- *
- * @param timeout Timeout duration in ms
  */
-ControllerStatus ControllerReceive(unsigned int timeout);
+ControllerStatus ControllerReceive(void);
 
 /**
  * @brief Send message and receive response from esp32
  *
  * @param timeout Timeout duration in ms
  */
-ControllerStatus ControllerTransaction(unsigned int timeout);
+ControllerStatus ControllerTransaction(void);
 
 /**
  * @brief Get reference to transmit buffer

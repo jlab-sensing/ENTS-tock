@@ -38,6 +38,12 @@ unsigned int Format(RepeatedSensorMeasurements* meas);
 SensorStatus Parse(RepeatedSensorMeasurements* meas);
 
 
+
+SensorStatus FormatRepeatedSensorMeasurements(
+        Metadata meta, const SensorMeasurement meas[], size_t count,
+        RepeatedSensorMeasurements* out);
+
+
 bool MetadataEqual(Metadata* left, Metadata* right) {
     if (left->ts != right->ts) {
         return false;
@@ -127,7 +133,10 @@ SensorStatus Parse(RepeatedSensorMeasurements* meas) {
 SensorStatus FormatRepeatedSensorMeasurements(
         Metadata meta, const SensorMeasurement meas[], size_t count,
         RepeatedSensorMeasurements* out) {
-    
+  
+    // keep meta for future optimization
+    (void) meta;
+
     // check count doesn't exceed max count
     size_t max_count = sizeof(out->measurements) / sizeof(out->measurements[0]);
     if (count > max_count) {
@@ -285,7 +294,7 @@ SensorStatus DecodeRepeatedSensorMeasurements(const uint8_t* data, const size_t 
 
 
 SensorStatus EncodeRepeatedSensorResponses(const RepeatedSensorResponses responses,
-    size_t count, uint8_t* buffer, size_t* size) {
+    uint8_t* buffer, size_t* size) {
 
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, *size);
     bool status = pb_encode(&ostream, RepeatedSensorResponses_fields, &responses);
