@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../unity.h"
+#include <unity.h>
 
-#include "fram.h"
+#include <storage/fram.h>
 
 // ---------------------------------------------------------------------------
 // Forward declarations for test functions.
@@ -55,28 +55,28 @@ void test_fram_size(void) {
 
 void test_write_valid_data(void) {
   uint8_t data[]    = {1, 2, 3, 4, 5};
-  FramStatus status = fram_write(0x00, data, sizeof(data));
+  fram_status status = fram_write(0x00, data, sizeof(data));
   TEST_ASSERT_EQUAL_INT(FRAM_OK, status);
 }
 
 void test_write_out_of_range(void) {
   uint8_t data[]    = {1, 2, 3, 4, 5};
-  FramAddr addr     = fram_size() + 1;
-  FramStatus status = fram_write(addr, data, sizeof(data));
+  fram_addr addr     = fram_size() + 1;
+  fram_status status = fram_write(addr, data, sizeof(data));
   TEST_ASSERT_EQUAL_INT(FRAM_OUT_OF_RANGE, status);
 }
 
 void test_write_zero_length(void) {
   uint8_t data[]    = {1, 2, 3, 4, 5};
-  FramStatus status = fram_write(0x00, data, 0);
+  fram_status status = fram_write(0x00, data, 0);
   TEST_ASSERT_EQUAL_INT(FRAM_OK, status);
 }
 
 void test_read_valid_data(void) {
   uint8_t write_data[] = {0xDE, 0xAD, 0xBE, 0xEF, 0x42};
-  FramAddr addr        = 0x100;
+  fram_addr addr        = 0x100;
 
-  FramStatus status = fram_write(addr, write_data, sizeof(write_data));
+  fram_status status = fram_write(addr, write_data, sizeof(write_data));
   TEST_ASSERT_EQUAL_INT_MESSAGE(FRAM_OK, status, "write failed");
 
   uint8_t read_data[5] = {0};
@@ -88,30 +88,30 @@ void test_read_valid_data(void) {
 
 void test_read_out_of_range(void) {
   uint8_t data[5];
-  FramAddr addr     = fram_size() + 1;
-  FramStatus status = fram_read(addr, sizeof(data), data);
+  fram_addr addr     = fram_size() + 1;
+  fram_status status = fram_read(addr, sizeof(data), data);
   TEST_ASSERT_EQUAL_INT(FRAM_OUT_OF_RANGE, status);
 }
 
 void test_read_zero_length(void) {
   uint8_t data[5];
-  FramStatus status = fram_read(0x00, 0, data);
+  fram_status status = fram_read(0x00, 0, data);
   TEST_ASSERT_EQUAL_INT(FRAM_OK, status);
 }
 
 void test_read_status(void) {
   uint8_t data[5];
-  FramStatus status = fram_read(0x00, sizeof(data), data);
+  fram_status status = fram_read(0x00, sizeof(data), data);
   TEST_ASSERT_EQUAL_INT(FRAM_OK, status);
 }
 
 void test_write_read_multiple_addresses(void) {
   uint8_t pattern_a[] = {0xAA, 0xBB, 0xCC};
   uint8_t pattern_b[] = {0x11, 0x22, 0x33};
-  FramAddr addr_a     = 0x200;
-  FramAddr addr_b     = 0x300;
+  fram_addr addr_a     = 0x200;
+  fram_addr addr_b     = 0x300;
 
-  FramStatus status;
+  fram_status status;
 
   status = fram_write(addr_a, pattern_a, sizeof(pattern_a));
   TEST_ASSERT_EQUAL_INT_MESSAGE(FRAM_OK, status, "write A failed");

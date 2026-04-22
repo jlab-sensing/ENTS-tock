@@ -1,11 +1,11 @@
 # Base definitions
-TOCK_USERLAND_BASE_DIR ?= ../libtock-c
-LIBNAME := libents
+TOCK_USERLAND_BASE_DIR ?= ../../../libtock-c
+LIBNAME := unity
 
 # Careful! Must be a path that resolves correctly **from where make is invoked**
 #
 # If you are only ever compiling a standalone library, then it's fine to simply set
-$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
+$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../stm32/tests/$(LIBNAME)
 #$(LIBNAME)_DIR := .
 
 # If you will be asking applications to rebuild this library (see the development
@@ -19,10 +19,7 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
 
 
 # Or let make find them automatically:
-$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller/*.c)
-$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/proto/*.c)
-$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/storage/*.c)
-
+$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/*.c)
 
 #$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
 #$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)
