@@ -1,11 +1,11 @@
 # Makefile for user application
 
 # Specify this directory relative to the current application.
-TOCK_USERLAND_BASE_DIR = ../../libtock-c
+TOCK_USERLAND_BASE_DIR = ../../../libtock-c
 
-PACKAGE_NAME = org.ents.core
+PACKAGE_NAME = org.ents.apps.sensors
 
-EXTERN_LIBS += ../../libents
+EXTERN_LIBS += ../../../libents
 
 # Which files to compile.
 C_SRCS := $(wildcard *.c)

@@ -1,23 +1,44 @@
 /* vim: set sw=2 expandtab tw=80: */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
-#include <libtock/interface/console.h>
+#include <libtock/tock.h>
+#include <libtock/kernel/ipc.h>
 
-char hello[] = "Hello World!\r\n";
 
-static void nop(
-  returncode_t ret __attribute__((unused)),
-  uint32_t     bytes_written __attribute__((unused))) {}
+static int counter = 0;
+
+
+/**
+ * @brief Callback when receiving data for upload from individual apps.
+ *
+ * @param pid An identifier for the app that notified us.
+ * @param len How long the buffer is that the client shared with us.
+ * @param buf Pointer to the shared buffer.
+ */
+static void ipc_callback(int pid, int len, int buf, void* ud);
+
 
 int main(void) {
-  libtock_console_write((uint8_t*) hello, strlen(hello), nop);
-  // Because we used the async method (as opposed to something synchronous,
-  // such as printf), we must explicitly wait for the asynchronous write to complete.
-  yield();
-  // Now we are done.
-  return 0;
+  printf("ENTS Core\n");
+
+ 
+  // service
+  ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
+
+
+
+  while (1) {
+    yield();
+  }
+}
+
+static void ipc_callback(int pid, int len, int buf, void* ud) {
+  uint8_t* buffer = (uint8_t*) buf;
+
+
+  // TODO: store in circular buffer.
+  counter = (int) (buffer[0]);
+
+  ipc_notify_client(pid);
 }
