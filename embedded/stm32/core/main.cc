@@ -5,6 +5,7 @@
 #include <libtock/tock.h>
 #include <libtock/kernel/ipc.h>
 
+#include "lorawan.h"
 
 static int counter = 0;
 
@@ -19,6 +20,8 @@ static int counter = 0;
 static void ipc_callback(int pid, int len, int buf, void* ud);
 
 
+
+
 int main(void) {
   printf("ENTS Core\n");
 
@@ -28,14 +31,20 @@ int main(void) {
 
 
 
+  lorawan_setup();
+
+
   while (1) {
     yield();
   }
 }
 
+
+
+
+
 static void ipc_callback(int pid, int len, int buf, void* ud) {
   uint8_t* buffer = (uint8_t*) buf;
-
 
   // TODO: store in circular buffer.
   counter = (int) (buffer[0]);
