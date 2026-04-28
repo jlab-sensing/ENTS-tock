@@ -21,16 +21,18 @@ static void ipc_callback(__attribute__ ((unused)) int pid, int len, int buf, voi
 char core_buf[256] __attribute__((aligned(256)));
 
 int main() {
+  libtocksync_alarm_delay_ms(500);
   printf("Sensor App Starting\n");
 
   int ret = 0;
 
 
   int core_service = 0;
-  
+
+
   ret = ipc_discover("org.ents.core", &core_service);
   if (ret < 0) {
-    printf("No core service\n");
+    printf("No core service %d\n", ret);
     return -1;
   }
 
@@ -43,7 +45,7 @@ int main() {
     done = false;
     core_buf[0] = counter++;
     ipc_notify_service(core_service);
-    yield_for(&done);
+    yield_for(&done); 
 
     libtocksync_alarm_delay_ms(1000);
   }

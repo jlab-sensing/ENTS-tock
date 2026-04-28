@@ -12,7 +12,8 @@ EXTERN_LIBS += ../../libents
 EXTERN_LIBS += $(TOCK_USERLAND_BASE_DIR)/RadioLib
 
 # Which files to compile.
-CXX_SRCS := $(wildcard *.cc)
+#CXX_SRCS := $(wildcard *.cc)
+CXX_SRCS := main.cc
 
 # Include userland master makefile. Contains rules and flags for actually
 # building the application.
