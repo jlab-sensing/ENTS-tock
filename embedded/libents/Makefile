@@ -20,6 +20,7 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
 # Or let make find them automatically:
 $(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller/*.c)
 $(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/proto/*.c)
+$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/sensors/*.c)
 $(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/storage/*.c)
 
 # Sources for nanopb

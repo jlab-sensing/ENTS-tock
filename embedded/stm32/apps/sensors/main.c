@@ -4,6 +4,9 @@
 #include <libtock-sync/services/alarm.h>
 #include <libtock/kernel/ipc.h>
 
+#include <proto/sensor.h>
+#include <sensors/ads1219.h>
+
 static bool done = false;
 
 /**
@@ -24,11 +27,12 @@ int main() {
   libtocksync_alarm_delay_ms(500);
   printf("Sensor App Starting\n");
 
+  // return codes
   int ret = 0;
 
 
+  // setup ipc for uplaods
   int core_service = 0;
-
 
   ret = ipc_discover("org.ents.core", &core_service);
   if (ret < 0) {
@@ -39,17 +43,37 @@ int main() {
   ipc_register_client_callback(core_service, ipc_callback, NULL);
   ipc_share(core_service, core_buf, 256);
 
-  int counter = 0;
-
-  while (1) {
-    done = false;
-    core_buf[0] = counter++;
-    ipc_notify_service(core_service);
-    yield_for(&done); 
-
-    libtocksync_alarm_delay_ms(1000);
+  // reset to known state
+  ret = ads1219_reset();
+  if (ret < 0) {
+    printf("Could not reset ads1219\n");
+    return -1;
   }
 
+  while (1) {
+    // reset ipc flag
+    done = false;
+    
+    // read measurement
+    double voltage = 0.0;
+    ret = ads1219_voltage(&voltage);
+    if (ret < 0) {
+      printf("Could not read ads1219. Retrying\n");
+      continue;
+    }
+
+    // encode measurement
+    size_t core_buf_len = 0;
+    Metadata meta = {};
+    EncodeDoubleMeasurement(meta, voltage, SensorType_POWER_VOLTAGE, core_buf, &core_buf_len);
+
+    // Send to core for upload
+    ipc_notify_service(core_service);
+    yield_for(&done);
+
+    // wait 5s after upload
+    libtocksync_alarm_delay_ms(5000);
+  }
 
   return 0;
 }
