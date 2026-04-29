@@ -24,7 +24,9 @@ extern "C" {
 #include <stddef.h>
 #include <string.h>
 
-#include "soil_power_sensor.pb.h"
+#include "controller.pb.h"
+#include "measurements.pb.h"
+#include "user_config.pb.h"
 
 /**
  * @ingroup proto

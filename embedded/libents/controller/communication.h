@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-#include "soil_power_sensor.pb.h"
+#include "../proto/controller.pb.h"
 
 #ifdef __cplusplus
 extern "C" {

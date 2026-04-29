@@ -1,7 +1,7 @@
 #include "sensor.h"
 
-#include "pb_decode.h"
-#include "pb_encode.h"
+#include "../nanopb/pb_decode.h"
+#include "../nanopb/pb_encode.h"
 
 
 /**

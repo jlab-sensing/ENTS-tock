@@ -6,7 +6,7 @@
 #include <libtock-sync/services/alarm.h>
 
 #include "communication.h"
-#include "../proto/soil_power_sensor.pb.h"
+#include "../proto/controller.pb.h"
 
 
 // TODO: Update with correct value.

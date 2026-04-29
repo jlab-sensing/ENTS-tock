@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 import "user_config.proto";
-import "measurement.proto";
+import "measurements.proto";
 
 message Esp32Command {
   oneof command {

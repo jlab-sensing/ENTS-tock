@@ -17,11 +17,17 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
 # is a common relative path everywhere.
 #$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/$(LIBNAME)
 
-
 # Or let make find them automatically:
 $(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller/*.c)
 $(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/proto/*.c)
 $(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/storage/*.c)
+
+# Sources for nanopb
+# Wasn't able to have a library require another library so having nanopb inside
+# the libents source tree
+$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_common.c
+$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_decode.c
+$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_encode.c
 
 
 #$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
