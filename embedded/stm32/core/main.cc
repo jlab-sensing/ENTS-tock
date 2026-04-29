@@ -5,10 +5,9 @@
 #include <libtock/tock.h>
 #include <libtock/kernel/ipc.h>
 
+#include <ulog.h>
+
 #include "lorawan.h"
-
-static int counter = 0;
-
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -21,9 +20,15 @@ static void ipc_callback(int pid, int len, int buf, void* ud);
 
 
 
+void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
+  snprintf(prefix, prefix_size, "Core\t");
+}
+
+
 
 int main(void) {
-  printf("ENTS Core\n");
+  ulog_prefix_set_fn(ulog_prefix_handler);
+  ulog_info("App Initialized\n");
  
   // service
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
@@ -35,14 +40,13 @@ int main(void) {
 
 
 
-
-
 static void ipc_callback(int pid, int len, int buf, void* ud) {
   uint8_t* buffer = (uint8_t*) buf;
 
   // TODO: store in circular buffer.
 
   // print out bytes
+  ulog_info("Received bytes:");
   for (int i=0; i < len; i++) {
     printf("%x", buffer[i]);
   }

@@ -4,3 +4,6 @@
 [submodule "embedded/libents/nanopb"]
 	path = embedded/libents/nanopb
 	url = https://github.com/nanopb/nanopb.git
+[submodule "embedded/libents/microlog"]
+	path = embedded/libents/microlog
+	url = https://github.com/an-dr/microlog.git

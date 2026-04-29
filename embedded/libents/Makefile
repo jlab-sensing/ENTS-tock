@@ -30,8 +30,14 @@ $(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_common.c
 $(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_decode.c
 $(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_encode.c
 
+# Sources for microlog
+$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/microlog/src/ulog.c
 
 #$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
 #$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)
+
+
+override CPPFLAGS_$(LIBNAME) += -I$($(LIBNAME)_DIR)/microlog/include -DULOG_BUILD_PREFIX_SIZE=32
+
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

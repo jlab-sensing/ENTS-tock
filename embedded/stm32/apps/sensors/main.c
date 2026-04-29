@@ -7,6 +7,8 @@
 #include <proto/sensor.h>
 #include <sensors/ads1219.h>
 
+#include <ulog.h>
+
 static bool done = false;
 
 /**
@@ -21,11 +23,16 @@ static void ipc_callback(__attribute__ ((unused)) int pid, int len, int buf, voi
 }
 
 
+void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
+  snprintf(prefix, prefix_size, "Sensors\t");
+}
+
+
 char core_buf[256] __attribute__((aligned(256)));
 
-int main() {
-  libtocksync_alarm_delay_ms(500);
-  printf("Sensor App Starting\n");
+int main() { 
+  ulog_prefix_set_fn(ulog_prefix_handler);
+  ulog_info("App Initialized");
 
   // return codes
   int ret = 0;
@@ -36,7 +43,7 @@ int main() {
 
   ret = ipc_discover("org.ents.core", &core_service);
   if (ret < 0) {
-    printf("No core service %d\n", ret);
+    ulog_fatal("No core service %d", ret);
     return -1;
   }
 
@@ -46,7 +53,7 @@ int main() {
   // reset to known state
   ret = ads1219_reset();
   if (ret < 0) {
-    printf("Could not reset ads1219\n");
+    ulog_fatal("Could not reset ads1219");
     return -1;
   }
 
@@ -58,7 +65,7 @@ int main() {
     double voltage = 0.0;
     ret = ads1219_voltage(&voltage);
     if (ret < 0) {
-      printf("Could not read ads1219. Retrying\n");
+      ulog_error("Could not read ads1219. Retrying.");
       continue;
     }
 
@@ -70,6 +77,9 @@ int main() {
     // Send to core for upload
     ipc_notify_service(core_service);
     yield_for(&done);
+
+
+    ulog_info("Return bytes: %x %x %x %x", core_buf[0], core_buf[1], core_buf[2], core_buf[3]); 
 
     // wait 5s after upload
     libtocksync_alarm_delay_ms(5000);
