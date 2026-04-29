@@ -26,7 +26,7 @@ const uint32_t uplinkIntervalSeconds = 5UL * 60UL;    // minutes x seconds
 
 // the Device EUI & two keys can be generated on the TTN console 
 #ifndef RADIOLIB_LORAWAN_DEV_EUI   // Replace with your Device EUI
-#define RADIOLIB_LORAWAN_DEV_EUI   05,38,04,D9,00,80,E1,15
+#define RADIOLIB_LORAWAN_DEV_EUI   70,B3,D5,7E,D0,07,73,A2
 #endif
 #ifndef RADIOLIB_LORAWAN_APP_KEY   // Replace with your App Key 
 #define RADIOLIB_LORAWAN_APP_KEY  02,B0,7E,01,50,16,02,80,AE,0D,20,A6,0A,B0,F7,01

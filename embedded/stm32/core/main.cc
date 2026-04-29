@@ -27,11 +27,18 @@ void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
 
 
 int main(void) {
+  ulog_output_level_set_all(ULOG_LEVEL_TRACE);
+
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("App Initialized\n");
  
   // service
-  ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
+  //ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
+
+
+  lorawan_init();
+  lorawan_join();
+  lorawan_timesync();
 
   while (1) {
     yield();
@@ -41,7 +48,8 @@ int main(void) {
 
 
 static void ipc_callback(int pid, int len, int buf, void* ud) {
-  uint8_t* buffer = (uint8_t*) buf;
+  int buffer_len = (int) buf;
+  uint8_t* buffer = ((uint8_t*) buf) + 1;
 
   // TODO: store in circular buffer.
 
@@ -51,6 +59,8 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
     printf("%x", buffer[i]);
   }
   printf("\n");
+
+  //lorawan_upload(buffer, buffer_len);
 
   // reply with response
   buffer[0] = 0xb;
