@@ -103,19 +103,18 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       write_len = len;
     }
 
-    for (size_t i = 0; i < write_len; i++) {
-      // transmit data
-      int tock_status = RETURNCODE_SUCCESS;
 
-      uint8_t buffer[write_len + 2] = {};
-      buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
-      buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
-      memcpy(buffer+2, data, write_len);
-      tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
+    // transmit data
+    int tock_status = RETURNCODE_SUCCESS;
+  
+    uint8_t buffer[write_len + 2] = {};
+    buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
+    buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
+    memcpy(buffer+2, data, write_len);
+    tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
 
-      if (tock_status < 0) {
-        return FRAM_OK;
-      }
+    if (tock_status < 0) {
+      return FRAM_ERROR;
     }
 
     // update address and length
@@ -157,7 +156,7 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
     int tock_status = RETURNCODE_SUCCESS;
 
     data[0] = (uint8_t) (i2c_addr.mem >> 8);
-    data[0] = (uint8_t) (i2c_addr.mem & 0xFF);
+    data[1] = (uint8_t) (i2c_addr.mem & 0xFF);
     tock_status = i2c_master_write_read_sync(i2c_addr.dev, data, 2, read_len);
     if (tock_status < 0) {
       return FRAM_ERROR;
