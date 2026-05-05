@@ -9,6 +9,10 @@
 
 #include "lorawan.h"
 
+
+static bool connected = false;
+
+
 /**
  * @brief Callback when receiving data for upload from individual apps.
  *
@@ -31,36 +35,39 @@ int main(void) {
 
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("App Initialized\n");
- 
-  // service
-  //ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
-
+  
+  // start service after connected
+  ipc_register_service_callback("org.ents.core", ipc_callback, NULL); 
 
   lorawan_init();
   lorawan_join();
   lorawan_timesync();
+  
+  connected = true;  
 
   while (1) {
     yield();
   }
 }
 
-
-
 static void ipc_callback(int pid, int len, int buf, void* ud) {
-  int buffer_len = (int) buf;
-  uint8_t* buffer = ((uint8_t*) buf) + 1;
+  ulog_trace("ipc_callabck");
+  uint8_t* buffer = (uint8_t*) buf;
 
   // TODO: store in circular buffer.
 
   // print out bytes
-  ulog_info("Received bytes:");
-  for (int i=0; i < len; i++) {
-    printf("%x", buffer[i]);
+  //  Get number of bytes in buffer
+  uint8_t buffer_len = buffer[0];
+  ulog_info("Received %d bytes:", buffer_len);
+  for (int i=1; i < buffer_len; i++) {
+    printf("%x ", buffer[i]);
   }
   printf("\n");
 
-  //lorawan_upload(buffer, buffer_len);
+  if (connected) {
+    lorawan_upload(&buffer[1], buffer_len);
+  }
 
   // reply with response
   buffer[0] = 0xb;

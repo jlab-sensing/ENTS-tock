@@ -31,6 +31,8 @@ void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
 char core_buf[256] __attribute__((aligned(256)));
 
 int main() { 
+  ulog_output_level_set_all(ULOG_LEVEL_TRACE);
+
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("App Initialized");
 
@@ -62,6 +64,7 @@ int main() {
     done = false;
     
     // read measurement
+    ulog_trace("Reading ads1219");
     double voltage = 0.0;
     ret = ads1219_voltage(&voltage);
     if (ret < 0) {
@@ -72,7 +75,13 @@ int main() {
     // encode measurement
     size_t core_buf_len = 0;
     Metadata meta = {};
-    EncodeDoubleMeasurement(meta, voltage, SensorType_POWER_VOLTAGE, core_buf, &core_buf_len);
+    EncodeDoubleMeasurement(meta, voltage, SensorType_POWER_VOLTAGE, &core_buf[1], &core_buf_len);
+    core_buf[0] = (uint8_t) core_buf_len;
+    ulog_debug("Encoded %d bytes:", core_buf_len);
+    for (int i = 1; i < core_buf_len; i++) {
+      printf("%x ", core_buf[i]);
+    }
+    printf("\n");
 
     // Send to core for upload
     ipc_notify_service(core_service);
@@ -82,7 +91,7 @@ int main() {
     ulog_info("Return bytes: %x %x %x %x", core_buf[0], core_buf[1], core_buf[2], core_buf[3]); 
 
     // wait 5s after upload
-    libtocksync_alarm_delay_ms(5000);
+    libtocksync_alarm_delay_ms(15000);
   }
 
   return 0;

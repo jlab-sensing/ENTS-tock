@@ -49,9 +49,7 @@ int lorawan_init(void) {
     ulog_fatal("Error when initializing tock module.");
     return -1;
   }
-  ulog_trace("a");
   int state = tock_module->begin();
-  ulog_trace("b");
 
   // check node?
   if (node == nullptr) {
@@ -102,6 +100,20 @@ int lorawan_join(void) {
 
   ulog_debug("LoRaWAN OTAA activation success!");
 
+
+  // set configuration for future uploads
+  
+  // use ADR but set initial data rate
+  node->setADR(true);
+  node->setDatarate(2);
+
+  // TTN fair use
+  //node->setDutyCycle(true, 1250);
+  // dwell time limit for US
+  node->setDwellTime(true, 400);
+
+
+
   return 0;
 }
 
@@ -124,7 +136,7 @@ int lorawan_upload(uint8_t* buffer, int length) {
   yield_no_wait();
 
   // Form payload to send
-  ulog_debug("Sending uplink of %lu bytes: %s\r\n", length, buffer);
+  ulog_debug("Sending uplink of %lu bytes.", length, buffer);
 
   state = node->sendReceive(buffer, length);
   ulog_debug("LoRaWAN send/receive code %d.", state);
