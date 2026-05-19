@@ -4,6 +4,7 @@
 .mypy_cache
 tags*
 .DS_Store
+*.plist
 
 # configuration files
 proto/python/src/soil_power_sensor_protobuf/config/Load/*.json
@@ -14,6 +15,7 @@ doxygen/build
 # cppcheck
 *.ctu-info
 *.dump
+
 
 ## Python
 
