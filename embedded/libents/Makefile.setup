@@ -2,13 +2,21 @@
 
 TOCK_USERLAND_BASE_DIR ?= ../libtock-c
 
+SRC_DIR = $(TOCK_USERLAND_BASE_DIR)/../libents/src/libents
 
-all: $(TOCK_USERLAND_BASE_DIR)/../libents/nanopb/README.md
+NANOPB_DIR = $(SRC_DIR)/nanopb
+MICROLOG_DIR = $(SRC_DIR)/microlog
+
+all: $(NANOPB_DIR)/README.md  $(MICROLOG_DIR)/README.md
 
 clean::
 	rm -rf build
 
-# confirm RadioLib git submodule is checked out. 
-$(TOCK_USERLAND_BASE_DIR)/../nanopb/nanopb/README.md:
-	git submodule update --init -- $(TOCK_USERLAND_BASE_DIR)/../libents/nanopb
+# confirm nanopb is checked out
+$(NANOPB_DIR)/README.md:
+	git submodule update --init -- $(NANOPB_DIR)
+
+# confirm microlog is checkedo ut
+$(MICROLOG_DIR)/README.md:
+	git submodule update --init -- $(MICROLOG_DIR)
 

@@ -17,27 +17,30 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
 # is a common relative path everywhere.
 #$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/$(LIBNAME)
 
+SRC_DIR = $($(LIBNAME)_DIR)/src/$(LIBNAME)
+
 # Or let make find them automatically:
-$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller/*.c)
-$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/proto/*.c)
-$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/sensors/*.c)
-$(LIBNAME)_SRCS += $(wildcard $($(LIBNAME)_DIR)/storage/*.c)
+$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/controller/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/proto/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/storage/*.c)
+$(LIBNAME)_SRCS += $(SRC_DIR)/user_config.c
 
 # Sources for nanopb
 # Wasn't able to have a library require another library so having nanopb inside
 # the libents source tree
-$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_common.c
-$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_decode.c
-$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/nanopb/pb_encode.c
+$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_common.c
+$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_decode.c
+$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_encode.c
 
 # Sources for microlog
-$(LIBNAME)_SRCS += $($(LIBNAME)_DIR)/microlog/src/ulog.c
+$(LIBNAME)_SRCS += $(SRC_DIR)/microlog/src/ulog.c
 
 #$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
 #$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)
 
 
-override CPPFLAGS_$(LIBNAME) += -I$($(LIBNAME)_DIR)/microlog/include -DULOG_BUILD_PREFIX_SIZE=32
+override CPPFLAGS_$(LIBNAME) += -I$(SRC_DIR)/microlog/include -DULOG_BUILD_PREFIX_SIZE=32
 
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

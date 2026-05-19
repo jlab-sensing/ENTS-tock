@@ -14,7 +14,7 @@
 #include "../communication.h"
 
 // TODO Remove dependency
-#include "userConfig.h"
+#include "../../user_config.h"
 
 #ifdef __cplusplus
 extern "C" {

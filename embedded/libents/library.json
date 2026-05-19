@@ -17,5 +17,13 @@
     ],
     "license": "MIT",
     "framework": "*",
-    "platform": "*"
+    "platform": "*",
+    "build": {
+        "srcFilter": [
+            "-<*>",
+            "+<libents/proto/*>",
+            "+<libents/nanopb/*.h>",
+            "+<libents/nanopb/*.c>"
+        ]
+    }
 }
