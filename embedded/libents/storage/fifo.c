@@ -104,9 +104,9 @@ fram_status fifo_get(uint8_t *data, uint8_t *len) {
     return FRAM_BUFFER_EMPTY;
   }
 
-  fram_status status;
-
+  fram_status status = FRAM_OK;
   status = fram_read(read_addr, 1, len);
+  
   if (status != FRAM_OK) {
     return status;
   }
@@ -135,7 +135,7 @@ fram_status fifo_get(uint8_t *data, uint8_t *len) {
     }
     update_addr(&read_addr, *len);
   }
-
+ 
   // Decrement buffer length
   --buffer_len;
 
@@ -349,4 +349,8 @@ fram_status fifo_init(void) {
     }
   }
   return FRAM_OK;
+}
+
+int fifo_size(void) {
+  return FRAM_BUFFER_SIZE;
 }

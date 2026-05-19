@@ -155,9 +155,18 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
     // transmit data
     int tock_status = RETURNCODE_SUCCESS;
 
-    data[0] = (uint8_t) (i2c_addr.mem >> 8);
-    data[1] = (uint8_t) (i2c_addr.mem & 0xFF);
-    tock_status = i2c_master_write_read_sync(i2c_addr.dev, data, 2, read_len);
+    uint8_t mem_addr[2] = {};
+    mem_addr[0] = (uint8_t) (i2c_addr.mem >> 8);
+    mem_addr[1] = (uint8_t) (i2c_addr.mem & 0xFF);
+
+    // set read address
+    tock_status = i2c_master_write_sync(i2c_addr.dev, mem_addr, 2);
+    if (tock_status < 0) {
+      return FRAM_ERROR;
+    }
+
+    // read from memory
+    tock_status = i2c_master_read_sync(i2c_addr.dev, data, read_len);
     if (tock_status < 0) {
       return FRAM_ERROR;
     }

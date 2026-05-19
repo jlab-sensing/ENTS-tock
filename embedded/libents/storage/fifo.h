@@ -146,12 +146,22 @@ fram_status fifo_save_buffer_state(void);
 fram_status fifo_load_buffer_state(void);
 
 /**
- * @brief Initializes the FIFO buffer by loading the buffer state (read address,
- *        write address, and buffer length) from FRAM. If the state cannot be
- *        loaded or is invalid, it initializes the buffer with default values.
+ * @brief Initializes the buffer
+ *
+ * Initializes the FIFO buffer by loading the buffer state (read address, write
+ * address, and buffer length) from FRAM. If the state cannot be loaded or is
+ * invalid, it initializes the buffer with default values.
+ *
  * @return fram_status, status of the FRAM operation.
  */
 fram_status fifo_init(void);
+
+/**
+ * @brief Gets the total number of bytes in the buffer
+ *
+ * @return Number of bytes, fram_status otherwise.
+ */
+int fifo_size(void);
 
 /**
  * @}
