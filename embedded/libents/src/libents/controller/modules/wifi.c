@@ -1,10 +1,7 @@
-#include "controller/wifi.h"
+#include "wifi.h"
 
-#include "communication.h"
-#include "transcoder.h"
-
-/** Timeout for i2c communication with esp32, in communication.h */
-extern unsigned int g_controller_i2c_timeout;
+#include "../communication.h"
+#include "../../proto/transcoder.h"
 
 ControllerStatus WiFiCommandTransaction(const WiFiCommand *input,
                                         WiFiCommand *output) {
@@ -17,7 +14,7 @@ ControllerStatus WiFiCommandTransaction(const WiFiCommand *input,
 
   // send transaction
   ControllerStatus status = CONTROLLER_SUCCESS;
-  status = ControllerTransaction(g_controller_i2c_timeout);
+  status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     return status;
   }

@@ -1,8 +1,5 @@
 #include "../communication.h"
-#include "../../../transcoder.h"
-
-/** Timeout for i2c communication with esp32, in communication.h */
-extern unsigned int g_controller_i2c_timeout;
+#include "../../proto/transcoder.h"
 
 ControllerStatus PowerCommandTransaction(const PowerCommand *input,
                                          PowerCommand *output);
@@ -18,7 +15,7 @@ ControllerStatus PowerCommandTransaction(const PowerCommand *input,
 
   // send transaction
   ControllerStatus status = CONTROLLER_SUCCESS;
-  status = ControllerTransaction(g_controller_i2c_timeout);
+  status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     return status;
   }

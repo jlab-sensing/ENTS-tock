@@ -2,6 +2,7 @@
 
 #include "../communication.h"
 #include "../../proto/transcoder.h"
+#include "../../util/time.h"
 
 /** Timeout for i2c communication with esp32, in communication.h */
 extern unsigned int g_controller_i2c_timeout;
@@ -26,7 +27,7 @@ uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes) {
 
   // return if communication fails
   ControllerStatus status = CONTROLLER_SUCCESS;
-  status = ControllerTransaction(g_controller_i2c_timeout);
+  status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     return 0;
   }
@@ -88,8 +89,9 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
   // Ex. If input filename is "data.csv", sent filename is
   // "/<timestamp>_data.csv" Userconfig will be written to
   // "/<timestamp>_data.csv.userconfig"
-  snprintf(microsd_cmd.filename, sizeof(microsd_cmd.filename), "/%ld_%s",
-           SysTimeGet().Seconds, filename);
+ 
+  snprintf(microsd_cmd.filename, sizeof(microsd_cmd.filename), "/%lu_%s",
+           epoch(), filename);
 
   microsd_cmd.which_data = MicroSDCommand_uc_tag;
   memcpy(&microsd_cmd.data.uc, uc, sizeof(UserConfiguration));
@@ -99,7 +101,7 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
 
   // return if communication fails
   ControllerStatus status = CONTROLLER_SUCCESS;
-  status = ControllerTransaction(g_controller_i2c_timeout);
+  status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     return 0;
   }

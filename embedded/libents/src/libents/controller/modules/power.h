@@ -9,6 +9,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @ingroup controller
  * @defgroup controllerPower Power
@@ -18,3 +22,7 @@
 bool ControllerPowerSleep(void);
 
 bool ControllerPowerWakeup(void);
+
+#ifdef __cplusplus
+}
+#endif

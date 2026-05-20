@@ -2,8 +2,8 @@
 
 #include "../communication.h"
 
-#include "solenoid.h"
-#include "transcoder.h"
+#include "../../sensors/solenoid.h"
+#include "../../proto/transcoder.h"
 
 extern unsigned int g_controller_i2c_timeout;
 
@@ -18,7 +18,7 @@ ControllerStatus IrrigationCommandTransaction(const IrrigationCommand *input,
 
   // send transaction
   ControllerStatus status = CONTROLLER_SUCCESS;
-  status = ControllerTransaction(g_controller_i2c_timeout);
+  status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     return status;
   }

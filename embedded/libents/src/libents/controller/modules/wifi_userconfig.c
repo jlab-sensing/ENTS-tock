@@ -1,13 +1,7 @@
 #include "wifi_userconfig.h"
 
 #include "../communication.h"
-#include "../../transcoder.h"
-
-// TODO: Remove dependencies into core
-#include "userConfig.h"
-
-// Static variable for I2C timeout (same as WiFi)
-static unsigned int g_controller_i2c_timeout = 10000;
+#include "../../proto/transcoder.h"
 
 UserConfigStatus ControllerUserConfigRequest(void) {
   Buffer *tx = ControllerTx();
@@ -26,7 +20,7 @@ UserConfigStatus ControllerUserConfigRequest(void) {
     return USERCONFIG_ENCODE_ERROR;
   }
 
-  ControllerStatus status = ControllerTransaction(g_controller_i2c_timeout);
+  ControllerStatus status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     // APP_LOG(TS_OFF, VLEVEL_M, "Config request failed: %d\r\n", status);
     return USERCONFIG_COMM_ERROR;
@@ -65,7 +59,7 @@ UserConfigStatus ControllerUserConfigRequest(void) {
     }
   }
 
-  APP_LOG(TS_OFF, VLEVEL_M, "Invalid config response format\r\n");
+  //APP_LOG(TS_OFF, VLEVEL_M, "Invalid config response format\r\n");
   return USERCONFIG_INVALID_RESPONSE;
 }
 
@@ -107,7 +101,7 @@ UserConfigStatus ControllerUserConfigSend(void) {
     return USERCONFIG_ENCODE_ERROR;
   }
 
-  ControllerStatus status = ControllerTransaction(g_controller_i2c_timeout);
+  ControllerStatus status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     // APP_LOG(TS_OFF, VLEVEL_M, "Failed to send config: %d\r\n", status);
     return USERCONFIG_COMM_ERROR;
@@ -137,7 +131,7 @@ bool ControllerUserConfigStart(void) {
     return false;
   }
 
-  ControllerStatus status = ControllerTransaction(g_controller_i2c_timeout);
+  ControllerStatus status = ControllerTransaction();
   if (status != CONTROLLER_SUCCESS) {
     // APP_LOG(TS_OFF, VLEVEL_M, "Failed to send start request: %d\r\n",
     // status);

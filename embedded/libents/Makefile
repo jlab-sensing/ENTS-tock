@@ -21,9 +21,11 @@ SRC_DIR = $($(LIBNAME)_DIR)/src/$(LIBNAME)
 
 # Or let make find them automatically:
 $(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/controller/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/controller/modules/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/proto/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/storage/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/util/*.c)
 $(LIBNAME)_SRCS += $(SRC_DIR)/user_config.c
 
 # Sources for nanopb

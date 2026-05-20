@@ -10,7 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "userConfig.h"
+#include "../../user_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,5 +61,3 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // LIB_CONTROLLER_INCLUDE_CONTROLLER_MICROSD_H_
