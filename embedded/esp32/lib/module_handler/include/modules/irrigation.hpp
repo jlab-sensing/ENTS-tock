@@ -12,8 +12,9 @@
 
 #include <Arduino.h>
 
+#include <libents/proto/transcoder.h>
+
 #include "template_module.hpp"
-#include "transcoder.h"
 #include "webserver.hpp"
 
 /**

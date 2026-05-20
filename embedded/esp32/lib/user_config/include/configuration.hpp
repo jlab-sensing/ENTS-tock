@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "soil_power_sensor.pb.h"
+#include <libents/proto/user_config.pb.h>
 
 /**
  * @brief Set the user configuration.

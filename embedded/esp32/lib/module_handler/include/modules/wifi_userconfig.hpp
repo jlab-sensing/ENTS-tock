@@ -3,8 +3,9 @@
 
 #include <ArduinoLog.h>
 
+#include <libents/proto/controller.pb.h>
+
 #include "configuration.hpp"
-#include "soil_power_sensor.pb.h"
 #include "template_module.hpp"
 
 namespace ModuleHandler {

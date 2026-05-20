@@ -22,8 +22,9 @@
 #include <cstdint>
 #include <map>
 
+#include <libents/proto/transcoder.h>
+
 #include "template_module.hpp"
-#include "transcoder.h"
 
 // buffers that are used in place of i2c communication
 #ifdef UNIT_TEST

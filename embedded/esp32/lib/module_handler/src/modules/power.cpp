@@ -2,9 +2,10 @@
 
 #include <ArduinoLog.h>
 
+#include <libents/proto/transcoder.h>
+
 #include "driver/gpio.h"
 #include "esp_sleep.h"
-#include "transcoder.h"
 
 namespace ModuleHandler {
 

@@ -17,10 +17,12 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+#include <libents/proto/controller.pb.h>
+#include <libents/proto/transcoder.h>
+
 #include "dirtviz.hpp"
-#include "soil_power_sensor.pb.h"
+
 #include "template_module.hpp"
-#include "transcoder.h"
 
 /**
  * @ingroup moduleHandler

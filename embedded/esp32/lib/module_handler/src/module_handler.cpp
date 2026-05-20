@@ -6,7 +6,7 @@
 
 #include <cstring>
 
-#include "transcoder.h"
+#include <libents/proto/transcoder.h>
 
 ModuleHandler::ModuleHandler::ModuleHandler() {}
 

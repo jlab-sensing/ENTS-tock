@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "soil_power_sensor.pb.h"
-#include "transcoder.h"
+#include <libents/proto/controller.pb.h>
+#include <libents/proto/transcoder.h>
 
 void printEncodedData(const uint8_t *data, size_t len);
 void printDecodedConfig(const UserConfiguration *config);

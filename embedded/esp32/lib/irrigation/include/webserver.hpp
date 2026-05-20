@@ -1,7 +1,7 @@
 #ifndef LIB_IRRIGATION_INCLUDE_WEBSERVER_HPP
 #define LIB_IRRIGATION_INCLUDE_WEBSERVER_HPP
 
-#include "soil_power_sensor.pb.h"
+#include <libents/proto/controller.pb.h>
 
 /**
  * @brief Setup endpoints for the webserver
