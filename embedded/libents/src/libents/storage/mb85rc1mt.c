@@ -106,16 +106,53 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
 
     // transmit data
     int tock_status = RETURNCODE_SUCCESS;
-  
-    uint8_t buffer[write_len + 2] = {};
-    buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
-    buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
-    memcpy(buffer+2, data, write_len);
-    tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
+ 
 
-    if (tock_status < 0) {
-      return FRAM_ERROR;
+    // NOTE: There is an internal 32 bytes buffer on I2C communication
+    // See below in read for additional details.
+
+    size_t written = 0;
+    while (written < write_len) {
+      // Add address header to chunk
+      uint8_t buffer[32] = {};
+      buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
+      buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
+
+      // Calculate remaining bytes
+      size_t remaining = write_len - written;
+      size_t chunk_size = 0;
+      if (remaining > 30) {
+        chunk_size = 30;
+      } else {
+        chunk_size = remaining;
+      }
+
+      // copy chunk into buffer
+      memcpy(buffer+2, data+written, chunk_size);
+      // write chunk
+      tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, chunk_size+2);
+      if (tock_status < 0) {
+        return FRAM_ERROR;
+      }
+
+      // update written with total number of bytes
+      written += chunk_size;
+      // get the address for the next chunk
+      i2c_addr = convert_address(addr+written); 
     }
+
+
+    // Old Implementation
+
+    //uint8_t buffer[write_len + 2] = {};
+    //buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
+    //buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
+    //memcpy(buffer+2, data, write_len);
+    //tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
+
+    //if (tock_status < 0) {
+    //  return FRAM_ERROR;
+    //}
 
     // update address and length
     addr += write_len;
@@ -165,11 +202,23 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
       return FRAM_ERROR;
     }
 
-    // read from memory
-    tock_status = i2c_master_read_sync(i2c_addr.dev, data, read_len);
-    if (tock_status < 0) {
-      return FRAM_ERROR;
+
+    // NOTE: This is a temporary workaround for reading more than the 32 byte
+    // interal buffer. We write a single byte at at time.
+    // In the kernal see, `capsules/core/i2c_master.rs`.
+
+    for (int i = 0; i < read_len; i++) {
+      tock_status = i2c_master_read_sync(i2c_addr.dev, data+i, 1);
+      if (tock_status < 0) {
+        return FRAM_ERROR;
+      }
     }
+
+    // read from memory
+    //tock_status = i2c_master_read_sync(i2c_addr.dev, data, read_len);
+    //if (tock_status < 0) {
+    //  return FRAM_ERROR;
+    //}
 
     // update read params
     addr += read_len;
