@@ -4,8 +4,8 @@
 #include <libtock-sync/services/alarm.h>
 #include <libtock/kernel/ipc.h>
 
-#include <proto/sensor.h>
-#include <sensors/ads1219.h>
+#include <libents/proto/sensor.h>
+#include <libents/sensors/ads1219.h>
 
 #include <ulog.h>
 
