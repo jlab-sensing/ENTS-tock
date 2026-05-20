@@ -7,10 +7,26 @@
 
 #include <ulog.h>
 
+#include <libents/storage/fifo.h>
+#include <libents/proto/sensor.h>
+
 #include "lorawan.h"
+#include "user_config.h"
+
+/** Stats for uploads */
+typedef struct {
+  /** Total number of bytes */
+  int bytes;
+  /** Total number uploads */
+  int total;
+  /** Failed uploads */
+  int failed;
+  /** Total number of measurements */
+  int meas;
+} upload_stats;
 
 
-static bool connected = false;
+upload_stats stats = {};
 
 
 /**
@@ -21,6 +37,22 @@ static bool connected = false;
  * @param buf Pointer to the shared buffer.
  */
 static void ipc_callback(int pid, int len, int buf, void* ud);
+
+
+
+/**
+ * @brief Gets a formatted sensor measurement payload.
+ *
+ *
+ * Peeks into the fram circular buffer and decodes Measurements until the size
+ * of a RepeatedSensorMeasurements exceeds the buffer size. Then it encodes
+ * RepeatedSensorMeasurements with (n-1) measurements and returns that back.
+ *
+ * @param buffer Pointer to buffer.
+ * @param sizes Size of buffer.
+ * @return len Number of bytes in buffer.
+ */
+static int get_payload(uint8_t* buffer, int size);
 
 
 
@@ -35,23 +67,66 @@ int main(void) {
 
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("App Initialized\n");
-  
+
+
+
+  // Print warning when using TEST_USER_CONFIG
+#ifdef TEST_USER_CONFIG
+  ulog_warn(TS_OFF, VLEVEL_M, "WARNING: TEST_USER_CONFIG is enabled!\n");
+#endif  // TEST_USER_CONFIG
+
+
+  UserConfigStart(120);
+
+
+  // return codes
+  int ret = 0;
+
   // start service after connected
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL); 
 
-  lorawan_init();
-  lorawan_join();
-  lorawan_timesync();
-  
-  connected = true;  
+  ret = lorawan_init();
+  ret = lorawan_join();
+  ret = lorawan_timesync();
 
   while (1) {
+    // TODO: Create copy of counters
+
+    ulog_debug("Buffer has %d measurements", fifo_buffer_len()); 
+
+    if (fifo_buffer_len() > 0) {
+      // format payload
+      uint8_t buffer[256] = {};
+      int len = get_payload(buffer, sizeof(buffer));
+      if (len == 0) {
+        continue;
+      }
+      ulog_debug("Got payload of %d bytes", len); 
+
+      stats.total++;
+      ret = lorawan_upload(buffer, len);
+      if (ret < 0) {
+        stats.failed++;
+        ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+        continue;
+      }
+      ulog_debug("Uploaded %d bytes with LoRaWAN.");
+      
+      stats.bytes += len;
+    }
+
+    // print stats
+    if (stats.total % 10) {
+      ulog_info("total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: %d\t", stats.total, stats.failed, stats.meas, stats.bytes);
+    }
+      
     yield();
   }
 }
 
 static void ipc_callback(int pid, int len, int buf, void* ud) {
   ulog_trace("ipc_callabck");
+
   uint8_t* buffer = (uint8_t*) buf;
 
   // TODO: store in circular buffer.
@@ -65,9 +140,15 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
   }
   printf("\n");
 
-  if (connected) {
-    lorawan_upload(&buffer[1], buffer_len);
+  // store in buffer
+  int ret = fifo_put(&buffer[1], buffer_len);
+  if (ret < 0) {
+    ulog_error("Could not store measurement in buffer");
   }
+  stats.meas++;
+
+
+  //ulog_debug("buffer has %d measurements", fifo_buffer_len());
 
   // reply with response
   buffer[0] = 0xb;
@@ -76,4 +157,63 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
   buffer[3] = 0xf;
 
   ipc_notify_client(pid);
+}
+
+
+
+static int get_payload(uint8_t* buffer, int size) {
+  // return codes
+  int ret = 0;
+
+  int len = 0;
+
+  Metadata meta = {};
+  SensorMeasurement meas[8] = {};
+
+  uint16_t i = 0;
+  for (i = 0; i < fifo_buffer_len(); i++) {
+    ulog_debug("Buffer idx %d", i);
+    ret = fifo_peek(i, buffer, (uint8_t*) &len);
+    if (ret < 0) {
+      ulog_error("Could not read from buffer (error: %d)", ret);
+      continue;
+    }
+    ulog_debug("Read %d bytes from buffer", len);
+
+
+    // decode measuremnet
+    ret = DecodeSensorMeasurement(buffer, len, &meas[i]);
+    if (ret < 0) {
+      ulog_error("Could not decode measurement (error %d), malformed data?", ret);
+      // TODO: Removed failing measurement. Can't use drop, need to remove
+      // specific index.
+      continue;
+    }
+
+    ret = RepeatedSensorMeasurementsSize(meta, meas, i+1, (size_t*) &len);
+    if (ret < 0) {
+      ulog_error("Could not find size of payload (error %d)", ret);
+      continue;
+    }
+    ulog_debug("Size of repeated sensor measurements: %d", len);
+
+    // early stop when length exceeds size of buffer
+    if (len > size) {
+      i--;
+      break;
+    }
+  }
+      
+  ret = EncodeRepeatedSensorMeasurements(meta, meas, i+1, buffer, sizeof(buffer), (size_t*) &len);
+  if (ret < 0) {
+    ulog_error("Could encode %d repeated measurements (error %d)", i, ret);
+    return 0;
+  }
+
+  ret = fifo_drop();
+  if (ret < 0) {
+    ulog_error("Could not remove measurements from buffer");
+  }
+  
+  return len;
 }

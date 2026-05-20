@@ -13,9 +13,10 @@ EXTERN_LIBS += $(TOCK_USERLAND_BASE_DIR)/RadioLib
 
 # Which files to compile.
 #CXX_SRCS := $(wildcard *.cc)
-CXX_SRCS := main.cc lorawan.cc
+#CXX_SRCS += $(wildcard *c)
+#CXX_SRCS := main.cc lorawan.cc user_config.c
 #CXX_SRCS := main2.cc
-
+CXX_SRCS := user_config.cc lorawan.cc main.cc
 # Include userland master makefile. Contains rules and flags for actually
 # building the application.
 include $(TOCK_USERLAND_BASE_DIR)/AppMakefile.mk
