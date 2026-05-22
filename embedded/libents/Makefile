@@ -24,6 +24,7 @@ $(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/controller/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/controller/modules/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/proto/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/bme280/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/storage/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/util/*.c)
 $(LIBNAME)_SRCS += $(SRC_DIR)/user_config.c
@@ -42,7 +43,9 @@ $(LIBNAME)_SRCS += $(SRC_DIR)/microlog/src/ulog.c
 #$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)
 
 
-override CPPFLAGS_$(LIBNAME) += -I$(SRC_DIR)/microlog/include -DULOG_BUILD_PREFIX_SIZE=32
+override CPPFLAGS_$(LIBNAME) += -I$(SRC_DIR)/microlog/include
+override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
+override CPPFLAGS_$(LIBNAME) += -DBME280_32BIT_ENABLE
 
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk
