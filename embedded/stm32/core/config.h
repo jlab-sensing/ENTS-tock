@@ -81,6 +81,28 @@ static inline uint64_t bytes_to_u64_le(const uint8_t b[8]) {
          ((uint64_t)b[0]);
 }
 
+static inline void u64_to_bytes_be(uint64_t value, uint8_t b[8]) {
+  b[0] = (value >> 56) & 0xFF;
+  b[1] = (value >> 48) & 0xFF;
+  b[2] = (value >> 40) & 0xFF;
+  b[3] = (value >> 32) & 0xFF;
+  b[4] = (value >> 24) & 0xFF;
+  b[5] = (value >> 16) & 0xFF;
+  b[6] = (value >> 8) & 0xFF;
+  b[7] = value & 0xFF;
+}
+
+static inline void u64_to_bytes_le(uint64_t value, uint8_t b[8]) {
+  b[7] = (value >> 56) & 0xFF;
+  b[6] = (value >> 48) & 0xFF;
+  b[5] = (value >> 40) & 0xFF;
+  b[4] = (value >> 32) & 0xFF;
+  b[3] = (value >> 24) & 0xFF;
+  b[2] = (value >> 16) & 0xFF;
+  b[1] = (value >> 8) & 0xFF;
+  b[0] = value & 0xFF;
+}
+
 // ============================================================================
 // Below is to support the sketch - only make changes if the notes say so ...
 

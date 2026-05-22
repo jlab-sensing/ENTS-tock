@@ -8,6 +8,7 @@
 #include "lorawan.h"
 
 #include <ulog.h>
+#include <libtock/net/eui64.h>
 // include the library
 // #include <RadioLib.h>
 
@@ -71,11 +72,33 @@ int lorawan_join(void) {
 
   // status codes 
   int state = 0;
+  
+#ifdef RADIOLIB_LORAWAN_DEV_EUI
+  ulog_info("Using DevEUI from #define.");
 
   static const uint8_t devEUI_bytes[8] = FORMAT32_KEY(RADIOLIB_LORAWAN_DEV_EUI);
-  static const uint64_t devEUI  = bytes_to_u64_be(devEUI_bytes);
-  uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY);
+  static const uint64_t devEUI  = bytes_to_u64_be(devEUI_bytes); 
+#else
+  ulog_info("Using DevEUI from flash.");
  
+  // check driver exists
+  if (!libtock_eui64_exists();) {
+    ulog_error("EUI64 driver does not exist!");
+  }
+
+  // get devEUI from flash
+  static const uint64_t devEUI = 0;
+  libtock_eui64_get(&devEUI); 
+
+  uint8_t devEUI_bytes[8] = {};
+  u64_to_bytes_be(devEUI, devEUI_bytes);
+#endif  // RADIOLIB_LORAWAN_DEV_EUI 
+
+  ulog_info("DevEUI: %x %x %x %x %x %x %x %x", devEUI_bytes[0],
+      devEUI_bytes[1], devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4],
+      devEUI_bytes[5], devEUI_bytes[6], devEUI_bytes[7]);
+
+  uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY); 
   static const uint8_t joinEUI_bytes[8] = FORMAT32_KEY(RADIOLIB_LORAWAN_JOIN_EUI);
   static const uint64_t joinEUI = bytes_to_u64_be(joinEUI_bytes);
 
