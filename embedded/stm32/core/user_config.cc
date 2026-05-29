@@ -46,15 +46,28 @@ void UserConfigStart(uint32_t retry_ms) {
     ulog_info("Current user configuration:");
     ulog_info("---------------------------");
     UserConfigPrint();
-    ulog_info("");
   }
   
   uint32_t devAddr = 0;
   //GetDevAddr(&devAddr);
   snprintf(ssid, sizeof(ssid), "ents-%08X", devAddr);
-  
-  ControllerWiFiHost(ssid, pass);
-  ControllerUserConfigStart();
+ 
+  bool controller_status = true;
+  controller_status = ControllerWiFiHost(ssid, pass);
+  if (controller_status) {
+    ulog_info("Successfully started WiFi AP!");
+  } else {
+    ulog_error("Failed to start WiFi AP!");
+    return;
+  }
+
+  controller_status = ControllerUserConfigStart();
+  if (controller_status) {
+    ulog_info("Successfully started user config webserver!");
+  } else {
+    ulog_error("Failed to start user config webserver!");
+    return;
+  }
 
   // Get host info
   ControllerWiFiHostInfo(ssid, ip, mac, NULL);
@@ -64,7 +77,6 @@ void UserConfigStart(uint32_t retry_ms) {
   ulog_info("pass \"%s\"", pass);
   ulog_info("User Config http://%s/", ip);
   ulog_info("WiFi AP MAC: \"%s\"", mac);
-  ulog_info("");
   
   // Get Config from esp32
   ulog_info("Requesting configuration from ESP32...");
@@ -105,7 +117,6 @@ void UserConfigStart(uint32_t retry_ms) {
     ulog_info("Updated user configuration:");
     ulog_info("---------------------------");
     UserConfigPrint();
-    ulog_info("");
   }
 
   state = USERCONFIG_STATE_ON;
@@ -126,13 +137,11 @@ void UserConfigStop(uint32_t retry_ms) {
 void UserConfigStopCallback(uint32_t, uint32_t, void* ptr) {
   ulog_info("Stopping UserConfig webserver...\t");
 
-
   // deference to retry delay
-  uint32_t retry_ms = *(uint32_t*) ptr;
+  uint32_t retry_ms = *(uint32_t*) ptr; 
 
   uint8_t clients = 0;
   ControllerWiFiHostInfo(NULL, NULL, NULL, &clients);
-
 
   // Handle if there are still clients connected
   if (clients > 0) {

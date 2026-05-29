@@ -66,7 +66,7 @@ void onReceive(int len) {
 void onRequest() {
   Log.traceln("onRequest");
   mh.OnRequest();
-  power.EnterSleep();
+  //power.EnterSleep();
 }
 
 /** Startup code */
@@ -75,7 +75,7 @@ void setup() {
   Serial.begin(115200);
 
   // Create logging interfface
-  Log.begin(LOG_LEVEL_INFO, &Serial);
+  Log.begin(LOG_LEVEL_TRACE, &Serial);
 
   if (!LittleFS.begin()) {
     Log.errorln("LittleFS mount failed!");

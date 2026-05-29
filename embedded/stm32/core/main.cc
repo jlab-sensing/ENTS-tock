@@ -9,6 +9,7 @@
 
 #include <libents/storage/fifo.h>
 #include <libents/proto/sensor.h>
+#include <libents/controller/controller.h>
 
 #include "lorawan.h"
 #include "user_config.h"
@@ -63,10 +64,10 @@ void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
 
 
 int main(void) {
-  ulog_output_level_set_all(ULOG_LEVEL_TRACE);
+  ulog_output_level_set_all(ULOG_LEVEL_DEBUG);
 
   ulog_prefix_set_fn(ulog_prefix_handler);
-  ulog_info("App Initialized\n");
+  ulog_info("App Initialized");
 
 
 
@@ -75,19 +76,34 @@ int main(void) {
   ulog_warn(TS_OFF, VLEVEL_M, "WARNING: TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
 
+  // Initialize controller interface
+  ControllerInit();
 
-  UserConfigStart(120);
-
+  UserConfigStart(120 * 1000);
 
   // return codes
   int ret = 0;
 
   // start service after connected
-  ipc_register_service_callback("org.ents.core", ipc_callback, NULL); 
+  ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
+
+
+  // Initialize LoRaWAN
 
   ret = lorawan_init();
+  if (ret < 0) {
+    return ret;
+  }
+
   ret = lorawan_join();
+  if (ret < 0) {
+    return ret;
+  }
+
   ret = lorawan_timesync();
+  if (ret < 0) {
+    return ret;
+  }
 
   while (1) {
     // TODO: Create copy of counters

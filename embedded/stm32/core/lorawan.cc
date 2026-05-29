@@ -60,7 +60,7 @@ int lorawan_init(void) {
 
   // check final state
   if (state != RADIOLIB_ERR_NONE) {
-    ulog_fatal("Initialization failed.");
+    ulog_fatal("Initialization failed. State = %d.", state);
     return -1;
   }
 
