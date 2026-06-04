@@ -9,7 +9,7 @@ set -o pipefail
 bold=$(tput bold)
 normal=$(tput sgr0)
 
-for mkfile in `find . -maxdepth 6 -name Makefile`; do
+for mkfile in $(find embedded/stm32 -maxdepth 6 -name Makefile); do
   dir=`dirname $mkfile`
   if [ $dir == "." ]; then continue; fi
   # Skip directories with leading _'s, useful for leaving test apps around
