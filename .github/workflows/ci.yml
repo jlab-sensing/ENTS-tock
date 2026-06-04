@@ -31,7 +31,7 @@ jobs:
           key: ${{ runner.os }}-pio-esp32-${{ hashFiles('embedded/esp32/platformio.ini') }}
           restore-keys: ${{ runner.os }}-pio-esp32-
       - name: Build ESP32
-        run: bash tools/ci/build-esp32.sh
+        run: bash embedded/esp32/build-esp32.sh
 
   ci-esp32-lint:
     strategy:
@@ -53,7 +53,7 @@ jobs:
       - name: Install clang-tidy
         run: sudo apt-get install -y clang-tidy
       - name: Lint ESP32
-        run: bash tools/ci/lint-esp32.sh
+        run: bash embedded/esp32/lint-esp32.sh
 
   ci-stm32-build:
     strategy:
@@ -72,7 +72,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('embedded/stm32/core/Makefile') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Build STM32
-        run: bash tools/ci/build-stm32.sh
+        run: bash embedded/stm32/build-stm32.sh
 
   ci-stm32-lint:
     strategy:
@@ -86,7 +86,7 @@ jobs:
       - name: Install cppcheck
         run: sudo apt-get install -y cppcheck
       - name: Lint STM32
-        run: bash tools/ci/lint-stm32.sh
+        run: bash embedded/stm32/lint-stm32.sh
 
   ci-python-lint:
     strategy:
@@ -104,4 +104,4 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('python/pyproject.toml') }}
           restore-keys: ${{ runner.os }}-pip-
       - name: Lint Python
-        run: bash tools/ci/lint-python.sh
+        run: bash python/lint-python.sh
