@@ -4,10 +4,7 @@ env:
   TERM: xterm
 
 on:
-  push:
-    branches-ignore:
-      - staging.tmp
-      - trying.tmp
+  pull_request:
   workflow_dispatch:
 
 jobs:
