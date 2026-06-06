@@ -45,7 +45,7 @@ $(LIBNAME)_SRCS += $(SRC_DIR)/microlog/src/ulog.c
 
 override CPPFLAGS_$(LIBNAME) += -I$(SRC_DIR)/microlog/include
 override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
-override CPPFLAGS_$(LIBNAME) += -DBME280_32BIT_ENABLE
+override CPPFLAGS_$(LIBNAME) += -DBME280_32BIT_ENABLE=1
 
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

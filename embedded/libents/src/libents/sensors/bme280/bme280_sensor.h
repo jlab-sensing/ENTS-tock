@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-
 #include "bme280.h"
 
 #ifdef __cplusplus

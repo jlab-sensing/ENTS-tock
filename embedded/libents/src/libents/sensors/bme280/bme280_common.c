@@ -39,7 +39,6 @@ BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
 {
     dev_addr = *(uint8_t*)intf_ptr;
 
-
     // write memory address
     int ret = 0;
     ret = i2c_master_write_sync(dev_addr << 1, &reg_addr, 1);
@@ -62,19 +61,33 @@ BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
 BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr)
 {
     dev_addr = *(uint8_t*)intf_ptr;
+    
+
+
+    uint8_t buffer[32] = {};
+    buffer[0] = reg_addr;
+    memcpy(buffer+1, reg_data, length);
+
+    int ret = 0;
+    ret = i2c_master_write_sync(dev_addr << 1, buffer, length+1);
+    if (ret < 0) {
+        return BME280_E_COMM_FAIL;
+    }
+
+
 
     // write memory address
-    int ret = 0;
-    ret = i2c_master_write_sync(dev_addr << 1, &reg_addr, 1);
-    if (ret < 0) {
-        return BME280_E_COMM_FAIL;
-    }
+    //int ret = 0;
+    //ret = i2c_master_write_sync(dev_addr << 1, &reg_addr, 1);
+    //if (ret < 0) {
+    //    return BME280_E_COMM_FAIL;
+    //}
 
-    // write data
-    ret = i2c_master_write_sync(dev_addr << 1, (uint8_t *)reg_data, length);
-    if (ret < 0) {
-        return BME280_E_COMM_FAIL;
-    }
+    //// write data
+    //ret = i2c_master_write_sync(dev_addr << 1, (uint8_t *)reg_data, length);
+    //if (ret < 0) {
+    //    return BME280_E_COMM_FAIL;
+    //}
 
     return BME280_OK;
 }

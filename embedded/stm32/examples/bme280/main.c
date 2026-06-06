@@ -4,6 +4,20 @@
 
 int main(void) {
   ulog_info("Example bme280 measurements");
+  
+#ifdef BME280_DOUBLE_ENABLE
+  ulog_info("BME280_DOUBLE_ENABLE");
+#endif
+
+#ifdef BME280_64BIT_ENABLE
+  ulog_info("BME280_64BIT_ENABLE");
+#endif
+
+#ifdef BME280_32BIT_ENABLE
+  ulog_info("BME280_32BIT_ENABLE");
+#endif
+
+
 
   BME280Status status = BME280Init();
   if (status != BME280_STATUS_OK) {
@@ -19,9 +33,8 @@ int main(void) {
       ulog_error("Error measuring from bme280: %d", status);
       continue;
     }
-
-    ulog_info("Pressure: %d, Temperature: %d, Humidity: %d", data.pressure,
-            data.temperature, data.humidity);
+    
+    printf("p: %d, t: %d, h: %d\n", data.pressure, data.temperature, data.humidity);
 
     libtocksync_alarm_delay_ms(2000);
   }
