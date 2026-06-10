@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <libtock/peripherals/i2c_master.h>
 #include <libtock-sync/services/alarm.h>

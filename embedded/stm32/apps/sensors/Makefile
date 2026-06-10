@@ -8,7 +8,7 @@ PACKAGE_NAME = org.ents.apps.sensors
 EXTERN_LIBS += ../../../libents
 
 # Which files to compile.
-C_SRCS := $(wildcard *.c)
+C_SRCS := main.c
 
 # Include userland master makefile. Contains rules and flags for actually
 # building the application.

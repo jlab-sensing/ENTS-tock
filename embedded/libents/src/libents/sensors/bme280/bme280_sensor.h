@@ -77,7 +77,7 @@ BME280Status BME280MeasureAll(BME280Data *data);
  * 
  * @see SensorsPrototypeMeasure
  */
-//size_t BME280Measure(uint8_t *data, SysTime_t ts, uint32_t idx);
+uint8_t BME280Measure(uint8_t *data, uint32_t ts, uint32_t idx);
 
 #ifdef __cplusplus
 }

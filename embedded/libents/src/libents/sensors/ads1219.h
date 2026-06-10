@@ -86,6 +86,15 @@ int ads1219_voltage_raw(uint32_t *voltage);
 int ads1219_current(double *current);
 int ads1219_current_raw(uint32_t *current);
 
+
+/**
+ * @brief Sensor measure functions.
+ *
+ * @see SensorsPrototypeMeasure
+ */
+uint8_t ads1219_sensor_voltage(uint8_t *data, uint32_t ts, uint32_t idx);
+uint8_t ads1219_sensor_current(uint8_t *data, uint32_t ts, uint32_t idx);
+
 /**
  * @}
  */

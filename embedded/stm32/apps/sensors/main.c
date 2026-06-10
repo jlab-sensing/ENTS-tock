@@ -6,21 +6,13 @@
 
 #include <libents/proto/sensor.h>
 #include <libents/sensors/ads1219.h>
+#include <libents/sensors/bme280/bme280_sensor.h>
+#include <libents/sensors/sensors.h>
+
+#include <libents/user_config.h>
 
 #include <ulog.h>
 
-static bool done = false;
-
-/**
- * @brief Callback when receiving data for upload from individual apps.
- *
- * @param pid An identifier for the app that notified us.
- * @param len How long the buffer is that the client shared with us.
- * @param buf Pointer to the shared buffer.
- */
-static void ipc_callback(__attribute__ ((unused)) int pid, int len, int buf, void* ud) {
-  done = true;
-}
 
 
 void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
@@ -28,70 +20,162 @@ void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
 }
 
 
-char core_buf[256] __attribute__((aligned(256)));
 
 int main() { 
+  // setup logging output
   ulog_output_level_set_all(ULOG_LEVEL_TRACE);
 
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("App Initialized");
 
-  // return codes
+
+  // return code
   int ret = 0;
+
+
+  // Print warning when using TEST_USER_CONFIG
+#ifdef TEST_USER_CONFIG
+  ulog_notice("TEST_USER_CONFIG is enabled!");
+#endif  // TEST_USER_CONFIG
+  
+  // set upload interval
+  //UserConfigStatus uc_status = UserConfigLoad();
+  //ulog_info("User Config Load: %d", uc_status);
+  const UserConfiguration *cfg = UserConfigGet();
+
+
+  // currently not functional
+  // NOTE for initializing state
+  // FIFO_Init();
+
+  ulog_info("Enabled Sensors");
+  ulog_info("---------------");
+  
+  printf("\n\n");
+  UserConfigPrintAny(cfg);
+  printf("\n\n");
+
+
+
+  while (1) { yield(); }
+
+
+
+  // configure enabled sensors
+  for (int i = 0; i < cfg->enabled_sensors_count; i++) {
+    printf("\n\n\n\n");
+    ulog_info("HERE %d", i);
+    printf("\n\n\n\n");
+
+    EnabledSensor sensor = cfg->enabled_sensors[i];
+
+    if (sensor == EnabledSensor_Voltage || sensor == EnabledSensor_Current) {
+      ret = ads1219_reset();
+      if (ret < 0) {
+        ulog_error("Could not reset ads1219.");
+      }
+    }
+
+    // Voltage channel is used by multiple different sensors
+    if (sensor == EnabledSensor_Voltage) {
+
+#ifdef DEFAULT
+      SensorAdd(ads1219_sensor_voltage);
+      ulog_info("Voltage Enabled!");
+#endif
+
+#ifdef USE_FLOW_METER_SENSOR
+      FlowInit();
+      SensorsAdd(WatFlow_measure);
+      ulog_info("Flow Meter Enabled!");
+#endif
+
+#ifdef USE_WATER_PRESSURE_SENSOR
+      PressureInit();
+      SensorsAdd(WatPress_measure);
+      ulog_info("Water Pressure Sensor Enabled!");
+#endif
+
+#ifdef USE_CAP_SOIL_SENSOR
+      CapSoilInit();
+      SensorsAdd(SEN0308_measure);
+      ulog_info("Cap Soil Sensor Enabled!");
+#endif
+
+#ifdef USE_PHYTOS31_SENSOR
+
+#endif
+    }
+
+    if (sensor == EnabledSensor_Current) {
+      SensorsAdd(ads1219_sensor_current);
+      ulog_info("Current Enabled!");
+    }
+    //if (sensor == EnabledSensor_Teros12) {
+    //  ulog_info("Teros12 Enabled!");
+    //  SensorsAdd(Teros12Measure);
+    //}
+    //if (sensor == EnabledSensor_Teros21) {
+    //  SensorsAdd(Teros21Measure);
+    //  ulog_info("Teros21 Enabled!");
+    //}
+    if (sensor == EnabledSensor_BME280) {
+      BME280Init();
+      SensorsAdd(BME280Measure);
+      ulog_info("BME280 Enabled!");
+    }
+    // if (sensor == EnabledSensor_Phytos31) {
+    //   Phytos31Init();
+    //   SensorsAdd(Phytos31_measure);
+    //   ulog_info("Phytos31 Enabled!");
+    // }
+    // if (sensor == EnabledSensor_SEN0308) {
+    //   CapSoilInit();
+    //   SensorsAdd(SEN0308_measure);
+    //   ulog_info("SEN0308 Cap Soil Sensor Enabled!");
+    // }
+    // if (sensor == EnabledSensor_SEN0257) {
+    //   PressureInit();
+    //   SensorsAdd(WatPress_measure);
+    //   ulog_info("SEN0257 Water Pressure Sensor Enabled!");
+    // }
+    // if (sensor == EnabledSensor_YFS210C) {
+    //   FlowInit();
+    //   SensorsAdd(WatFlow_measure);
+    //   ulog_info("YFS210C Flow Meter Enabled!");
+    // }
+    //if (sensor == EnabledSensor_PCAP02) {
+    //  pcap02_init();
+    //  SensorsAdd(pcap02_measure);
+    //  ulog_info("PCAP02 Enabled!");
+    //}
+    // TODO add support for dummy sensor
+  }
+
+  
+
+ 
 
 
   // setup ipc for uplaods
   int core_service = 0;
-
   ret = ipc_discover("org.ents.core", &core_service);
   if (ret < 0) {
     ulog_fatal("No core service %d", ret);
     return -1;
   }
 
-  ipc_register_client_callback(core_service, ipc_callback, NULL);
-  ipc_share(core_service, core_buf, 256);
 
-  // reset to known state
-  ret = ads1219_reset();
-  if (ret < 0) {
-    ulog_fatal("Could not reset ads1219");
-    return -1;
-  }
+
+
+  // convert to ms
+  uint32_t period_ms = (uint32_t) (cfg->Upload_interval * 1000);
+  SensorsStart(core_service, period_ms);
+
+
 
   while (1) {
-    // reset ipc flag
-    done = false;
-    
-    // read measurement
-    ulog_trace("Reading ads1219");
-    double voltage = 0.0;
-    ret = ads1219_voltage(&voltage);
-    if (ret < 0) {
-      ulog_error("Could not read ads1219. Retrying.");
-      continue;
-    }
-
-    // encode measurement
-    size_t core_buf_len = 0;
-    Metadata meta = {};
-    EncodeDoubleMeasurement(meta, voltage, SensorType_POWER_VOLTAGE, &core_buf[1], &core_buf_len);
-    core_buf[0] = (uint8_t) core_buf_len;
-    ulog_debug("Encoded %d bytes:", core_buf_len);
-    for (int i = 1; i < core_buf_len; i++) {
-      printf("%x ", core_buf[i]);
-    }
-    printf("\n");
-
-    // Send to core for upload
-    ipc_notify_service(core_service);
-    yield_for(&done);
-
-
-    ulog_info("Return bytes: %x %x %x %x", core_buf[0], core_buf[1], core_buf[2], core_buf[3]); 
-
-    // wait 5s after upload
-    libtocksync_alarm_delay_ms(15000);
+    yield();
   }
 
   return 0;

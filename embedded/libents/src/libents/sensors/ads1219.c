@@ -19,6 +19,8 @@
 #include <libtock-sync/services/alarm.h>
 #include <libtock/peripherals/i2c_master.h>
 
+#include "../proto/sensor.h"
+
 
 // Generic calibration values that give rough estimate
 static const double voltage_calibration_m = -0.00039326;
@@ -273,4 +275,48 @@ int measure(uint32_t *meas) {
   }
 
   return ADS1219_SUCCESS;
+}
+
+uint8_t ads1219_sensor_voltage(uint8_t *data, uint32_t ts, uint32_t idx) {
+  double voltage = 0.;
+  ads1219_voltage(&voltage);
+
+  Metadata meta = Metadata_init_zero;
+  meta.ts = ts;
+  
+  //meta.logger_id = cfg->logger_id;
+  //meta.cell_id = cfg->cell_id;
+
+  size_t data_len = 0;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, voltage, SensorType_POWER_VOLTAGE,
+                                   data, &data_len);
+  if (status != SENSOR_OK) {
+    return -1;
+  }
+
+  return data_len;
+}
+
+uint8_t ads1219_sensor_current(uint8_t *data, uint32_t ts, uint32_t idx) {
+  double current = 0.;
+  ads1219_current(&current);
+
+  Metadata meta = Metadata_init_zero;
+  meta.ts = ts;
+  
+  //meta.logger_id = cfg->logger_id;
+  //meta.cell_id = cfg->cell_id;
+
+  size_t data_len = 0;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, current, SensorType_POWER_CURRENT,
+                                   data, &data_len);
+  if (status != SENSOR_OK) {
+    return -1;
+  }
+
+  return data_len;
 }
