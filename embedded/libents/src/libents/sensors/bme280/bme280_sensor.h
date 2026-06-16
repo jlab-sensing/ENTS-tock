@@ -19,7 +19,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
 #include "bme280.h"
+#pragma GCC diagnostic pop
+
 
 #ifdef __cplusplus
 extern "C" {

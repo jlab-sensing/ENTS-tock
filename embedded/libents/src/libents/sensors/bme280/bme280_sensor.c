@@ -5,7 +5,12 @@
 
 #include "../sensors.h"
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
 #include "bme280_common.h"
+#pragma GCC diagnostic pop
+
 
 /**
  * @brief Required time between measurements
