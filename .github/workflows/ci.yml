@@ -1,0 +1,103 @@
+name: ci
+
+env:
+  TERM: xterm
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  ci-esp32-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-esp32-${{ hashFiles('embedded/esp32/platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-esp32-
+      - name: Build ESP32
+        run: bash embedded/esp32/build-esp32.sh
+
+  ci-esp32-lint:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-esp32-${{ hashFiles('embedded/esp32/platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-esp32-
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+      - name: Lint ESP32
+        run: bash embedded/esp32/lint-esp32.sh
+
+  ci-stm32-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install toolchains
+        run: sudo apt-get install -y gcc-arm-none-eabi gcc-riscv64-unknown-elf make
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('embedded/stm32/core/Makefile') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Build STM32
+        run: bash embedded/stm32/build-stm32.sh
+
+  ci-stm32-lint:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install cppcheck
+        run: sudo apt-get install -y cppcheck
+      - name: Lint STM32
+        run: bash embedded/stm32/lint-stm32.sh
+
+  ci-python-lint:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('python/pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-pip-
+      - name: Lint Python
+        run: bash python/lint-python.sh
