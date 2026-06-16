@@ -46,6 +46,8 @@ void UserConfigStart(uint32_t retry_ms) {
     ulog_info("Current user configuration:");
     ulog_info("---------------------------");
     UserConfigPrint();
+  } else {
+    ulog_error("Could not load user config.");
   }
   
   uint32_t devAddr = 0;

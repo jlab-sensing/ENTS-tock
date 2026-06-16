@@ -3,6 +3,9 @@
 #include "./proto/transcoder.h"
 #include "./storage/fram.h"
 
+
+#include <stdio.h>
+
 // Static variable to store the loaded user configuration in RAM
 static UserConfiguration loadedConfig = {};
 
@@ -56,7 +59,6 @@ UserConfigStatus UserConfig_ReadFromFRAM(uint16_t addr, uint16_t length,
 
 
 
-
 UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
                                         uint16_t length) {
   fram_status status = fram_write(addr, data, length);
@@ -72,8 +74,55 @@ UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
 UserConfigStatus UserConfig_ReadFromFRAM(uint16_t addr, uint16_t length,
                                          uint8_t *data) {
   fram_status status = fram_read(addr, length, data);
+  printf("\n\n[d] Read from FRAM status: %d\n\n", status);
   if (status != FRAM_OK) {
     return USERCONFIG_FRAM_ERROR;
+  }
+  
+
+  return USERCONFIG_OK;
+}
+
+UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length) {
+#ifdef TEST_USER_CONFIG
+  return USERCONFIG_OK;
+#else
+  uint8_t length_buf[2];
+
+  // Read the length of the user configuration data from FRAM
+  if (UserConfig_ReadFromFRAM(USER_CONFIG_LEN_ADDR, 2, length_buf) !=
+      USERCONFIG_OK) {
+    return USERCONFIG_FRAM_ERROR;
+  }
+
+  // Convert length bytes to integer
+  *length = (length_buf[0] << 8) | length_buf[1];
+
+  if (*length == 0) {
+    return USERCONFIG_EMPTY_CONFIG;
+  }
+
+  // check the length for errors
+  if (*length > UserConfiguration_size) {
+    return USERCONFIG_FRAM_ERROR;
+  }
+
+  // Read the encoded configuration data from FRAM into RX_Buffer
+  if (UserConfig_ReadFromFRAM(USER_CONFIG_START_ADDRESS, *length,
+                              buffer) != USERCONFIG_OK) {
+    return USERCONFIG_FRAM_ERROR;
+  }
+
+  return USERCONFIG_OK;
+#endif  // TEST_USER_CONFIG
+}
+
+UserConfigStatus UserConfigLoadBytes(uint8_t *buffer, uint16_t length) {
+  // Decode the user configuration from RX_Buffer into loadedConfig struct
+  if (DecodeUserConfiguration(buffer, length, &loadedConfig) !=
+      USERCONFIG_OK) {
+    // Return an error if decoding fails
+    return USERCONFIG_DECODE_ERROR;
   }
 
   return USERCONFIG_OK;
@@ -84,40 +133,23 @@ UserConfigStatus UserConfigLoad(void) {
 #ifdef TEST_USER_CONFIG
   return USERCONFIG_OK;
 #else
-  uint16_t data_length = 0;
-  uint8_t length_buf[2];
-
-  // Read the length of the user configuration data from FRAM
-  if (UserConfig_ReadFromFRAM(USER_CONFIG_LEN_ADDR, 2, length_buf) !=
-      USERCONFIG_OK) {
-    return USERCONFIG_FRAM_ERROR;
-  }
-
-  // Convert length bytes to integer
-  data_length = (length_buf[0] << 8) | length_buf[1];
-
-  if (data_length == 0) {
-    return USERCONFIG_EMPTY_CONFIG;
-  }
-
-  // check the length for errors
-  if (data_length > UserConfiguration_size) {
-    return USERCONFIG_FRAM_ERROR;
-  }
 
   uint8_t buffer[UserConfiguration_size] = {};
+  uint16_t data_length = 0;
+  
 
-  // Read the encoded configuration data from FRAM into RX_Buffer
-  if (UserConfig_ReadFromFRAM(USER_CONFIG_START_ADDRESS, data_length,
-                              buffer) != USERCONFIG_OK) {
-    return USERCONFIG_FRAM_ERROR;
+  UserConfigStatus status = USERCONFIG_OK;
+
+  /// get bytes
+  status = UserConfigBytes(buffer, &data_length);
+  if (status != USERCONFIG_OK) {
+    return status;
   }
 
   // Decode the user configuration from RX_Buffer into loadedConfig struct
-  if (DecodeUserConfiguration(buffer, data_length, &loadedConfig) !=
-      USERCONFIG_OK) {
-    // Return an error if decoding fails
-    return USERCONFIG_DECODE_ERROR;
+  status = UserConfigLoadBytes(buffer, data_length);
+  if (status != USERCONFIG_OK) {
+    return status;
   }
 
   return USERCONFIG_OK;  // Return success if decoding is successful

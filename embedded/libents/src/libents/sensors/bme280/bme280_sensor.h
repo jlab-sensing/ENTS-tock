@@ -63,6 +63,15 @@ BME280Status BME280Deinit(void);
  */
 BME280Status BME280MeasureAll(BME280Data *data);
 
+
+
+uint8_t BME280MeasureTemperature(uint8_t *data, uint32_t ts, uint32_t idx);
+uint8_t BME280MeasurePressure(uint8_t *data, uint32_t ts, uint32_t idx);
+uint8_t BME280MeasureHumidity(uint8_t *data, uint32_t ts, uint32_t idx);
+
+
+
+
 /**
  * @brief BME280 sensor library function
  * 

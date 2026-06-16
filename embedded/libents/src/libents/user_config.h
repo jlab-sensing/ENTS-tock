@@ -117,6 +117,26 @@ void UserConfigPrint(void);
 UserConfigStatus UserConfigClear(void);
 
 /**
+ * @brief Gets encoded bytes from userconfig
+ *
+ * @param buffer Output buffer.
+ * @param length Length of user config.
+ *
+ * @return USERCONFIG_OK if successful, error code otherwise.
+ */
+UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length);
+
+/**
+ * @brief Load user config from bytes.
+ *
+ * @param buffer User config bytes.
+ * @param length Length of buffer.
+ *
+ * @return USERCONFIG_OK if successful, error code otherwise.
+ */
+UserConfigStatus UserConfigLoadBytes(uint8_t *buffer, uint16_t length);
+
+/**
  * @}
  */
 

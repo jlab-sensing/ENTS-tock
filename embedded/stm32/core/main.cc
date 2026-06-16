@@ -10,6 +10,7 @@
 #include <libents/storage/fifo.h>
 #include <libents/proto/sensor.h>
 #include <libents/controller/controller.h>
+#include <libents/user_config.h>
 
 #include "lorawan.h"
 #include "user_config.h"
@@ -28,6 +29,21 @@ typedef struct {
 
 
 upload_stats stats = {};
+
+
+static bool callback_event = false;
+
+
+// buffer to store measurements
+static uint8_t meas_buffer[256] = {};
+static uint8_t meas_buffer_length = 0;
+
+// buffer for user config
+static uint8_t uc_buffer[256] = {};
+static uint8_t uc_buffer_length = 0;
+
+static uint8_t cmd = 0;;
+
 
 
 /**
@@ -64,28 +80,69 @@ void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
 
 
 int main(void) {
-  ulog_output_level_set_all(ULOG_LEVEL_DEBUG);
-
+  // Setup logging level and prefix
+  ulog_output_level_set_all(ULOG_LEVEL_TRACE);
   ulog_prefix_set_fn(ulog_prefix_handler);
-  ulog_info("App Initialized");
+  ulog_info("=== App Initialized ===");
 
+
+
+
+
+  // Load bytes into userconfig buffer
+  //
+  // Yes I am casting uint8_t to a uint16_t and it could overwrite the data
+  // buffer. I know at the time of writing this that the user config stays
+  // under 256 bytes as defined by protobuf.
+  UserConfigStatus uc_status = UserConfigBytes(uc_buffer, (uint16_t *) &uc_buffer_length);
+
+  printf("uc_buffer[%u]:", uc_buffer_length);
+  for (uint8_t i = 0; i < uc_buffer_length; i++) {
+    printf(" %02x", uc_buffer[i]);
+  }
+  printf("\n\n");
+
+
+
+
+
+  // start service after connected
+  ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
 
 
   // Print warning when using TEST_USER_CONFIG
 #ifdef TEST_USER_CONFIG
-  ulog_warn(TS_OFF, VLEVEL_M, "WARNING: TEST_USER_CONFIG is enabled!\n");
+  ulog_warn("TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
 
   // Initialize controller interface
   ControllerInit();
 
+ 
+
+  //UserConfigStatus uc_status = UserConfigLoad();
+  //// start user config interface
+  //if (uc_status == USERCONFIG_OK) {
+  //  // print current user config
+  //  ulog_info("Current user configuration:");
+  //  ulog_info("---------------------------");
+  //  UserConfigPrint();
+  //} else {
+  //  ulog_error("Could not load user config.");
+  //}
+  
+
+
+
+
+  // Load user config and start webservice with timeotu
   UserConfigStart(120 * 1000);
+
+
 
   // return codes
   int ret = 0;
 
-  // start service after connected
-  ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
 
 
   // Initialize LoRaWAN
@@ -107,6 +164,41 @@ int main(void) {
 
   while (1) {
     // TODO: Create copy of counters
+    
+
+    // wait for callback
+    //yield_for(&callback_event);
+    yield();
+
+
+
+    //
+    // Save data if second command
+    // 
+
+    if (cmd == 2) {
+      ulog_info("[d] get meas");
+      // print out bytes
+      //  Get number of bytes in buffer
+      ulog_info("Received %d bytes:", meas_buffer_length);
+      for (int i=1; i < meas_buffer_length; i++) {
+        printf("%x ", meas_buffer[i]);
+      }
+      printf("\n");
+
+      // store in buffer
+      int ret = fifo_put(meas_buffer, meas_buffer_length);
+      if (ret < 0) {
+        ulog_error("Could not store measurement in buffer");
+      }
+      stats.meas++;
+    }
+
+
+    //
+    // Always check buffer for an upload
+    //
+
 
     ulog_debug("Buffer has %d measurements", fifo_buffer_len()); 
 
@@ -135,8 +227,6 @@ int main(void) {
     if (stats.total % 10) {
       ulog_info("total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: %d\t", stats.total, stats.failed, stats.meas, stats.bytes);
     }
-      
-    yield();
   }
 }
 
@@ -145,32 +235,33 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
 
   uint8_t* buffer = (uint8_t*) buf;
 
-  // TODO: store in circular buffer.
+  // payload format
+  cmd = buffer[0];
+  uint8_t* length = buffer + 1;
+  uint8_t* data = buffer + 2;
 
-  // print out bytes
-  //  Get number of bytes in buffer
-  uint8_t buffer_len = buffer[0];
-  ulog_info("Received %d bytes:", buffer_len);
-  for (int i=1; i < buffer_len; i++) {
-    printf("%x ", buffer[i]);
+  // Reply with userconfig when requested
+  if (cmd == 1) {
+    ulog_info("[d] get user config");
+
+    memcpy(data, uc_buffer, uc_buffer_length);
+    *length = uc_buffer_length;
+
+  // Store measurements into buffer
+  } else if (cmd == 2) {
+    // copy data to buffer
+    meas_buffer_length = *length;
+    memcpy(meas_buffer, data, *length);
+
+    // reply with response
+    buffer[0] = 0xb;
+    buffer[1] = 0xe;
+    buffer[2] = 0xe;
+    buffer[3] = 0xf;
+  // Catch all other commands
+  } else {
+    ulog_error("IPC Command %d not implemented.", buffer[0]);
   }
-  printf("\n");
-
-  // store in buffer
-  int ret = fifo_put(&buffer[1], buffer_len);
-  if (ret < 0) {
-    ulog_error("Could not store measurement in buffer");
-  }
-  stats.meas++;
-
-
-  //ulog_debug("buffer has %d measurements", fifo_buffer_len());
-
-  // reply with response
-  buffer[0] = 0xb;
-  buffer[1] = 0xe;
-  buffer[2] = 0xe;
-  buffer[3] = 0xf;
 
   ipc_notify_client(pid);
 }
