@@ -31,9 +31,6 @@ typedef struct {
 upload_stats stats = {};
 
 
-static bool callback_event = false;
-
-
 // buffer to store measurements
 static uint8_t meas_buffer[256] = {};
 static uint8_t meas_buffer_length = 0;
@@ -42,7 +39,12 @@ static uint8_t meas_buffer_length = 0;
 static uint8_t uc_buffer[256] = {};
 static uint8_t uc_buffer_length = 0;
 
-static uint8_t cmd = 0;;
+static uint8_t cmd = 0;
+
+// last pid command
+static int last_pid = 0; 
+
+static bool has_data = false;
 
 
 
@@ -96,11 +98,12 @@ int main(void) {
   // under 256 bytes as defined by protobuf.
   UserConfigStatus uc_status = UserConfigBytes(uc_buffer, (uint16_t *) &uc_buffer_length);
 
-  printf("uc_buffer[%u]:", uc_buffer_length);
-  for (uint8_t i = 0; i < uc_buffer_length; i++) {
-    printf(" %02x", uc_buffer[i]);
-  }
-  printf("\n\n");
+  // Option to print bytes to the buffer
+  //printf("uc_buffer[%u]:", uc_buffer_length);
+  //for (uint8_t i = 0; i < uc_buffer_length; i++) {
+  //  printf(" %02x", uc_buffer[i]);
+  //}
+  //printf("\n\n");
 
 
 
@@ -162,29 +165,31 @@ int main(void) {
     return ret;
   }
 
+
+
   while (1) {
     // TODO: Create copy of counters
-    
 
+    ulog_trace("main loop");
+
+    
     // wait for callback
-    //yield_for(&callback_event);
-    yield();
+    yield_for(&has_data);
 
 
 
     //
-    // Save data if second command
+    // Save data on matched command
     // 
 
     if (cmd == 2) {
-      ulog_info("[d] get meas");
       // print out bytes
       //  Get number of bytes in buffer
       ulog_info("Received %d bytes:", meas_buffer_length);
-      for (int i=1; i < meas_buffer_length; i++) {
-        printf("%x ", meas_buffer[i]);
-      }
-      printf("\n");
+      //for (int i=1; i < meas_buffer_length; i++) {
+      //  printf("%x ", meas_buffer[i]);
+      //}
+      //printf("\n");
 
       // store in buffer
       int ret = fifo_put(meas_buffer, meas_buffer_length);
@@ -192,41 +197,56 @@ int main(void) {
         ulog_error("Could not store measurement in buffer");
       }
       stats.meas++;
+
+
+      // indicate data has been processed and trigger client
+      has_data = false;
+      ipc_notify_client(last_pid);
     }
+
 
 
     //
     // Always check buffer for an upload
     //
 
+    uint16_t meas_in_buffer = fifo_buffer_len();  
 
-    ulog_debug("Buffer has %d measurements", fifo_buffer_len()); 
+    // batch into minium of 4 measurements
+    while (meas_in_buffer > 4) {
+      ulog_debug("Buffer has %d measurements", meas_in_buffer);
 
-    if (fifo_buffer_len() > 0) {
       // format payload
-      uint8_t buffer[256] = {};
+      uint8_t buffer[60] = {};
       int len = get_payload(buffer, sizeof(buffer));
-      if (len == 0) {
-        continue;
-      }
-      ulog_debug("Got payload of %d bytes", len); 
+      if (len != 0) {
+        ulog_debug("Uploading %d bytes", len); 
 
-      stats.total++;
-      ret = lorawan_upload(buffer, len);
-      if (ret < 0) {
-        stats.failed++;
-        ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
-        continue;
+        stats.total++;
+        ret = lorawan_upload(buffer, len);
+        if (ret < 0) {
+          stats.failed++;
+          ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+        } else {
+          ulog_debug("Uploaded %d bytes with LoRaWAN.");
+
+          stats.bytes += len;
+        }
       }
-      ulog_debug("Uploaded %d bytes with LoRaWAN.");
-      
-      stats.bytes += len;
+
+      meas_in_buffer = fifo_buffer_len();
     }
 
+
+    //
     // print stats
-    if (stats.total % 10) {
+    // 
+    if (!(stats.total % 6)) {
       ulog_info("total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: %d\t", stats.total, stats.failed, stats.meas, stats.bytes);
     }
+    
+
+
   }
 }
 
@@ -242,33 +262,39 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
 
   // Reply with userconfig when requested
   if (cmd == 1) {
-    ulog_info("[d] get user config");
+    ulog_trace("user config command");
 
+    // copy from user config to data
     memcpy(data, uc_buffer, uc_buffer_length);
     *length = uc_buffer_length;
+ 
+    // trigger client
+    ipc_notify_client(pid);
 
   // Store measurements into buffer
   } else if (cmd == 2) {
+    ulog_trace("measurement command");
+
     // copy data to buffer
     meas_buffer_length = *length;
     memcpy(meas_buffer, data, *length);
 
-    // reply with response
-    buffer[0] = 0xb;
-    buffer[1] = 0xe;
-    buffer[2] = 0xe;
-    buffer[3] = 0xf;
+    // store last pid so it can be triggered
+    // basically hold sensors in an interrupt until we store the measurement
+    last_pid = pid;
+    has_data = true;
+
   // Catch all other commands
   } else {
-    ulog_error("IPC Command %d not implemented.", buffer[0]);
+    ulog_error("IPC command %d not implemented.", buffer[0]);
   }
 
-  ipc_notify_client(pid);
 }
 
 
-
 static int get_payload(uint8_t* buffer, int size) {
+  ulog_trace("get_payload");
+
   // return codes
   int ret = 0;
 
@@ -277,9 +303,10 @@ static int get_payload(uint8_t* buffer, int size) {
   Metadata meta = {};
   SensorMeasurement meas[8] = {};
 
+  uint16_t length = fifo_buffer_len();
+
   uint16_t i = 0;
-  for (i = 0; i < fifo_buffer_len(); i++) {
-    ulog_debug("Buffer idx %d", i);
+  for (i = 0; i < length; i++) {
     ret = fifo_peek(i, buffer, (uint8_t*) &len);
     if (ret < 0) {
       ulog_error("Could not read from buffer (error: %d)", ret);
@@ -306,21 +333,28 @@ static int get_payload(uint8_t* buffer, int size) {
 
     // early stop when length exceeds size of buffer
     if (len > size) {
+      ulog_debug("Over sensors size limit of %d. Removing last measurement.", size);
+  
       i--;
       break;
     }
   }
-      
-  ret = EncodeRepeatedSensorMeasurements(meta, meas, i+1, buffer, sizeof(buffer), (size_t*) &len);
+  
+
+  ret = EncodeRepeatedSensorMeasurements(meta, meas, i+1, buffer, size, (size_t*) &len);
   if (ret < 0) {
-    ulog_error("Could encode %d repeated measurements (error %d)", i, ret);
+    ulog_error("Could not encode %d repeated measurements (error %d)", i, ret);
     return 0;
   }
 
-  ret = fifo_drop();
-  if (ret < 0) {
-    ulog_error("Could not remove measurements from buffer");
+
+  // Clear uploaded measurements
+  //ulog_debug("%d measurements to drop");
+  for (uint16_t j = 0; j < i; j++) {
+    ret = fifo_drop();
+    if (ret < 0) {
+      ulog_error("Could not remove measurement index %d from buffer", j);
+    }
   }
-  
   return len;
 }

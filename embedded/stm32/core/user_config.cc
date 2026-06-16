@@ -1,8 +1,7 @@
 #include "user_config.h"
 
 #include <libtock/services/alarm.h>
-
-
+#include <libtock/net/eui64.h>
 
 #include <ulog.h>
 
@@ -49,9 +48,12 @@ void UserConfigStart(uint32_t retry_ms) {
   } else {
     ulog_error("Could not load user config.");
   }
-  
-  uint32_t devAddr = 0;
-  //GetDevAddr(&devAddr);
+ 
+  // Get device address
+  uint64_t dev_eui = 0;
+  libtock_eui64_get(&dev_eui);
+  uint32_t devAddr = (uint32_t) (dev_eui & 0xFFFF);   
+
   snprintf(ssid, sizeof(ssid), "ents-%08X", devAddr);
  
   bool controller_status = true;

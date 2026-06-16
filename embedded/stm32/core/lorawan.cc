@@ -161,15 +161,16 @@ int lorawan_upload(uint8_t* buffer, int length) {
   // Form payload to send
   ulog_debug("Sending uplink of %lu bytes.", length, buffer);
 
+  // state indicates there was a downlink received
   state = node->sendReceive(buffer, length);
   ulog_debug("LoRaWAN send/receive code %d.", state);
-  if (state != RADIOLIB_ERR_NONE) {
+  if (state < 0) {
     ulog_error("Upload failed.");
     return -1;
   }
 
   // Wait until next uplink - observing legal & TTN FUP constraints
-  hal->delay(uplinkIntervalSeconds * 1000UL);
+  //hal->delay(uplinkIntervalSeconds * 1000UL);
 
   counter++;
 

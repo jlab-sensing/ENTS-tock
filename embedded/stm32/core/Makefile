@@ -5,7 +5,7 @@ TOCK_USERLAND_BASE_DIR = ../../libtock-c
 
 PACKAGE_NAME = org.ents.core
 
-STACK_SIZE=4096
+STACK_SIZE=8192
 APP_HEAP_SIZE=4096
 
 EXTERN_LIBS += ../../libents

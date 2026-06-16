@@ -56,7 +56,7 @@ int measure_sensor(SensorsPrototypeMeasure cb);
 int load_userconfig(void);
 
 int measure_sensor(SensorsPrototypeMeasure cb) {
-
+  ulog_trace("measure_sensor");
 
   // payload format
   uint8_t* cmd = core_buf;
@@ -69,25 +69,28 @@ int measure_sensor(SensorsPrototypeMeasure cb) {
   // store measurement in buffer
   uint32_t ts =  epoch();
   *length = cb(data, ts, meas_idx++);
-  if (*length < 1) {
-    return *length;
+
+  // check for errors in cb
+  if (*length < 255) {
+    // Send to core for upload and wait for completion
+    ipc_notify_service(core_service);
+    yield_for(&done);
+    done = false;
+
+    // Write to SD card
+#ifdef SAVE_TO_MICROSD
+      ControllerMicroSDSave(data, *length);
+#endif
   }
 
-  // Send to core for upload
-  ipc_notify_service(core_service);
-  yield_for(&done);
-
-  // Write to SD card
-#ifdef SAVE_TO_MICROSD
-    ControllerMicroSDSave(data, *length);
-#endif
-
-  done = false;
+  return *length;  
 }
 
 
 
 int load_userconfig(void) {
+  ulog_trace("load_userconfig");
+
   // payload format
   uint8_t* cmd = core_buf;
   uint8_t* length = core_buf + 1;
@@ -199,9 +202,16 @@ int main() {
       // Voltage channel is used by multiple different sensors
       if (sensor == EnabledSensor_Voltage) {
 
+#if !defined(USE_FLOW_METER_SENSOR) && \
+    !defined(USE_WATER_PRESSURE_SENSOR) && \
+    !defined(USE_CAP_SOIL_SENSOR) && \
+    !defined(USE_PHYTOS31_SENSOR)
+#define DEFAULT
+#endif
+
 #ifdef DEFAULT
         measure_sensor(ads1219_sensor_voltage);
-        ulog_info("Measuring Voltage");
+        ulog_info("Measured Voltage");
 #endif
 
 #ifdef USE_FLOW_METER_SENSOR
@@ -210,7 +220,7 @@ int main() {
           ulog_info("Initialized flow meter");
         }
         measure_sensor(WatFlow_measure);
-        ulog_info("Measuring Flow Meter");
+        ulog_info("Measured Flow Meter");
 #endif
 
 #ifdef USE_WATER_PRESSURE_SENSOR
@@ -219,7 +229,7 @@ int main() {
           ulog_info("Initialized Water Pressure");
         }
         measure_sensor(WatPress_measure);
-        ulog_info("Measuring Water Pressure Sensor");
+        ulog_info("Measured Water Pressure Sensor");
 #endif
 
 #ifdef USE_CAP_SOIL_SENSOR
@@ -228,7 +238,7 @@ int main() {
           ulog_info("Initialized Cap Soil");
         }
         measure_sensor(SEN0308_measure);
-        ulog_info("Measuring Cap Soil Sensor");
+        ulog_info("Measured Cap Soil Sensor");
 #endif
 
 #ifdef USE_PHYTOS31_SENSOR
@@ -238,7 +248,7 @@ int main() {
 
       if (sensor == EnabledSensor_Current) {
         measure_sensor(ads1219_sensor_current);
-        ulog_info("Measuring Current");
+        ulog_info("Measured Current");
       }
       //if (sensor == EnabledSensor_Teros12) {
       //  ulog_info("Teros12");
@@ -256,7 +266,7 @@ int main() {
         measure_sensor(BME280MeasureTemperature);
         measure_sensor(BME280MeasurePressure);
         measure_sensor(BME280MeasureHumidity);
-        ulog_info("Measuring BME280");
+        ulog_info("Measured BME280");
       }
       // if (sensor == EnabledSensor_Phytos31) {
       //   Phytos31Init();
