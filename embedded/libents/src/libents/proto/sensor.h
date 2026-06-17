@@ -37,13 +37,13 @@ extern "C" {
  */
 
 typedef enum _SensorStatus {
-  SENSOR_OK,
-  SENSOR_ERROR,
-  SENSOR_OUT_OF_BOUNDS,
+  SENSOR_OK = 0,
+  SENSOR_ERROR = -1,
+  SENSOR_OUT_OF_BOUNDS = -2,
   /** Indicate the sensor data needs to be re-uploaded. */
-  SENSOR_REUPLOAD,
+  SENSOR_REUPLOAD = -3,
   /** Indicate an issue with the sensor format. */
-  SENSOR_FORMAT
+  SENSOR_FORMAT = -4
 } SensorStatus;
 
 /** Constant value to indicate no metadata field */
