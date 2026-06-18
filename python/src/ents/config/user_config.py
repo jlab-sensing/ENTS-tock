@@ -28,7 +28,6 @@ from ..proto import encode_user_configuration, decode_user_configuration
 
 
 class Ui_MainWindow(object):
-
     def setupUi(self, MainWindow):
         """
         @brief Sets up the user interface components.
@@ -492,11 +491,11 @@ class Ui_MainWindow(object):
             # Print success message in case of saving the config or saving and sending the config
             if flag == "send":
                 print(
-                    f"Configuration saved and sent to STM32 successfully! Backup JSON file: {'cell_'+ str(cell_id) + '_' }"
+                    f"Configuration saved and sent to STM32 successfully! Backup JSON file: {'cell_' + str(cell_id) + '_'}"
                 )
             else:
                 print(
-                    f"Configuration saved successfully! Backup JSON file: {'cell_'+ str(cell_id) + '_' }"
+                    f"Configuration saved successfully! Backup JSON file: {'cell_' + str(cell_id) + '_'}"
                 )
 
         except ValueError as e:
