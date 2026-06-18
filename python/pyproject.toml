@@ -32,8 +32,8 @@ gui = [
 ]
 
 dev = [
-  "black",
   "ruff",
+  "build",
 ]
 
 [project.scripts]
@@ -48,7 +48,7 @@ Issues = "https://github.com/jlab-sensing/soil-power-sensor-firmware/issues"
 
 [tool.ruff]
 exclude = [
-  "src/ents/proto/soil_power_sensor_pb2.py",
+  "src/ents/proto/*_pb2.py",
 ]
 
 [tool.black]

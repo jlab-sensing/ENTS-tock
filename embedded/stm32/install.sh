@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 NUM_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || 4)
+echo "Using ${NUM_JOBS} jobs."
 
 set -e
 set -u
