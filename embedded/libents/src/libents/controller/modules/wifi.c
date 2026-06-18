@@ -1,13 +1,13 @@
 #include "wifi.h"
 
-#include "../communication.h"
 #include "../../proto/transcoder.h"
+#include "../communication.h"
 
-ControllerStatus WiFiCommandTransaction(const WiFiCommand *input,
-                                        WiFiCommand *output) {
+ControllerStatus WiFiCommandTransaction(const WiFiCommand* input,
+                                        WiFiCommand* output) {
   // get reference to tx and rx buffers
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // encode command
   tx->len = EncodeWiFiCommand(input, tx->data, tx->size);
@@ -34,7 +34,7 @@ ControllerStatus WiFiCommandTransaction(const WiFiCommand *input,
   return CONTROLLER_SUCCESS;
 }
 
-bool ControllerWiFiConnect(const char *ssid, const char *passwd) {
+bool ControllerWiFiConnect(const char* ssid, const char* passwd) {
   // format input command
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_CONNECT;
@@ -98,7 +98,7 @@ uint32_t ControllerWiFiTime(void) {
   return resp.ts;
 }
 
-bool ControllerWiFiCheckApi(const char *url) {
+bool ControllerWiFiCheckApi(const char* url) {
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_CHECK_API;
   strncpy(wifi_cmd.url, url, sizeof(wifi_cmd.url));
@@ -112,7 +112,7 @@ bool ControllerWiFiCheckApi(const char *url) {
   return true;
 }
 
-bool ControllerWiFiPost(const uint8_t *data, size_t data_len) {
+bool ControllerWiFiPost(const uint8_t* data, size_t data_len) {
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_POST;
   wifi_cmd.resp.size = data_len;
@@ -150,7 +150,7 @@ ControllerWiFiResponse ControllerWiFiCheckRequest(void) {
   return http_resp;
 }
 
-bool ControllerWiFiHost(const char *ssid, const char *passwd) {
+bool ControllerWiFiHost(const char* ssid, const char* passwd) {
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_HOST;
 
@@ -180,7 +180,7 @@ bool ControllerWiFiStopHost(void) {
   return true;
 }
 
-void ControllerWiFiHostInfo(char *ssid, char *ip, char *mac, uint8_t *clients) {
+void ControllerWiFiHostInfo(char* ssid, char* ip, char* mac, uint8_t* clients) {
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_HOST_INFO;
 

@@ -10,8 +10,8 @@
 #ifndef PROTO_C_INCLUDE_SENSOR_H_
 #define PROTO_C_INCLUDE_SENSOR_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "sensor.pb.h"
 
@@ -29,8 +29,9 @@ extern "C" {
  * are used.
  *
  * When formatting multiple measurements, single measurements may have to be
- * decoded first with DecodeSensorMeasurement and placed in the SensorMeasurement struct before re-encoding
- * Re-encoding into a RepeatedSensorMeasurement struct can be done with
+ * decoded first with DecodeSensorMeasurement and placed in the
+ * SensorMeasurement struct before re-encoding Re-encoding into a
+ * RepeatedSensorMeasurement struct can be done with
  * EncodeRepeatedSensorMeasurements.
  *
  * @{
@@ -61,8 +62,8 @@ static const Metadata METADATA_NONE = Metadata_init_zero;
  *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeSensorMeasurement(const SensorMeasurement* meas, 
-    uint8_t* buffer, size_t* size);
+SensorStatus EncodeSensorMeasurement(const SensorMeasurement* meas,
+                                     uint8_t* buffer, size_t* size);
 
 /**
  * @brief Encodes multiple sensor measurements into a buffer.
@@ -79,8 +80,10 @@ SensorStatus EncodeSensorMeasurement(const SensorMeasurement* meas,
  *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeRepeatedSensorMeasurements(Metadata meta, const SensorMeasurement meas[],
-    size_t count, uint8_t* buffer, size_t size, size_t* length);
+SensorStatus EncodeRepeatedSensorMeasurements(Metadata meta,
+                                              const SensorMeasurement meas[],
+                                              size_t count, uint8_t* buffer,
+                                              size_t size, size_t* length);
 
 /**
  * @brief Encodes a uint64_t sensor measurement into a buffer.
@@ -91,11 +94,12 @@ SensorStatus EncodeRepeatedSensorMeasurements(Metadata meta, const SensorMeasure
  * @param buffer Pointer to the output buffer.
  * @param size Pointer to the size of the output buffer. On success, updated to
  * the number of bytes written.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeUint32Measurement(Metadata meta, uint32_t value, SensorType type,
-                             uint8_t* buffer, size_t* size);
+SensorStatus EncodeUint32Measurement(Metadata meta, uint32_t value,
+                                     SensorType type, uint8_t* buffer,
+                                     size_t* size);
 
 /**
  * @brief Encodes an int64_t sensor measurement into a buffer.
@@ -106,11 +110,12 @@ SensorStatus EncodeUint32Measurement(Metadata meta, uint32_t value, SensorType t
  * @param buffer Pointer to the output buffer.
  * @param size Pointer to the size of the output buffer. On success, updated to
  * the number of bytes written.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeInt32Measurement(Metadata meta, int32_t value, SensorType type,
-                            uint8_t* buffer, size_t* size);
+SensorStatus EncodeInt32Measurement(Metadata meta, int32_t value,
+                                    SensorType type, uint8_t* buffer,
+                                    size_t* size);
 
 /**
  * @brief Encodes a double sensor measurement into a buffer.
@@ -121,12 +126,12 @@ SensorStatus EncodeInt32Measurement(Metadata meta, int32_t value, SensorType typ
  * @param buffer Pointer to the output buffer.
  * @param size Pointer to the size of the output buffer. On success, updated to
  * the number of bytes written.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeDoubleMeasurement(Metadata meta,
-                             double value, SensorType type,
-                             uint8_t* buffer, size_t* size);
+SensorStatus EncodeDoubleMeasurement(Metadata meta, double value,
+                                     SensorType type, uint8_t* buffer,
+                                     size_t* size);
 
 /**
  * @brief Decodes a sensor measurement from a buffer.
@@ -134,12 +139,11 @@ SensorStatus EncodeDoubleMeasurement(Metadata meta,
  * @param data Pointer to the input buffer.
  * @param len Length of the input buffer.
  * @param meas Pointer to the SensorMeasurement to populate.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
 SensorStatus DecodeSensorMeasurement(const uint8_t* data, const size_t len,
-                             SensorMeasurement* meas);
-
+                                     SensorMeasurement* meas);
 
 /**
  * @brief Gets the size of multiple repeated sensor measurements when encoded.
@@ -148,12 +152,12 @@ SensorStatus DecodeSensorMeasurement(const uint8_t* data, const size_t len,
  * @param meas Array of SensorMeasurements to encode.
  * @param count Number of measurements in the array.
  * @param size Pointer to the size variable to populate.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus RepeatedSensorMeasurementsSize(Metadata meta, const SensorMeasurement meas[], 
-        size_t count, size_t *size);
-
+SensorStatus RepeatedSensorMeasurementsSize(Metadata meta,
+                                            const SensorMeasurement meas[],
+                                            size_t count, size_t* size);
 
 /**
  * @brief Decodes multiple sensor measurements from a buffer.
@@ -161,12 +165,12 @@ SensorStatus RepeatedSensorMeasurementsSize(Metadata meta, const SensorMeasureme
  * @param data Pointer to the input buffer.
  * @param len Length of the input buffer.
  * @param meas Pointer to the RepeatedSensorMeasurements to populate.
- * 
+ *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus DecodeRepeatedSensorMeasurements(const uint8_t* data, const size_t len,
-                             RepeatedSensorMeasurements* meas);
-
+SensorStatus DecodeRepeatedSensorMeasurements(const uint8_t* data,
+                                              const size_t len,
+                                              RepeatedSensorMeasurements* meas);
 
 /**
  * @brief Encodes multiple sensor responses into a buffer.
@@ -181,9 +185,8 @@ SensorStatus DecodeRepeatedSensorMeasurements(const uint8_t* data, const size_t 
  *
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
-SensorStatus EncodeRepeatedSensorResponses(const RepeatedSensorResponses responses, uint8_t* buffer, size_t* size);
-
-
+SensorStatus EncodeRepeatedSensorResponses(
+    const RepeatedSensorResponses responses, uint8_t* buffer, size_t* size);
 
 /**
  * @brief Decodes multiple sensor responses from a buffer.
@@ -195,8 +198,7 @@ SensorStatus EncodeRepeatedSensorResponses(const RepeatedSensorResponses respons
  * @return SENSOR_SUCCESS on success, SENSOR_ERROR on failure.
  */
 SensorStatus DecodeRepeatedSensorReponses(const uint8_t* data, const size_t len,
-                             RepeatedSensorResponses* resp);
-
+                                          RepeatedSensorResponses* resp);
 
 /**
  * @brief Checks a single sensor response for errors.
@@ -219,11 +221,9 @@ SensorStatus DecodeRepeatedSensorReponses(const uint8_t* data, const size_t len,
  */
 SensorStatus CheckSensorResponse(const SensorResponse* resp);
 
-
 /**
  * @}
  */
-
 
 #ifdef __cplusplus
 }

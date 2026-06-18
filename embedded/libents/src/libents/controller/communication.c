@@ -1,7 +1,7 @@
 #include "communication.h"
 
-#include <stdlib.h>
 #include <libtock/peripherals/i2c_master.h>
+#include <stdlib.h>
 
 /**
  * @brief Mutex lock to prevent subsequent transmissions
@@ -80,7 +80,8 @@ ControllerStatus ControllerTransmit(void) {
 
     // transmit data
     int tock_status = RETURNCODE_SUCCESS;
-    tock_status = i2c_master_write_sync(g_esp32_i2c_addr, chunk.data, chunk.len);
+    tock_status =
+        i2c_master_write_sync(g_esp32_i2c_addr, chunk.data, chunk.len);
     if (tock_status < 0) {
       cont_status = CONTROLLER_ERROR;
       break;
@@ -104,7 +105,8 @@ ControllerStatus ControllerReceive(void) {
 
   // receive number of incoming bytes
   uint8_t len_bytes[2] = {};
-  tock_status = i2c_master_read_sync(g_esp32_i2c_addr, len_bytes, sizeof(len_bytes));
+  tock_status =
+      i2c_master_read_sync(g_esp32_i2c_addr, len_bytes, sizeof(len_bytes));
   if (tock_status < 0) {
     return CONTROLLER_ERROR;
   }
@@ -137,7 +139,6 @@ ControllerStatus ControllerReceive(void) {
     }
     // add 1 for done flag
     chunk.len = num_bytes + 1;
-
 
     tock_status = i2c_master_read_sync(g_esp32_i2c_addr, chunk.data, chunk.len);
     if (tock_status < 0) {
@@ -183,8 +184,8 @@ ControllerStatus ControllerTransaction(void) {
   return status;
 }
 
-Buffer *ControllerTx(void) { return &tx; }
+Buffer* ControllerTx(void) { return &tx; }
 
-Buffer *ControllerRx(void) { return &rx; }
+Buffer* ControllerRx(void) { return &rx; }
 
 void ControllerWakeupEsp32(void) {}

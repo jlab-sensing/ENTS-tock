@@ -1,7 +1,5 @@
-#include <stdio.h>
-
 #include <libtock-sync/services/alarm.h>
-
+#include <stdio.h>
 #include <ulog.h>
 
 int main(void) {

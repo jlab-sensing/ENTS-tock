@@ -13,7 +13,6 @@
 #define LIB_MODULE_HANDLER_INCLUDE_MODULES_MICROSD_HPP_
 
 #include <Arduino.h>
-
 #include <libents/proto/controller.pb.h>
 #include <libents/proto/transcoder.h>
 
@@ -39,16 +38,16 @@ class ModuleMicroSD : public ModuleHandler::Module {
   /**
    * @see ModuleHandler::Module.OnReceive
    */
-  void OnReceive(const Esp32Command &cmd);
+  void OnReceive(const Esp32Command& cmd);
 
   /**
    * @see ModuleHandler::Module.OnRequest
    */
-  size_t OnRequest(uint8_t *buffer);
+  size_t OnRequest(uint8_t* buffer);
 
  private:
-  void Save(const Esp32Command &cmd);
-  void UserConfig(const Esp32Command &cmd);
+  void Save(const Esp32Command& cmd);
+  void UserConfig(const Esp32Command& cmd);
 
   /** Buffer for i2c requests */
   uint8_t request_buffer[MicroSDCommand_size] = {};

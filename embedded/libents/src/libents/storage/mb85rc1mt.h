@@ -38,7 +38,7 @@ extern "C" {
  * @param len   Number of bytes to write
  * @return FRAM_OK on success, FRAM_OUT_OF_RANGE or FRAM_ERROR on failure
  */
-fram_status mb85rc1mt_write(fram_addr addr, const uint8_t *data, size_t len);
+fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len);
 
 /**
  * @brief Read bytes from FRAM at the given address
@@ -48,7 +48,7 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t *data, size_t len);
  * @param data  Buffer to read into (must be at least len bytes)
  * @return FRAM_OK on success, FRAM_OUT_OF_RANGE or FRAM_ERROR on failure
  */
-fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t *data);
+fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data);
 
 /**
  * @brief Get the total size of FRAM in bytes

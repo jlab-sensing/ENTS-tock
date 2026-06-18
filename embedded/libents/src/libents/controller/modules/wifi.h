@@ -94,7 +94,7 @@ typedef struct {
  *
  * @return If the command succeeded
  */
-bool ControllerWiFiConnect(const char *ssid, const char *passwd);
+bool ControllerWiFiConnect(const char* ssid, const char* passwd);
 
 /**
  * @brief Disconnects from the WiFi network
@@ -142,7 +142,7 @@ uint32_t ControllerWiFiTime(void);
  *
  * @return If the command succeeded
  */
-bool ControllerWiFiCheckApi(const char *url);
+bool ControllerWiFiCheckApi(const char* url);
 
 /**
  * @brief Post data to the configured endpoint
@@ -156,7 +156,7 @@ bool ControllerWiFiCheckApi(const char *url);
  *
  * @return If the command succeeded
  */
-bool ControllerWiFiPost(const uint8_t *data, size_t data_len);
+bool ControllerWiFiPost(const uint8_t* data, size_t data_len);
 
 /**
  * @brief Checks the status of the most recent HTTP request
@@ -184,7 +184,7 @@ ControllerWiFiResponse ControllerWiFiCheckRequest(void);
  *
  * @return If the command succeeded
  */
-bool ControllerWiFiHost(const char *ssid, const char *passwd);
+bool ControllerWiFiHost(const char* ssid, const char* passwd);
 
 /**
  * @brief Stops the esp32 from acting as a WiFi access point.
@@ -210,7 +210,7 @@ bool ControllerWiFiStopHost(void);
  * @param mac Buffer to store the MAC address of the access point.
  * @param clients Pointer to store the number of connected clients.
  */
-void ControllerWiFiHostInfo(char *ssid, char *ip, char *mac, uint8_t *clients);
+void ControllerWiFiHostInfo(char* ssid, char* ip, char* mac, uint8_t* clients);
 
 /**
  * @}

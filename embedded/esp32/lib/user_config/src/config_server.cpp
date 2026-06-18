@@ -3,7 +3,6 @@
 #include <ArduinoLog.h>
 #include <LittleFS.h>
 #include <WebServer.h>
-
 #include <libents/proto/controller.pb.h>
 #include <libents/proto/transcoder.h>
 
@@ -98,7 +97,7 @@ void handleSave() {
   // copy password
   bool use_previous_password = server.hasArg("use_previous_password");
   if (use_previous_password) {
-    const UserConfiguration &config_old = getConfig();
+    const UserConfiguration& config_old = getConfig();
     strncpy(config.WiFi_Password, config_old.WiFi_Password,
             sizeof(config.WiFi_Password));
   } else {

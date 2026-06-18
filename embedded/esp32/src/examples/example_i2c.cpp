@@ -1,4 +1,5 @@
- #include <Arduino.h>
+#include <Arduino.h>
+
 #include "Wire.h"
 
 /** Target device address */
@@ -8,11 +9,9 @@ static const int sda_pin = 0;
 /** Serial clock pin */
 static const int scl_pin = 1;
 
-
 uint8_t i = 0;
 
 uint8_t buffer[32] = "world";
-
 
 void onRequest() {
   // prewrite to buffer
@@ -36,7 +35,7 @@ void setup() {
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
 
-  Wire.begin(dev_addr, sda_pin, scl_pin, 400000); 
+  Wire.begin(dev_addr, sda_pin, scl_pin, 400000);
 }
 
 void loop() {}

@@ -21,7 +21,7 @@ ModuleUserConfig::ModuleUserConfig() : Module() {
   setConfig(default_config);
 }
 
-void ModuleUserConfig::OnReceive(const Esp32Command &cmd) {
+void ModuleUserConfig::OnReceive(const Esp32Command& cmd) {
   Log.traceln("ModuleUserConfig::OnReceive");
 
   // Check which command
@@ -53,13 +53,13 @@ void ModuleUserConfig::OnReceive(const Esp32Command &cmd) {
   }
 }
 
-size_t ModuleUserConfig::OnRequest(uint8_t *buffer) {
+size_t ModuleUserConfig::OnRequest(uint8_t* buffer) {
   Log.traceln("ModuleUserConfig::OnRequest");
   memcpy(buffer, this->buffer, buffer_len);
   return buffer_len;
 }
 
-void ModuleUserConfig::requestConfig(const UserConfigCommand &cmd) {
+void ModuleUserConfig::requestConfig(const UserConfigCommand& cmd) {
   Log.noticeln(" ============ Received Config Request ============");
   Log.noticeln(" STM32 is requesting current configuration");
   // Log.noticeln("============ Sending Configuration ============");
@@ -87,7 +87,7 @@ void ModuleUserConfig::requestConfig(const UserConfigCommand &cmd) {
   Log.noticeln("Successfully encoded configuration (%d bytes)", buffer_len);
 }
 
-void ModuleUserConfig::responseConfig(const UserConfigCommand &cmd) {
+void ModuleUserConfig::responseConfig(const UserConfigCommand& cmd) {
   Log.noticeln(" ============ Received New Configuration ============");
 
   setConfig(cmd.config_data);

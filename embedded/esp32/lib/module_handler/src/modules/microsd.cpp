@@ -2,7 +2,6 @@
 
 #include <ArduinoLog.h>
 #include <SD.h>
-
 #include <libents/nanopb/pb_decode.h>
 
 static const uint8_t chipSelect_pin = 7;
@@ -21,7 +20,7 @@ ModuleMicroSD::ModuleMicroSD(void) {
 
 ModuleMicroSD::~ModuleMicroSD(void) {}
 
-void ModuleMicroSD::OnReceive(const Esp32Command &cmd) {
+void ModuleMicroSD::OnReceive(const Esp32Command& cmd) {
   Log.traceln("ModuleMicroSD::OnReceive");
 
   // check if microSD command
@@ -47,13 +46,13 @@ void ModuleMicroSD::OnReceive(const Esp32Command &cmd) {
   }
 }
 
-size_t ModuleMicroSD::OnRequest(uint8_t *buffer) {
+size_t ModuleMicroSD::OnRequest(uint8_t* buffer) {
   Log.traceln("ModuleMicroSD::OnRequest");
   memcpy(buffer, request_buffer, request_buffer_len);
   return request_buffer_len;
 }
 
-void ModuleMicroSD::Save(const Esp32Command &cmd) {
+void ModuleMicroSD::Save(const Esp32Command& cmd) {
   static uint32_t last_ts = 0;
   // init return microSD command
   MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
@@ -290,7 +289,7 @@ void ModuleMicroSD::Save(const Esp32Command &cmd) {
                                                   sizeof(request_buffer));
 }
 
-void ModuleMicroSD::UserConfig(const Esp32Command &cmd) {
+void ModuleMicroSD::UserConfig(const Esp32Command& cmd) {
   // init return microSD command
   MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
   microsd_cmd.type = MicroSDCommand_Type_USERCONFIG;

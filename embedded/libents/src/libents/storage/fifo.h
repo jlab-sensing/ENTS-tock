@@ -72,7 +72,6 @@ extern "C" {
 #error "Buffer end address must be greater than buffer start address"
 #endif
 
-
 /**
  * @brief Puts a measurement into the circular buffer
  *
@@ -80,7 +79,7 @@ extern "C" {
  * @param    num_bytes The number of bytes to be written.
  * @return   See fram_status
  */
-fram_status fifo_put(const uint8_t *data, uint8_t num_bytes);
+fram_status fifo_put(const uint8_t* data, uint8_t num_bytes);
 
 /**
  * @brief    Reads a measurement from the queue
@@ -90,7 +89,7 @@ fram_status fifo_put(const uint8_t *data, uint8_t num_bytes);
  * @param    len Length of data
  * @return   See fram_status
  */
-fram_status fifo_get(uint8_t *data, uint8_t *len);
+fram_status fifo_get(uint8_t* data, uint8_t* len);
 
 /**
  * @brief Peeks at the next measurement in the buffer without removing it
@@ -103,7 +102,7 @@ fram_status fifo_get(uint8_t *data, uint8_t *len);
  * @param len Length of data
  * @return See fram_status
  */
-fram_status fifo_peek(size_t idx, uint8_t *data, uint8_t *len);
+fram_status fifo_peek(size_t idx, uint8_t* data, uint8_t* len);
 
 /**
  * @brief Drops the next measurement in the buffer

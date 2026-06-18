@@ -2,7 +2,6 @@
 #define LIB_USER_CONFIG_INCLUDE_WIFI_USERCONFIG_HPP
 
 #include <ArduinoLog.h>
-
 #include <libents/proto/controller.pb.h>
 
 #include "configuration.hpp"
@@ -16,8 +15,8 @@ class ModuleUserConfig : public Module {
   virtual ~ModuleUserConfig() = default;
 
   // Implement required Module interface
-  void OnReceive(const Esp32Command &cmd) override;
-  size_t OnRequest(uint8_t *buffer) override;
+  void OnReceive(const Esp32Command& cmd) override;
+  size_t OnRequest(uint8_t* buffer) override;
 
  private:
   /** @brief Request buffer. */
@@ -41,7 +40,7 @@ class ModuleUserConfig : public Module {
    *
    * @param pb_config Pointer to the received user configuration
    */
-  void updateWebConfig(const UserConfiguration *pb_config);
+  void updateWebConfig(const UserConfiguration* pb_config);
 
   /**
    * @brief Send configuration to the stm32
@@ -49,14 +48,14 @@ class ModuleUserConfig : public Module {
    * @param cmd The command data.
    *
    */
-  void requestConfig(const UserConfigCommand &cmd);
+  void requestConfig(const UserConfigCommand& cmd);
 
   /**
    * @brief Receive config from the stm32
    *
    * @param cmd The command data.
    */
-  void responseConfig(const UserConfigCommand &cmd);
+  void responseConfig(const UserConfigCommand& cmd);
 
   /**
    * @brief Start the user config webserver

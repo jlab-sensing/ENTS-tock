@@ -7,8 +7,8 @@
 
 #include "lorawan.h"
 
-#include <ulog.h>
 #include <libtock/net/eui64.h>
+#include <ulog.h>
 // include the library
 // #include <RadioLib.h>
 
@@ -16,8 +16,6 @@
 //
 #include "config.h"
 // Include some libtock-c helpers
-
-
 
 static TockRadioLibHal* hal;
 static Module* mod;
@@ -29,13 +27,14 @@ int lorawan_init(void) {
   ulog_trace("lorawan_setup");
 
   hal = new TockRadioLibHal();
-  mod = new Module(hal, RADIOLIB_RADIO_NSS, RADIOLIB_RADIO_DIO_1, RADIOLIB_RADIO_RESET,
-                                 RADIOLIB_RADIO_BUSY);
+  mod = new Module(hal, RADIOLIB_RADIO_NSS, RADIOLIB_RADIO_DIO_1,
+                   RADIOLIB_RADIO_RESET, RADIOLIB_RADIO_BUSY);
   tock_module = new SX1262(mod);
 
   // print const LoRaWANBand_t US915
-  ulog_info("Region: %d\t Sub Band: %d", Region->txSpans->numChannels, Region->freqMin);
- 
+  ulog_info("Region: %d\t Sub Band: %d", Region->txSpans->numChannels,
+            Region->freqMin);
+
   // create the LoRaWAN node
   node = new LoRaWANNode(tock_module, Region, subBand);
   // now we can create the radio module
@@ -70,17 +69,17 @@ int lorawan_init(void) {
 int lorawan_join(void) {
   ulog_trace("lorawan_join");
 
-  // status codes 
+  // status codes
   int state = 0;
-  
+
 #ifdef RADIOLIB_LORAWAN_DEV_EUI
   ulog_info("Using DevEUI from #define.");
 
   static const uint8_t devEUI_bytes[8] = FORMAT32_KEY(RADIOLIB_LORAWAN_DEV_EUI);
-  static const uint64_t devEUI  = bytes_to_u64_be(devEUI_bytes); 
+  static const uint64_t devEUI = bytes_to_u64_be(devEUI_bytes);
 #else
   ulog_info("Using DevEUI from flash.");
- 
+
   // check driver exists
   if (!libtock_eui64_exists();) {
     ulog_error("EUI64 driver does not exist!");
@@ -88,18 +87,19 @@ int lorawan_join(void) {
 
   // get devEUI from flash
   static const uint64_t devEUI = 0;
-  libtock_eui64_get(&devEUI); 
+  libtock_eui64_get(&devEUI);
 
   uint8_t devEUI_bytes[8] = {};
   u64_to_bytes_be(devEUI, devEUI_bytes);
-#endif  // RADIOLIB_LORAWAN_DEV_EUI 
+#endif  // RADIOLIB_LORAWAN_DEV_EUI
 
-  ulog_info("DevEUI: %x %x %x %x %x %x %x %x", devEUI_bytes[0],
-      devEUI_bytes[1], devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4],
-      devEUI_bytes[5], devEUI_bytes[6], devEUI_bytes[7]);
+  ulog_info("DevEUI: %x %x %x %x %x %x %x %x", devEUI_bytes[0], devEUI_bytes[1],
+            devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4], devEUI_bytes[5],
+            devEUI_bytes[6], devEUI_bytes[7]);
 
-  uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY); 
-  static const uint8_t joinEUI_bytes[8] = FORMAT32_KEY(RADIOLIB_LORAWAN_JOIN_EUI);
+  uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY);
+  static const uint8_t joinEUI_bytes[8] =
+      FORMAT32_KEY(RADIOLIB_LORAWAN_JOIN_EUI);
   static const uint64_t joinEUI = bytes_to_u64_be(joinEUI_bytes);
 
   static const uint8_t nwkKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_NWK_KEY);
@@ -117,25 +117,25 @@ int lorawan_join(void) {
 
   state = node->activateOTAA();
   while (state != RADIOLIB_ERR_NONE && state != RADIOLIB_LORAWAN_NEW_SESSION) {
-    ulog_error("LoRaWAN OTAA activation failed, code %d. Delaying 5 seconds, then retrying.", state);
+    ulog_error(
+        "LoRaWAN OTAA activation failed, code %d. Delaying 5 seconds, then "
+        "retrying.",
+        state);
     hal->delay(5000);
   }
 
   ulog_debug("LoRaWAN OTAA activation success!");
 
-
   // set configuration for future uploads
-  
+
   // use ADR but set initial data rate
   node->setADR(true);
   node->setDatarate(2);
 
   // TTN fair use
-  //node->setDutyCycle(true, 1250);
+  // node->setDutyCycle(true, 1250);
   // dwell time limit for US
   node->setDwellTime(true, 400);
-
-
 
   return 0;
 }
@@ -152,8 +152,8 @@ int lorawan_upload(uint8_t* buffer, int length) {
   ulog_trace("lorawan_upload");
 
   int state = 0;
-  
-  static int counter = 0; 
+
+  static int counter = 0;
 
   // Ensure there are no pending callbacks
   yield_no_wait();
@@ -170,7 +170,7 @@ int lorawan_upload(uint8_t* buffer, int length) {
   }
 
   // Wait until next uplink - observing legal & TTN FUP constraints
-  //hal->delay(uplinkIntervalSeconds * 1000UL);
+  // hal->delay(uplinkIntervalSeconds * 1000UL);
 
   counter++;
 

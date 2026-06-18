@@ -5,7 +5,7 @@
  * @brief Irrigation interface implementation with the esp32
  *
  * Controller module for controlling an irrigatoin valve.
-*/
+ */
 
 #pragma once
 

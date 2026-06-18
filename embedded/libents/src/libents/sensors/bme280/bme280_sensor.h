@@ -4,26 +4,25 @@
  * @brief Sensor interface for the BME280 sensor
  * @version 0.1
  * @date 2024-05-17
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  * This is the user code file that allows for interaction with the BME280
  * sensor. It provides a function for reading each measurement and a function
  * for a function that can be integrated with the sensors api.
- * 
+ *
  * @see sensors.h
  */
 
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #include "bme280.h"
 #pragma GCC diagnostic pop
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,13 +30,13 @@ extern "C" {
 
 /**
  * @brief Struct to store data from sensor
- * 
+ *
  */
 typedef struct bme280_data BME280Data;
 
 /**
  * @brief BME280 error codes
- * 
+ *
  * The enum constants are defined to match error codes in bme280_defs.h
  */
 typedef enum {
@@ -57,40 +56,35 @@ BME280Status BME280Deinit(void);
 
 /**
  * @brief Measures temperature, pressure, and humidity
- * 
+ *
  * If you only need a single measurement channel, take all measurements and only
  * take the needed measurement. Internally all channels need to be measured to
  * get the value of a single channel.
- * 
- * @param data 
+ *
+ * @param data
  * @return Status code
  */
-BME280Status BME280MeasureAll(BME280Data *data);
+BME280Status BME280MeasureAll(BME280Data* data);
 
-
-
-uint8_t BME280MeasureTemperature(uint8_t *data, uint32_t ts, uint32_t idx);
-uint8_t BME280MeasurePressure(uint8_t *data, uint32_t ts, uint32_t idx);
-uint8_t BME280MeasureHumidity(uint8_t *data, uint32_t ts, uint32_t idx);
-
-
-
+uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx);
+uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx);
+uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx);
 
 /**
  * @brief BME280 sensor library function
- * 
+ *
  * All three measurements (temperature, pressure, humidity) are measured and
  * appropriate calibration are applied. Data gets encoded into a serialized
  * measurement.
- * 
+ *
  * @param data Buffer to store measurement
  * @param ts System time of measurement
  * @param idx Sensor index
  * @return Length of measurement
- * 
+ *
  * @see SensorsPrototypeMeasure
  */
-uint8_t BME280Measure(uint8_t *data, uint32_t ts, uint32_t idx);
+uint8_t BME280Measure(uint8_t* data, uint32_t ts, uint32_t idx);
 
 #ifdef __cplusplus
 }

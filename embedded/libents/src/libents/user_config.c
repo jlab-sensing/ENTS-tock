@@ -1,10 +1,9 @@
 #include "user_config.h"
 
+#include <stdio.h>
+
 #include "./proto/transcoder.h"
 #include "./storage/fram.h"
-
-
-#include <stdio.h>
 
 // Static variable to store the loaded user configuration in RAM
 static UserConfiguration loadedConfig = {};
@@ -40,7 +39,7 @@ const static UserConfiguration testConfig = {
  * @param    length     Length of the data to be written.
  * @return   USERCONFIG_OK if successful, error code otherwise.
  */
-UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
+UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t* data,
                                         uint16_t length);
 
 /**
@@ -55,11 +54,9 @@ UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
  * @return USERCONFIG_OK if successful, error code otherwise.
  */
 UserConfigStatus UserConfig_ReadFromFRAM(uint16_t addr, uint16_t length,
-                                         uint8_t *data);
+                                         uint8_t* data);
 
-
-
-UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
+UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t* data,
                                         uint16_t length) {
   fram_status status = fram_write(addr, data, length);
   if (status != FRAM_OK) {
@@ -69,21 +66,18 @@ UserConfigStatus UserConfig_WriteToFRAM(uint16_t addr, uint8_t *data,
   return USERCONFIG_OK;
 }
 
-
-
 UserConfigStatus UserConfig_ReadFromFRAM(uint16_t addr, uint16_t length,
-                                         uint8_t *data) {
+                                         uint8_t* data) {
   fram_status status = fram_read(addr, length, data);
   printf("\n\n[d] Read from FRAM status: %d\n\n", status);
   if (status != FRAM_OK) {
     return USERCONFIG_FRAM_ERROR;
   }
-  
 
   return USERCONFIG_OK;
 }
 
-UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length) {
+UserConfigStatus UserConfigBytes(uint8_t* buffer, uint16_t* length) {
 #ifdef TEST_USER_CONFIG
   return USERCONFIG_OK;
 #else
@@ -108,8 +102,8 @@ UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length) {
   }
 
   // Read the encoded configuration data from FRAM into RX_Buffer
-  if (UserConfig_ReadFromFRAM(USER_CONFIG_START_ADDRESS, *length,
-                              buffer) != USERCONFIG_OK) {
+  if (UserConfig_ReadFromFRAM(USER_CONFIG_START_ADDRESS, *length, buffer) !=
+      USERCONFIG_OK) {
     return USERCONFIG_FRAM_ERROR;
   }
 
@@ -117,10 +111,9 @@ UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length) {
 #endif  // TEST_USER_CONFIG
 }
 
-UserConfigStatus UserConfigLoadBytes(uint8_t *buffer, uint16_t length) {
+UserConfigStatus UserConfigLoadBytes(uint8_t* buffer, uint16_t length) {
   // Decode the user configuration from RX_Buffer into loadedConfig struct
-  if (DecodeUserConfiguration(buffer, length, &loadedConfig) !=
-      USERCONFIG_OK) {
+  if (DecodeUserConfiguration(buffer, length, &loadedConfig) != USERCONFIG_OK) {
     // Return an error if decoding fails
     return USERCONFIG_DECODE_ERROR;
   }
@@ -136,7 +129,6 @@ UserConfigStatus UserConfigLoad(void) {
 
   uint8_t buffer[UserConfiguration_size] = {};
   uint16_t data_length = 0;
-  
 
   UserConfigStatus status = USERCONFIG_OK;
 
@@ -157,7 +149,7 @@ UserConfigStatus UserConfigLoad(void) {
 }
 
 // Get a reference to the loaded user configuration data in RAM.
-const UserConfiguration *UserConfigGet(void) {
+const UserConfiguration* UserConfigGet(void) {
 #ifdef TEST_USER_CONFIG
   return &testConfig;
 #else
@@ -165,7 +157,7 @@ const UserConfiguration *UserConfigGet(void) {
 #endif  // TEST_USER_CONFIG
 }
 
-UserConfigStatus UserConfigSave(const UserConfiguration *config) {
+UserConfigStatus UserConfigSave(const UserConfiguration* config) {
   if (config == NULL) {
     return USERCONFIG_NULL_CONFIG;
   }
@@ -194,7 +186,7 @@ UserConfigStatus UserConfigSave(const UserConfiguration *config) {
   return USERCONFIG_OK;
 }
 
-void UserConfigPrintAny(const UserConfiguration *config) {
+void UserConfigPrintAny(const UserConfiguration* config) {
   // Print each member of the UserConfiguration
   printf("Logger ID: %u\r\n", config->logger_id);
   printf("Cell ID: %u\r\n", config->cell_id);
@@ -208,7 +200,7 @@ void UserConfigPrintAny(const UserConfiguration *config) {
   printf("Upload Interval: %u\r\n", config->Upload_interval);
 
   for (int i = 0; i < config->enabled_sensors_count; i++) {
-    const char *sensor_name = NULL;
+    const char* sensor_name = NULL;
     switch (config->enabled_sensors[i]) {
       case EnabledSensor_Voltage:
         sensor_name = "Voltage";
@@ -270,7 +262,7 @@ void UserConfigPrintAny(const UserConfiguration *config) {
 }
 
 void UserConfigPrint(void) {
-  const UserConfiguration *config = UserConfigGet();
+  const UserConfiguration* config = UserConfigGet();
 
   UserConfigPrintAny(config);
 }

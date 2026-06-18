@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-void printEncodedData(const uint8_t *data, size_t len) {
+void printEncodedData(const uint8_t* data, size_t len) {
   Serial.println("\n=== Encoded Protobuf Data ===");
   Serial.print("Length: ");
   Serial.println(len);
@@ -14,7 +14,7 @@ void printEncodedData(const uint8_t *data, size_t len) {
   Serial.println("\n============================");
 }
 
-void printDecodedConfig(const UserConfiguration *pb_config) {
+void printDecodedConfig(const UserConfiguration* pb_config) {
   Serial.println("\n=== Decoded Configuration ===");
 
   Serial.println("Upload Settings:");

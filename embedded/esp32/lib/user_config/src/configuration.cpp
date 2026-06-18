@@ -1,14 +1,13 @@
 #include "configuration.hpp"
 
 #include <ArduinoLog.h>
-#include <string.h>
-
 #include <libents/proto/transcoder.h>
+#include <string.h>
 
 /** Instance of user config served by the webserver */
 static UserConfiguration config = UserConfiguration_init_default;
 
-void setConfig(const UserConfiguration &new_config) {
+void setConfig(const UserConfiguration& new_config) {
   // deeeeep copy
   config.logger_id = new_config.logger_id;
   config.cell_id = new_config.cell_id;
@@ -46,10 +45,10 @@ void setConfig(const UserConfiguration &new_config) {
   }
 }
 
-const UserConfiguration &getConfig() { return config; }
+const UserConfiguration& getConfig() { return config; }
 
 String getConfigJson() {
-  const UserConfiguration &config = getConfig();
+  const UserConfiguration& config = getConfig();
 
   String json = "{";
   json += "\"logger_id\":" + String(config.logger_id) + ",";
@@ -121,7 +120,7 @@ String getConfigJson() {
   return json;
 }
 
-void printConfig(const UserConfiguration &pconfig) {
+void printConfig(const UserConfiguration& pconfig) {
   Log.noticeln(" ============ Configuration Details ============");
   Log.noticeln(" Logger ID: %u", pconfig.logger_id);
   Log.noticeln(" Cell ID: %u", pconfig.cell_id);
@@ -131,7 +130,7 @@ void printConfig(const UserConfiguration &pconfig) {
 
   Log.noticeln(" Enabled Sensors (%d):", pconfig.enabled_sensors_count);
   for (int i = 0; i < pconfig.enabled_sensors_count; i++) {
-    const char *sensor_name = "Unknown";
+    const char* sensor_name = "Unknown";
     switch (pconfig.enabled_sensors[i]) {
       case EnabledSensor_Voltage:
         sensor_name = "Voltage";

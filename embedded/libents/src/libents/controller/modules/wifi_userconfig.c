@@ -1,11 +1,11 @@
 #include "wifi_userconfig.h"
 
-#include "../communication.h"
 #include "../../proto/transcoder.h"
+#include "../communication.h"
 
 UserConfigStatus ControllerUserConfigRequest(void) {
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // Clear buffers
   memset(tx->data, 0, tx->size);
@@ -42,7 +42,7 @@ UserConfigStatus ControllerUserConfigRequest(void) {
   if (cmd.command.user_config_command.type ==
       UserConfigCommand_RequestType_RESPONSE_CONFIG) {
     if (cmd.command.user_config_command.has_config_data) {
-      const UserConfiguration *config =
+      const UserConfiguration* config =
           &cmd.command.user_config_command.config_data;
       // Check if config is all zeros (uninitialized)
       if (isConfigEmpty(config)) {
@@ -59,12 +59,12 @@ UserConfigStatus ControllerUserConfigRequest(void) {
     }
   }
 
-  //APP_LOG(TS_OFF, VLEVEL_M, "Invalid config response format\r\n");
+  // APP_LOG(TS_OFF, VLEVEL_M, "Invalid config response format\r\n");
   return USERCONFIG_INVALID_RESPONSE;
 }
 
 UserConfigStatus ControllerUserConfigSend(void) {
-  const UserConfiguration *config = UserConfigGet();
+  const UserConfiguration* config = UserConfigGet();
   if (config == NULL) {
     // APP_LOG(TS_OFF, VLEVEL_M, "Null config received from FRAM\r\n");
     return USERCONFIG_NULL_CONFIG;
@@ -78,8 +78,8 @@ UserConfigStatus ControllerUserConfigSend(void) {
   UserConfigPrintAny(config);
   */
 
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // Clear buffers
   memset(tx->data, 0, tx->size);
@@ -112,8 +112,8 @@ UserConfigStatus ControllerUserConfigSend(void) {
 }
 
 bool ControllerUserConfigStart(void) {
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // Clear buffers
   memset(tx->data, 0, tx->size);
@@ -141,7 +141,7 @@ bool ControllerUserConfigStart(void) {
   return true;
 }
 
-bool isConfigEmpty(const UserConfiguration *config) {
+bool isConfigEmpty(const UserConfiguration* config) {
   // Check if logger_id & cell_id fields are zero/default
   return (config->logger_id == 0 && config->cell_id == 0);
 }

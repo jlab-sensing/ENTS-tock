@@ -51,8 +51,8 @@ extern "C" {
  *
  * @return Number of bytes in data
  */
-typedef uint8_t (*SensorsPrototypeMeasure)(uint8_t *data, uint32_t ts,
-                                          uint32_t idx);
+typedef uint8_t (*SensorsPrototypeMeasure)(uint8_t* data, uint32_t ts,
+                                           uint32_t idx);
 
 /**
  * @brief Starts timer to take measurements and add to upload queue
@@ -85,7 +85,7 @@ int SensorsAdd(SensorsPrototypeMeasure cb);
  * @param data Serialized measurement data.
  * @param data_len Length of serialized measurement data.
  */
-int SensorsAddMeasurement(uint8_t *data, uint8_t data_len);
+int SensorsAddMeasurement(uint8_t* data, uint8_t data_len);
 
 /**
  * @brief Function for adding static test measurements
@@ -95,7 +95,7 @@ int SensorsAddMeasurement(uint8_t *data, uint8_t data_len);
  *
  * @see SensorsPrototypeMeasure
  */
-uint8_t SensorsMeasureTest(uint8_t *data);
+uint8_t SensorsMeasureTest(uint8_t* data);
 
 /**
  * @}

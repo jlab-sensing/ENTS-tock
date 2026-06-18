@@ -30,10 +30,11 @@ extern "C" {
  * @{
  */
 
-typedef fram_status (*fram_write_ptr_t)(fram_addr addr, const uint8_t *data,
-                                       size_t len);
+typedef fram_status (*fram_write_ptr_t)(fram_addr addr, const uint8_t* data,
+                                        size_t len);
 
-typedef fram_status (*fram_read_ptr_t)(fram_addr addr, size_t len, uint8_t *data);
+typedef fram_status (*fram_read_ptr_t)(fram_addr addr, size_t len,
+                                       uint8_t* data);
 
 typedef fram_addr (*fram_size_ptr_t)(void);
 
@@ -45,7 +46,6 @@ typedef struct {
   /** Size of FRAM */
   fram_size_ptr_t size_ptr;
 } fram_interface_t;
-
 
 /**
  * @}

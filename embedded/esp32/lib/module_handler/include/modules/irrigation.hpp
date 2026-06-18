@@ -11,7 +11,6 @@
 #define LIB_MODULE_HANDLER_INCLUDE_MODULES_IRRIGATION_HPP_
 
 #include <Arduino.h>
-
 #include <libents/proto/transcoder.h>
 
 #include "template_module.hpp"
@@ -36,12 +35,12 @@ class ModuleIrrigation : public ModuleHandler::Module {
   /**
    * @see ModuleHandler::Module.OnReceive
    */
-  void OnReceive(const Esp32Command &cmd);
+  void OnReceive(const Esp32Command& cmd);
 
   /**
    * @see ModuleHandler::Module.OnRequest
    */
-  size_t OnRequest(uint8_t *buffer);
+  size_t OnRequest(uint8_t* buffer);
 
   /**
    * Handles irrigation based on soil moisture measurements
@@ -52,7 +51,7 @@ class ModuleIrrigation : public ModuleHandler::Module {
   /**
    * @brief Get the current state and send back to stm32.
    */
-  void Check(const Esp32Command &cmd);
+  void Check(const Esp32Command& cmd);
 
   /** Buffer for i2c requests */
   uint8_t request_buffer[WiFiCommand_size] = {};

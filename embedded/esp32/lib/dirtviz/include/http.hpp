@@ -39,7 +39,7 @@ class HttpClient {
    *
    * @param Http response string
    */
-  explicit HttpClient(const std::string &resp);
+  explicit HttpClient(const std::string& resp);
 
   /**
    * @brief Default destructor
@@ -118,28 +118,28 @@ class HttpClient {
    *
    * @param str Input string
    */
-  void RemoveLeadingSpace(std::string *str);
+  void RemoveLeadingSpace(std::string* str);
 
   /**
    * @brief Remove trailing spaces from a string
    *
    * @param str Input string
    */
-  void RemoveTrailingSpace(std::string *str);
+  void RemoveTrailingSpace(std::string* str);
 
   /**
    * @brief Remove leading and trailing spaces from the string
    *
    * @param str Input string
    */
-  void ExtractText(std::string *str);
+  void ExtractText(std::string* str);
 
   /**
    * @brief Remove all spaces from string
    *
    * @param str Input string
    */
-  void RemoveSpace(std::string *str);
+  void RemoveSpace(std::string* str);
 };
 
 /**

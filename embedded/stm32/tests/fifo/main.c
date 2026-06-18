@@ -17,11 +17,9 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
 #include <stdio.h>
-#include <string.h>
-
-#include <unity.h>
-
 #include <storage/fifo.h>
+#include <string.h>
+#include <unity.h>
 
 void setUp(void) { fifo_buffer_clear(); }
 
@@ -83,7 +81,7 @@ void test_fifo_ValidData(void) {
   unsigned int items = 5;
   uint8_t put_data[] = {1, 2, 3, 4, 5};
   fifo_put(put_data, items);
-  
+
   uint8_t get_data[items];
   uint8_t get_data_len;
   fram_status status = fifo_get(get_data, &get_data_len);
@@ -213,7 +211,7 @@ void test_fifo_wraparound(void) {
   uint8_t oob_after = 0;
   const uint8_t oob_check = 0xFF;
   status = fram_read(FRAM_BUFFER_END + 1, 1,
-                    &oob_before);  // to be restored afterwards
+                     &oob_before);  // to be restored afterwards
   TEST_ASSERT_EQUAL(FRAM_OK, status);
   status = fram_write(FRAM_BUFFER_END + 1, &oob_check, 1);
   TEST_ASSERT_EQUAL(FRAM_OK, status);
@@ -297,7 +295,7 @@ void test_fifo_load_buffer_state(void) {
   status = fifo_load_buffer_state();
   TEST_ASSERT_EQUAL(FRAM_OK, status);
 
-  // 
+  //
   uint8_t retrieved_data[sizeof(test_data)];
   uint8_t retrieved_len;
   for (int i = 0; i < 10; i++) {
@@ -366,7 +364,6 @@ void test_fifo_drop(void) {
   status = fifo_drop();
   TEST_ASSERT_EQUAL(FRAM_BUFFER_EMPTY, status);
 }
-
 
 int main(void) {
   UNITY_BEGIN();

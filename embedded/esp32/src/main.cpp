@@ -66,7 +66,7 @@ void onReceive(int len) {
 void onRequest() {
   Log.traceln("onRequest");
   mh.OnRequest();
-  //power.EnterSleep();
+  // power.EnterSleep();
 }
 
 /** Startup code */

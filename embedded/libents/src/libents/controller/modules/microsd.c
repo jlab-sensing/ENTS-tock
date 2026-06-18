@@ -1,16 +1,16 @@
 #include "microsd.h"
 
-#include "../communication.h"
 #include "../../proto/transcoder.h"
 #include "../../util/time.h"
+#include "../communication.h"
 
 /** Timeout for i2c communication with esp32, in communication.h */
 extern unsigned int g_controller_i2c_timeout;
 
-uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes) {
+uint32_t ControllerMicroSDSave(const uint8_t* data, const uint16_t num_bytes) {
   // get reference to tx and rx buffers
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
   microsd_cmd.type = MicroSDCommand_Type_SAVE;
@@ -41,9 +41,8 @@ uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes) {
   Esp32Command cmd = Esp32Command_init_default;
   cmd = DecodeEsp32Command(rx->data, rx->len);
 
-
   // This should be printed in the module.
-  //switch (cmd.command.microsd_command.rc) {
+  // switch (cmd.command.microsd_command.rc) {
   //  case MicroSDCommand_ReturnCode_SUCCESS:
   //    APP_LOG(TS_OFF, VLEVEL_L,
   //            "Successfully saved measurement to microSD card.\r\n");
@@ -76,11 +75,11 @@ uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes) {
   return cmd.command.microsd_command.rc;
 }
 
-uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
-                                     const char *filename) {
+uint32_t ControllerMicroSDUserConfig(UserConfiguration* uc,
+                                     const char* filename) {
   // get reference to tx and rx buffers
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
   microsd_cmd.type = MicroSDCommand_Type_USERCONFIG;
@@ -89,7 +88,7 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
   // Ex. If input filename is "data.csv", sent filename is
   // "/<timestamp>_data.csv" Userconfig will be written to
   // "/<timestamp>_data.csv.userconfig"
- 
+
   snprintf(microsd_cmd.filename, sizeof(microsd_cmd.filename), "/%lu_%s",
            epoch(), filename);
 
@@ -115,13 +114,13 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
   Esp32Command cmd = Esp32Command_init_default;
   cmd = DecodeEsp32Command(rx->data, rx->len);
 
-
   // This should be handled in the module
-  //switch (cmd.command.microsd_command.rc) {
+  // switch (cmd.command.microsd_command.rc) {
   //  case MicroSDCommand_ReturnCode_SUCCESS:
   //    APP_LOG(
   //        TS_OFF, VLEVEL_L,
-  //        "Successfully saved userConfig and CSV headers to microSD card.\r\n");
+  //        "Successfully saved userConfig and CSV headers to microSD
+  //        card.\r\n");
   //    break;
   //  case MicroSDCommand_ReturnCode_ERROR_GENERAL:
   //    APP_LOG(TS_OFF, VLEVEL_M, "Error: General error.\r\n");

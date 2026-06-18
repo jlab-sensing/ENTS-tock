@@ -1,38 +1,35 @@
 #include "bme280_sensor.h"
 
 #include "../../proto/sensor.h"
-//#include "../../user_config.h"
+// #include "../../user_config.h"
 
 #include "../sensors.h"
-
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #include "bme280_common.h"
 #pragma GCC diagnostic pop
 
-
 /**
  * @brief Required time between measurements
- * 
+ *
  * @see BME280Init
  */
 static uint32_t period = 0;
 
 /**
  * @brief Device definition
- * 
+ *
  * @see BME280Init
  */
 static struct bme280_dev dev;
 
 /**
  * @brief Device settings
- * 
+ *
  * @see BME280Init
  */
 static struct bme280_settings settings;
-
 
 BME280Status BME280Init(void) {
   int8_t rslt;
@@ -51,7 +48,8 @@ BME280Status BME280Init(void) {
     return rslt;
   }
 
-  /* Always read the current settings before writing, especially when all the configuration is not modified */
+  /* Always read the current settings before writing, especially when all the
+   * configuration is not modified */
   rslt = bme280_get_sensor_settings(&settings, &dev);
   if (rslt != BME280_OK) {
     return rslt;
@@ -89,10 +87,10 @@ BME280Status BME280Init(void) {
   return rslt;
 }
 
-BME280Status BME280MeasureAll(BME280Data *data) {
+BME280Status BME280MeasureAll(BME280Data* data) {
   int8_t rslt = BME280_E_NULL_PTR;
   uint8_t status_reg;
- 
+
   // trigger measurement
   rslt = bme280_set_sensor_mode(BME280_POWERMODE_FORCED, &dev);
   if (rslt != BME280_OK) {
@@ -105,8 +103,7 @@ BME280Status BME280MeasureAll(BME280Data *data) {
     return rslt;
   }
 
-  if (status_reg & BME280_STATUS_MEAS_DONE)
-  {
+  if (status_reg & BME280_STATUS_MEAS_DONE) {
     /* Measurement time delay given to read sample */
     dev.delay_us(period, dev.intf_ptr);
 
@@ -118,24 +115,23 @@ BME280Status BME280MeasureAll(BME280Data *data) {
   }
 
   // adjust based on defines
-//#ifndef BME280_DOUBLE_ENABLE
-///*
-//  data->temperature = data->temperature / 100;
-//  data->humidity = data->humidity / 1000;
-//  */
-//  data->temperature = data->temperature;
-//  data->humidity = data->humidity;
-//#endif
-//    
-//#ifdef BME280_64BIT_ENABLE 
-//  data->pressure = data->pressure / 100;
-//#endif
+  // #ifndef BME280_DOUBLE_ENABLE
+  ///*
+  //  data->temperature = data->temperature / 100;
+  //  data->humidity = data->humidity / 1000;
+  //  */
+  //  data->temperature = data->temperature;
+  //  data->humidity = data->humidity;
+  // #endif
+  //
+  // #ifdef BME280_64BIT_ENABLE
+  //  data->pressure = data->pressure / 100;
+  // #endif
 
   return rslt;
 }
 
-
-uint8_t BME280MeasureTemperature(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
   // read sensor
   BME280Data sens_data;
   BME280Status status = BME280MeasureAll(&sens_data);
@@ -143,23 +139,21 @@ uint8_t BME280MeasureTemperature(uint8_t *data, uint32_t ts, uint32_t idx) {
     return -1;
   }
 
-  //const UserConfiguration* cfg = UserConfigGet();
+  // const UserConfiguration* cfg = UserConfigGet();
 
   // metadata
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
 
-
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
-
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
 
   // temperature
-  sen_status = EncodeDoubleMeasurement(
-      meta, sens_data.temperature, SensorType_BME280_TEMP, data, &data_len);
+  sen_status = EncodeDoubleMeasurement(meta, sens_data.temperature,
+                                       SensorType_BME280_TEMP, data, &data_len);
   if (sen_status != SENSOR_OK) {
     return -1;
   }
@@ -167,7 +161,7 @@ uint8_t BME280MeasureTemperature(uint8_t *data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t BME280MeasurePressure(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
   // read sensor
   BME280Data sens_data;
   BME280Status status = BME280MeasureAll(&sens_data);
@@ -175,16 +169,14 @@ uint8_t BME280MeasurePressure(uint8_t *data, uint32_t ts, uint32_t idx) {
     return -1;
   }
 
-  //const UserConfiguration* cfg = UserConfigGet();
+  // const UserConfiguration* cfg = UserConfigGet();
 
   // metadata
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
 
-
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
-
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
@@ -199,7 +191,7 @@ uint8_t BME280MeasurePressure(uint8_t *data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t BME280MeasureHumidity(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx) {
   // read sensor
   BME280Data sens_data;
   BME280Status status = BME280MeasureAll(&sens_data);
@@ -207,16 +199,14 @@ uint8_t BME280MeasureHumidity(uint8_t *data, uint32_t ts, uint32_t idx) {
     return -1;
   }
 
-  //const UserConfiguration* cfg = UserConfigGet();
+  // const UserConfiguration* cfg = UserConfigGet();
 
   // metadata
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
 
-
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
-
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
@@ -231,8 +221,7 @@ uint8_t BME280MeasureHumidity(uint8_t *data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-
-uint8_t BME280Measure(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t BME280Measure(uint8_t* data, uint32_t ts, uint32_t idx) {
   // read sensor
   BME280Data sens_data;
   BME280Status status = BME280MeasureAll(&sens_data);
@@ -240,16 +229,14 @@ uint8_t BME280Measure(uint8_t *data, uint32_t ts, uint32_t idx) {
     return -1;
   }
 
-  //const UserConfiguration* cfg = UserConfigGet();
+  // const UserConfiguration* cfg = UserConfigGet();
 
   // metadata
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
 
-
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
-
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
@@ -263,8 +250,8 @@ uint8_t BME280Measure(uint8_t *data, uint32_t ts, uint32_t idx) {
   SensorsAddMeasurement(data, data_len);
 
   // temperature
-  sen_status = EncodeDoubleMeasurement(
-      meta, sens_data.temperature, SensorType_BME280_TEMP, data, &data_len);
+  sen_status = EncodeDoubleMeasurement(meta, sens_data.temperature,
+                                       SensorType_BME280_TEMP, data, &data_len);
   if (sen_status != SENSOR_OK) {
     return -1;
   }

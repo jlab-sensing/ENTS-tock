@@ -1,7 +1,6 @@
 #include "modules/power.hpp"
 
 #include <ArduinoLog.h>
-
 #include <libents/proto/transcoder.h>
 
 #include "driver/gpio.h"
@@ -21,7 +20,7 @@ ModulePower::ModulePower() {
 
 ModulePower::~ModulePower() {}
 
-void ModulePower::OnReceive(const Esp32Command &cmd) {
+void ModulePower::OnReceive(const Esp32Command& cmd) {
   Log.traceln("ModulePower::OnReceive");
 
   // check if power command
@@ -49,7 +48,7 @@ void ModulePower::OnReceive(const Esp32Command &cmd) {
   }
 }
 
-size_t ModulePower::OnRequest(uint8_t *buffer) {
+size_t ModulePower::OnRequest(uint8_t* buffer) {
   Log.traceln("ModulePower::OnRequest");
   memcpy(buffer, request_buffer, request_buffer_len);
   return request_buffer_len;

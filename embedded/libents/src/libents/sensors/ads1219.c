@@ -15,12 +15,11 @@
 
 #include "ads1219.h"
 
-#include <libtock/tock.h>
 #include <libtock-sync/services/alarm.h>
 #include <libtock/peripherals/i2c_master.h>
+#include <libtock/tock.h>
 
 #include "../proto/sensor.h"
-
 
 // Generic calibration values that give rough estimate
 static const double voltage_calibration_m = -0.00039326;
@@ -77,13 +76,13 @@ typedef union {
  *
  * @see data_ready_pin
  */
-//const GPIO_TypeDef *data_ready_port = GPIOC;
+// const GPIO_TypeDef *data_ready_port = GPIOC;
 
 /**
  * @brief GPIO pin for adc data ready line
  *
  */
-//const uint16_t data_ready_pin = GPIO_PIN_0;
+// const uint16_t data_ready_pin = GPIO_PIN_0;
 
 /**
  * @brief Turn on power to analog circuit
@@ -114,7 +113,7 @@ void power_off(void);
  *
  * @return Raw measurement from adc
  */
-int measure(uint32_t *meas);
+int measure(uint32_t* meas);
 
 /**
  * @brief This function reconfigures the ADS1219 based on the parameter reg_data
@@ -143,15 +142,15 @@ int ads1219_reset(void) {
 int configure(const ConfigReg reg_data) {
   int ret = RETURNCODE_SUCCESS;
   uint8_t i2c_data[2] = {cmd_wreg, reg_data.value};
-  ret = i2c_master_write_sync(addrls, (uint8_t *)i2c_data, sizeof(i2c_data));
+  ret = i2c_master_write_sync(addrls, (uint8_t*)i2c_data, sizeof(i2c_data));
   if (ret != RETURNCODE_SUCCESS) {
     return ADS1219_CONFIGURE;
   }
-  
+
   return ADS1219_SUCCESS;
 }
 
-int ads1219_voltage_raw(uint32_t *voltage) {
+int ads1219_voltage_raw(uint32_t* voltage) {
   int ret = ADS1219_SUCCESS;
 
   ConfigReg reg_data = {0};
@@ -172,19 +171,19 @@ int ads1219_voltage_raw(uint32_t *voltage) {
   return ret;
 }
 
-int ads1219_voltage(double *voltage) {
+int ads1219_voltage(double* voltage) {
   int ret = ADS1219_SUCCESS;
 
   uint32_t raw = 0;
   ret = ads1219_voltage_raw(&raw);
 
-  *voltage = (voltage_calibration_m * (double) raw) + voltage_calibration_b;
+  *voltage = (voltage_calibration_m * (double)raw) + voltage_calibration_b;
   *voltage /= 1000;
 
   return ret;
 }
 
-int ads1219_current_raw(uint32_t *current) {
+int ads1219_current_raw(uint32_t* current) {
   int ret = ADS1219_SUCCESS;
   double meas = 0.0;
 
@@ -207,29 +206,29 @@ int ads1219_current_raw(uint32_t *current) {
   return meas;
 }
 
-int ads1219_current(double *current) {
+int ads1219_current(double* current) {
   int ret = ADS1219_SUCCESS;
 
   uint32_t raw = 0;
   ret = ads1219_current_raw(&raw);
 
-  *current = (current_calibration_m * (double) raw) + current_calibration_b;
-  return ret; 
+  *current = (current_calibration_m * (double)raw) + current_calibration_b;
+  return ret;
 }
 
 void power_on(void) {
   //// set high
-  //HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_SET);
+  // HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_SET);
   //// delay for settling of analog components
-  //HAL_Delay(1);
+  // HAL_Delay(1);
 }
 
 void power_off(void) {
   //// set low
-  //HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_RESET);
+  // HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_RESET);
 }
 
-int measure(uint32_t *meas) {
+int measure(uint32_t* meas) {
   int ret = RETURNCODE_SUCCESS;
 
   uint8_t rx_data[3] = {0x00, 0x00, 0x00};
@@ -248,7 +247,7 @@ int measure(uint32_t *meas) {
 
   // TODO(jmadden173) implement data ready pin wait
   // Wait for the DRDY pin on the ADS12 to go low, this means data is ready
-  //while (HAL_GPIO_ReadPin(data_ready_port, data_ready_pin)) {}
+  // while (HAL_GPIO_ReadPin(data_ready_port, data_ready_pin)) {}
 
   // send read data command
   buf[0] = cmd_rdata;
@@ -277,15 +276,15 @@ int measure(uint32_t *meas) {
   return ADS1219_SUCCESS;
 }
 
-uint8_t ads1219_sensor_voltage(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t ads1219_sensor_voltage(uint8_t* data, uint32_t ts, uint32_t idx) {
   double voltage = 0.;
   ads1219_voltage(&voltage);
 
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
-  
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
+
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   size_t data_len = 0;
 
@@ -299,15 +298,15 @@ uint8_t ads1219_sensor_voltage(uint8_t *data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t ads1219_sensor_current(uint8_t *data, uint32_t ts, uint32_t idx) {
+uint8_t ads1219_sensor_current(uint8_t* data, uint32_t ts, uint32_t idx) {
   double current = 0.;
   ads1219_current(&current);
 
   Metadata meta = Metadata_init_zero;
   meta.ts = ts;
-  
-  //meta.logger_id = cfg->logger_id;
-  //meta.cell_id = cfg->cell_id;
+
+  // meta.logger_id = cfg->logger_id;
+  // meta.cell_id = cfg->cell_id;
 
   size_t data_len = 0;
 

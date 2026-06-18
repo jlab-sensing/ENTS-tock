@@ -19,8 +19,8 @@
 
 #include "mb85rc1mt.h"
 
-#include <string.h>
 #include <libtock/peripherals/i2c_master.h>
+#include <string.h>
 
 #include "fram.h"
 
@@ -43,13 +43,11 @@ typedef struct {
   uint16_t mem;
 } mb85rc1mt_address;
 
-
 /**
  * @brief Put the chip into sleep mode
  *
  */
 fram_status mb85rc1mt_wakeup(mb85rc1mt_address addr);
-
 
 /**
  * @brief Wake up device from sleep
@@ -57,8 +55,6 @@ fram_status mb85rc1mt_wakeup(mb85rc1mt_address addr);
  * @return
  */
 fram_status mb85rc1mt_sleep(mb85rc1mt_address addr);
-
-
 
 /**
  * @brief Convert a flat FRAM address to MB85RC1MT I2C address format
@@ -103,10 +99,8 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       write_len = len;
     }
 
-
     // transmit data
     int tock_status = RETURNCODE_SUCCESS;
- 
 
     // NOTE: There is an internal 32 bytes buffer on I2C communication
     // See below in read for additional details.
@@ -128,9 +122,9 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       }
 
       // copy chunk into buffer
-      memcpy(buffer+2, data+written, chunk_size);
+      memcpy(buffer + 2, data + written, chunk_size);
       // write chunk
-      tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, chunk_size+2);
+      tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, chunk_size + 2);
       if (tock_status < 0) {
         return FRAM_ERROR;
       }
@@ -138,21 +132,20 @@ fram_status mb85rc1mt_write(fram_addr addr, const uint8_t* data, size_t len) {
       // update written with total number of bytes
       written += chunk_size;
       // get the address for the next chunk
-      i2c_addr = convert_address(addr+written); 
+      i2c_addr = convert_address(addr + written);
     }
-
 
     // Old Implementation
 
-    //uint8_t buffer[write_len + 2] = {};
-    //buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
-    //buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
-    //memcpy(buffer+2, data, write_len);
-    //tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
+    // uint8_t buffer[write_len + 2] = {};
+    // buffer[0] = (uint8_t)(i2c_addr.mem >> 8);
+    // buffer[1] = (uint8_t)(i2c_addr.mem & 0xFF);
+    // memcpy(buffer+2, data, write_len);
+    // tock_status = i2c_master_write_sync(i2c_addr.dev, buffer, write_len + 2);
 
-    //if (tock_status < 0) {
-    //  return FRAM_ERROR;
-    //}
+    // if (tock_status < 0) {
+    //   return FRAM_ERROR;
+    // }
 
     // update address and length
     addr += write_len;
@@ -193,8 +186,8 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
     int tock_status = RETURNCODE_SUCCESS;
 
     uint8_t mem_addr[2] = {};
-    mem_addr[0] = (uint8_t) (i2c_addr.mem >> 8);
-    mem_addr[1] = (uint8_t) (i2c_addr.mem & 0xFF);
+    mem_addr[0] = (uint8_t)(i2c_addr.mem >> 8);
+    mem_addr[1] = (uint8_t)(i2c_addr.mem & 0xFF);
 
     // set read address
     tock_status = i2c_master_write_sync(i2c_addr.dev, mem_addr, 2);
@@ -202,21 +195,20 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
       return FRAM_ERROR;
     }
 
-
     // NOTE: This is a temporary workaround for reading more than the 32 byte
     // interal buffer. We write a single byte at at time.
     // In the kernal see, `capsules/core/i2c_master.rs`.
 
     for (int i = 0; i < read_len; i++) {
-      tock_status = i2c_master_read_sync(i2c_addr.dev, data+i, 1);
+      tock_status = i2c_master_read_sync(i2c_addr.dev, data + i, 1);
       if (tock_status < 0) {
         return FRAM_ERROR;
       }
     }
 
     // read from memory
-    //tock_status = i2c_master_read_sync(i2c_addr.dev, data, read_len);
-    //if (tock_status < 0) {
+    // tock_status = i2c_master_read_sync(i2c_addr.dev, data, read_len);
+    // if (tock_status < 0) {
     //  return FRAM_ERROR;
     //}
 
@@ -239,7 +231,7 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
 fram_status mb85rc1mt_wakeup(mb85rc1mt_address addr) {
   // TODO: Implement wakeup
 
-  (void) addr;
+  (void)addr;
 
   return FRAM_OK;
 }
@@ -247,11 +239,9 @@ fram_status mb85rc1mt_wakeup(mb85rc1mt_address addr) {
 fram_status mb85rc1mt_sleep(mb85rc1mt_address addr) {
   // TODO: Implement sleep
 
-  (void) addr;
+  (void)addr;
 
   return FRAM_OK;
 }
 
-fram_addr mb85rc1mt_size(void) {
-  return mb85rc1mt_pages * mb85rc1mt_seg_size;
-}
+fram_addr mb85rc1mt_size(void) { return mb85rc1mt_pages * mb85rc1mt_seg_size; }

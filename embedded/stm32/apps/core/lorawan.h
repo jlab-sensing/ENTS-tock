@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-
 int lorawan_init(void);
 
 int lorawan_join(void);

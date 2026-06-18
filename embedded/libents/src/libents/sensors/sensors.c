@@ -31,11 +31,10 @@
 
 #include "sensors.h"
 
+#include <libtock/kernel/ipc.h>
+#include <libtock/services/alarm.h>
 #include <stdint.h>
 #include <string.h>
-
-#include <libtock/services/alarm.h>
-#include <libtock/kernel/ipc.h>
 
 #include "../util/time.h"
 
@@ -55,14 +54,14 @@ static libtock_alarm_t sensor_alarm = {};
 
 /** Measurement index counter */
 static uint32_t meas_idx = 1;
-  
+
 // setup ipc for uplaods
 static int core_service = 0;
 
 // buffer to share with core service
 char core_buf[256] __attribute__((aligned(256)));
 
-// flag when ipc is don 
+// flag when ipc is don
 static bool done = false;
 
 /**
@@ -72,10 +71,10 @@ static bool done = false;
  * @param len How long the buffer is that the client shared with us.
  * @param buf Pointer to the shared buffer.
  */
-static void ipc_callback(__attribute__ ((unused)) int pid, int len, int buf, void* ud) {
+static void ipc_callback(__attribute__((unused)) int pid, int len, int buf,
+                         void* ud) {
   done = true;
 }
-
 
 /**
  * @brief Measures sensors and adds to tx buffer
@@ -91,17 +90,15 @@ void SensorsStart(int service, uint32_t period_ms) {
   ipc_register_client_callback(core_service, ipc_callback, NULL);
   ipc_share(core_service, core_buf, 256);
 
-
   // setup repeating measurement call
-  libtock_alarm_repeating_every_ms(period_ms, SensorsMeasure, NULL, &sensor_alarm);
+  libtock_alarm_repeating_every_ms(period_ms, SensorsMeasure, NULL,
+                                   &sensor_alarm);
 
   // Take first measurement
   SensorsMeasure(0, 0, 0);
 }
 
-void SensorsStop(void) {
-  libtock_alarm_ms_cancel(&sensor_alarm);
-}
+void SensorsStop(void) { libtock_alarm_ms_cancel(&sensor_alarm); }
 
 int SensorsAdd(SensorsPrototypeMeasure cb) {
   // check for out of range error
@@ -127,7 +124,7 @@ void SensorsMeasure(uint32_t arg1, uint32_t arg2, void* arg3) {
   for (int i = 0; i < callback_arr_len; i++) {
     // call measurement function
     // store length as first byte in buffer
-    core_buf[0] = callback_arr[i](core_buf+1, ts, meas_idx++);
+    core_buf[0] = callback_arr[i](core_buf + 1, ts, meas_idx++);
 
     // skip if error happened
     if (core_buf[0] == -1) {
@@ -144,17 +141,17 @@ void SensorsMeasure(uint32_t arg1, uint32_t arg2, void* arg3) {
   }
 }
 
-int SensorsAddMeasurement(uint8_t *data, uint8_t data_len) {
+int SensorsAddMeasurement(uint8_t* data, uint8_t data_len) {
   // copy data
   core_buf[0] = data_len;
-  memcpy(core_buf+1, data, data_len);
-    
+  memcpy(core_buf + 1, data, data_len);
+
   // Send to core for upload
   ipc_notify_service(core_service);
   yield_for(&done);
 }
 
-uint8_t SensorsMeasureTest(uint8_t *data) {
+uint8_t SensorsMeasureTest(uint8_t* data) {
   uint8_t static_data[] = {0xa,  0xc,  0x8,  0xc8, 0x1,  0x10, 0xc8, 0x1,  0x18,
                            0x88, 0xba, 0xf3, 0xba, 0x6,  0x12, 0x9,  0x11, 0xd9,
                            0xce, 0xf7, 0x53, 0x3,  0x88, 0xb7, 0xc0};

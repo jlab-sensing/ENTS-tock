@@ -11,7 +11,6 @@
 #define LIB_MODULE_HANDLER_INCLUDE_MODULES_POWER_HPP_
 
 #include <ArduinoLog.h>
-
 #include <libents/proto/controller.pb.h>
 
 #include "template_module.hpp"
@@ -37,12 +36,12 @@ class ModulePower : public Module {
   /**
    * @see ModuleHandler::Module.OnReceive
    */
-  void OnReceive(const Esp32Command &cmd);
+  void OnReceive(const Esp32Command& cmd);
 
   /**
    * @see ModuleHandler::Module.OnRequest
    */
-  size_t OnRequest(uint8_t *buffer);
+  size_t OnRequest(uint8_t* buffer);
 
   /**
    * @brief Put the esp32 into a deep sleep state if stated

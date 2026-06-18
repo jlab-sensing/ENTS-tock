@@ -1,7 +1,6 @@
-#include <libtock-sync/services/alarm.h>
-
-#include <ulog.h>
 #include <libents/sensors/ads1219.h>
+#include <libtock-sync/services/alarm.h>
+#include <ulog.h>
 
 int main(void) {
   ulog_info("ADS1219 Example");
@@ -38,4 +37,3 @@ int main(void) {
 
   return 0;
 }
-

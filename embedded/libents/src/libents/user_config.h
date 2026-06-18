@@ -61,7 +61,6 @@ typedef enum {
   USERCONFIG_NULL_CONFIG = -9,
 } UserConfigStatus;
 
-
 /**
  * @brief Loads user configuration data from FRAM to RAM.
  *
@@ -80,7 +79,7 @@ UserConfigStatus UserConfigLoad(void);
  * @param config  Pointer to the UserConfiguration structure to save.
  * @return USERCONFIG_OK if successful, error code otherwise.
  */
-UserConfigStatus UserConfigSave(const UserConfiguration *config);
+UserConfigStatus UserConfigSave(const UserConfiguration* config);
 
 /**
  * @brief Gets a reference to the loaded user configuration data in RAM.
@@ -90,7 +89,7 @@ UserConfigStatus UserConfigSave(const UserConfiguration *config);
  *
  * @return Pointer to the loaded UserConfig structure.
  */
-const UserConfiguration *UserConfigGet(void);
+const UserConfiguration* UserConfigGet(void);
 
 /**
  * @brief Prints arbitrary user config over serial.
@@ -98,7 +97,7 @@ const UserConfiguration *UserConfigGet(void);
  * The printing/formatting is done with APP_LOG functions requiring
  * SystemApp_Init() to be called before this function can be used.
  */
-void UserConfigPrintAny(const UserConfiguration *config);
+void UserConfigPrintAny(const UserConfiguration* config);
 
 /**
  * @brief Prints the current user configuration over serial.
@@ -124,7 +123,7 @@ UserConfigStatus UserConfigClear(void);
  *
  * @return USERCONFIG_OK if successful, error code otherwise.
  */
-UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length);
+UserConfigStatus UserConfigBytes(uint8_t* buffer, uint16_t* length);
 
 /**
  * @brief Load user config from bytes.
@@ -134,7 +133,7 @@ UserConfigStatus UserConfigBytes(uint8_t *buffer, uint16_t *length);
  *
  * @return USERCONFIG_OK if successful, error code otherwise.
  */
-UserConfigStatus UserConfigLoadBytes(uint8_t *buffer, uint16_t length);
+UserConfigStatus UserConfigLoadBytes(uint8_t* buffer, uint16_t length);
 
 /**
  * @}

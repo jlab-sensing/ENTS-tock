@@ -1,14 +1,14 @@
-#include "../communication.h"
 #include "../../proto/transcoder.h"
+#include "../communication.h"
 
-ControllerStatus PowerCommandTransaction(const PowerCommand *input,
-                                         PowerCommand *output);
+ControllerStatus PowerCommandTransaction(const PowerCommand* input,
+                                         PowerCommand* output);
 
-ControllerStatus PowerCommandTransaction(const PowerCommand *input,
-                                         PowerCommand *output) {
+ControllerStatus PowerCommandTransaction(const PowerCommand* input,
+                                         PowerCommand* output) {
   // get reference to tx and rx buffers
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // encode command
   tx->len = EncodePowerCommand(input, tx->data, tx->size);

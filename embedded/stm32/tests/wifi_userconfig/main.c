@@ -16,14 +16,12 @@
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
-#include <stdio.h>
-#include <string.h>
-
-#include <unity.h>
-
 #include <libents/controller/controller.h>
 #include <libents/controller/modules/wifi.h>
 #include <libents/controller/modules/wifi_userconfig.h>
+#include <stdio.h>
+#include <string.h>
+#include <unity.h>
 
 /**
  * @brief Run at the start of every test.
@@ -34,7 +32,6 @@ void setUp(void) {}
  * @brief Run at the end of every test.
  */
 void tearDown(void) {}
-
 
 void test_ControllerWiFiHost(void) {
   int ret = 0;
@@ -72,7 +69,7 @@ void test_ControllerWiFiStopHost(void) {
 
 int main(void) {
   ControllerInit();
-  
+
   UNITY_BEGIN();
 
   RUN_TEST(test_ControllerWiFiHost);

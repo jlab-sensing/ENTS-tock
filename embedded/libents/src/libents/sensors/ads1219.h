@@ -17,8 +17,8 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /**
  * @ingroup stm32
@@ -47,17 +47,16 @@ typedef enum {
   ADS1219_CONVERSION = -4
 } ads1219_status;
 
-
 /**
-* @brief This function starts up the ADS1219
-*
-* This function is a wrapper for the STM32 HAl I2C library. The ADS1219 uses
-* I2C the I2C communication protocol. This function configures then ADS1219 for
-* single read mode. Note: the ADS1219 requires a minimum of 500us when it is
-* powered on.
-*
-* @return Return code.
-*/
+ * @brief This function starts up the ADS1219
+ *
+ * This function is a wrapper for the STM32 HAl I2C library. The ADS1219 uses
+ * I2C the I2C communication protocol. This function configures then ADS1219 for
+ * single read mode. Note: the ADS1219 requires a minimum of 500us when it is
+ * powered on.
+ *
+ * @return Return code.
+ */
 int ads1219_reset(void);
 
 /**
@@ -70,8 +69,8 @@ int ads1219_reset(void);
  * @param current Pointer to store measurement.
  * @return Return code.
  */
-int ads1219_voltage(double *voltage);
-int ads1219_voltage_raw(uint32_t *voltage);
+int ads1219_voltage(double* voltage);
+int ads1219_voltage_raw(uint32_t* voltage);
 
 /**
  * @brief This function reads the current ADC ampere value.
@@ -83,17 +82,16 @@ int ads1219_voltage_raw(uint32_t *voltage);
  * @param current Pointer to store measurement.
  * @return Return code.
  */
-int ads1219_current(double *current);
-int ads1219_current_raw(uint32_t *current);
-
+int ads1219_current(double* current);
+int ads1219_current_raw(uint32_t* current);
 
 /**
  * @brief Sensor measure functions.
  *
  * @see SensorsPrototypeMeasure
  */
-uint8_t ads1219_sensor_voltage(uint8_t *data, uint32_t ts, uint32_t idx);
-uint8_t ads1219_sensor_current(uint8_t *data, uint32_t ts, uint32_t idx);
+uint8_t ads1219_sensor_voltage(uint8_t* data, uint32_t ts, uint32_t idx);
+uint8_t ads1219_sensor_current(uint8_t* data, uint32_t ts, uint32_t idx);
 
 /**
  * @}

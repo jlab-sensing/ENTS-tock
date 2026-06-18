@@ -19,7 +19,6 @@ typedef enum {
   USERCONFIG_STATE_STOPPING
 } UserConfigState;
 
-
 /**
  * @brief Starts the user config webserver
  *

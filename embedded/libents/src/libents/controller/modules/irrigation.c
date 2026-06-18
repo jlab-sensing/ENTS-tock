@@ -1,17 +1,16 @@
 #include "irrigation.h"
 
-#include "../communication.h"
-
-#include "../../sensors/solenoid.h"
 #include "../../proto/transcoder.h"
+#include "../../sensors/solenoid.h"
+#include "../communication.h"
 
 extern unsigned int g_controller_i2c_timeout;
 
-ControllerStatus IrrigationCommandTransaction(const IrrigationCommand *input,
-                                              IrrigationCommand *output) {
+ControllerStatus IrrigationCommandTransaction(const IrrigationCommand* input,
+                                              IrrigationCommand* output) {
   // get reference to tx and rx buffers
-  Buffer *tx = ControllerTx();
-  Buffer *rx = ControllerRx();
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
 
   // encode command
   tx->len = EncodeIrrigationCommand(input, tx->data, tx->size);
@@ -50,7 +49,7 @@ IrrigationCommand_State ControllerIrrigationCheck(void) {
   }
 
   // Add verbose output
-  const char *state_name = "UNKNOWN";
+  const char* state_name = "UNKNOWN";
   switch (resp.state) {
     case IrrigationCommand_State_OPEN:
       state_name = "OPEN";

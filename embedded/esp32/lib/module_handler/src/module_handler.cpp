@@ -3,16 +3,15 @@
 #include <Arduino.h>
 #include <ArduinoLog.h>
 #include <Wire.h>
+#include <libents/proto/transcoder.h>
 
 #include <cstring>
-
-#include <libents/proto/transcoder.h>
 
 ModuleHandler::ModuleHandler::ModuleHandler() {}
 
 ModuleHandler::ModuleHandler::~ModuleHandler() {}
 
-void ModuleHandler::ModuleHandler::RegisterModule(Module *module) {
+void ModuleHandler::ModuleHandler::RegisterModule(Module* module) {
   // add module to map based on type
   int type = module->Type();
   req_map[type] = module;
@@ -32,7 +31,7 @@ void ModuleHandler::ModuleHandler::OnReceive(size_t num_bytes) {
 
 #ifdef UNIT_TEST
   // Store pointer to the rx buffer
-  uint8_t *module_handler_rx_buffer_idx = module_handler_rx_buffer;
+  uint8_t* module_handler_rx_buffer_idx = module_handler_rx_buffer;
   // get msg end flag
   bool msg_end = module_handler_rx_buffer_idx;
   // increment idx
@@ -44,7 +43,7 @@ void ModuleHandler::ModuleHandler::OnReceive(size_t num_bytes) {
 #endif
 
   // get end of buffer
-  uint8_t *prev_end = NULL;
+  uint8_t* prev_end = NULL;
   if (receive_buffer.len == 0) {
     prev_end = receive_buffer.data;
   } else {
@@ -52,7 +51,7 @@ void ModuleHandler::ModuleHandler::OnReceive(size_t num_bytes) {
   }
 
   // loop over available bytes in buffer
-  for (uint8_t *end = prev_end; end < prev_end + num_bytes - 1; end++) {
+  for (uint8_t* end = prev_end; end < prev_end + num_bytes - 1; end++) {
 #ifdef UNIT_TEST
     // copy bytes
     *end = *module_handler_rx_buffer_idx;
@@ -179,7 +178,7 @@ void ModuleHandler::ModuleHandler::OnRequest(void) {
     }
 
     // find the end of pr
-    uint8_t *end = request_buffer.data + request_buffer.idx;
+    uint8_t* end = request_buffer.data + request_buffer.idx;
 
     // print what will be sent
     for (int i = 0; i < bytes_to_send; i++) {
@@ -202,13 +201,13 @@ void ModuleHandler::ModuleHandler::OnRequest(void) {
   }
 }
 
-ModuleHandler::Module *ModuleHandler::ModuleHandler::GetModule(int type) {
+ModuleHandler::Module* ModuleHandler::ModuleHandler::GetModule(int type) {
   return req_map.at(type);
 }
 
 void ModuleHandler::ModuleHandler::ResetModules(void) {
   // call Reset() for all modules in req_map
-  for (auto &entry : req_map) {
+  for (auto& entry : req_map) {
     entry.second->Reset();
   }
 }

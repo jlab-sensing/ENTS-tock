@@ -26,7 +26,7 @@ ModuleIrrigation::~ModuleIrrigation(void) {
   // nothing to do
 }
 
-void ModuleIrrigation::OnReceive(const Esp32Command &cmd) {
+void ModuleIrrigation::OnReceive(const Esp32Command& cmd) {
   if (cmd.which_command != Esp32Command_irrigation_command_tag) {
     return;
   }
@@ -40,7 +40,7 @@ void ModuleIrrigation::OnReceive(const Esp32Command &cmd) {
   }
 }
 
-size_t ModuleIrrigation::OnRequest(uint8_t *buffer) {
+size_t ModuleIrrigation::OnRequest(uint8_t* buffer) {
   memcpy(buffer, request_buffer, request_buffer_len);
   return request_buffer_len;
 }
@@ -70,7 +70,7 @@ void ModuleIrrigation::CheckAutoIrrigation() {
   }
 }
 
-void ModuleIrrigation::Check(const Esp32Command &cmd) {
+void ModuleIrrigation::Check(const Esp32Command& cmd) {
   IrrigationCommand resp = IrrigationCommand_init_zero;
   resp.state = GetSolenoidState();
   request_buffer_len =
@@ -97,7 +97,7 @@ void CheckIrrigationConditions() {
 
 // Helper function to format time as RFC 1123
 String formatTimeRFC1123(time_t timestamp) {
-  struct tm *tm_info = gmtime(&timestamp);
+  struct tm* tm_info = gmtime(&timestamp);
   char buf[30];
   strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
   return String(buf);

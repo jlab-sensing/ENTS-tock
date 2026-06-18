@@ -39,7 +39,7 @@ extern "C" {
  * @return File length in bytes (after saving data). Returns -1 on failure to
  * save.
  */
-uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes);
+uint32_t ControllerMicroSDSave(const uint8_t* data, const uint16_t num_bytes);
 
 /**
  * @brief Send the UserConfig to the ESP32 and saves a file on the microSD with
@@ -51,8 +51,8 @@ uint32_t ControllerMicroSDSave(const uint8_t *data, const uint16_t num_bytes);
  * @return File length in bytes (after saving data). Returns -1 on failure to
  * save.
  */
-uint32_t ControllerMicroSDUserConfig(UserConfiguration *uc,
-                                     const char *filename);
+uint32_t ControllerMicroSDUserConfig(UserConfiguration* uc,
+                                     const char* filename);
 
 /**
  * @}

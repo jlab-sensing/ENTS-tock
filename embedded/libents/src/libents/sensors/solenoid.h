@@ -36,7 +36,8 @@ typedef enum {
 void SolenoidInit(void);
 
 /**
- * @brief Returns both the raw voltage value and a calibrated measurement from a water Flow sensor.
+ * @brief Returns both the raw voltage value and a calibrated measurement from a
+ * water Flow sensor.
  *
  * @param void
  * @return measurements

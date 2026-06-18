@@ -55,7 +55,7 @@ class Dirtviz {
    *
    * @param url API URL
    */
-  explicit Dirtviz(const char *url);
+  explicit Dirtviz(const char* url);
 
   /**
    * @brief Frees all memory
@@ -67,7 +67,7 @@ class Dirtviz {
    *
    * @param new_url New API URL
    */
-  void SetUrl(const char *url);
+  void SetUrl(const char* url);
 
   /**
    * @brief Health check for API endpoint
@@ -86,7 +86,7 @@ class Dirtviz {
    *
    * @return Number of bytes sent to the server
    */
-  unsigned int SendMeasurement(const uint8_t *meas, size_t meas_len);
+  unsigned int SendMeasurement(const uint8_t* meas, size_t meas_len);
 
   /**
    * @brief Get the response from the server

@@ -1,16 +1,13 @@
 /* vim: set sw=2 expandtab tw=80: */
 
-#include <stdio.h>
-
-#include <libtock/tock.h>
-#include <libtock/kernel/ipc.h>
-
-#include <ulog.h>
-
-#include <libents/storage/fifo.h>
-#include <libents/proto/sensor.h>
 #include <libents/controller/controller.h>
+#include <libents/proto/sensor.h>
+#include <libents/storage/fifo.h>
 #include <libents/user_config.h>
+#include <libtock/kernel/ipc.h>
+#include <libtock/tock.h>
+#include <stdio.h>
+#include <ulog.h>
 
 #include "lorawan.h"
 #include "user_config.h"
@@ -27,9 +24,7 @@ typedef struct {
   int meas;
 } upload_stats;
 
-
 upload_stats stats = {};
-
 
 // buffer to store measurements
 static uint8_t meas_buffer[256] = {};
@@ -42,11 +37,9 @@ static uint8_t uc_buffer_length = 0;
 static uint8_t cmd = 0;
 
 // last pid command
-static int last_pid = 0; 
+static int last_pid = 0;
 
 static bool has_data = false;
-
-
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -56,8 +49,6 @@ static bool has_data = false;
  * @param buf Pointer to the shared buffer.
  */
 static void ipc_callback(int pid, int len, int buf, void* ud);
-
-
 
 /**
  * @brief Gets a formatted sensor measurement payload.
@@ -73,13 +64,9 @@ static void ipc_callback(int pid, int len, int buf, void* ud);
  */
 static int get_payload(uint8_t* buffer, int size);
 
-
-
-void ulog_prefix_handler(ulog_event *ev, char *prefix, size_t prefix_size) {
+void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
   snprintf(prefix, prefix_size, "Core\t");
 }
-
-
 
 int main(void) {
   // Setup logging level and prefix
@@ -87,31 +74,23 @@ int main(void) {
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("=== App Initialized ===");
 
-
-
-
-
   // Load bytes into userconfig buffer
   //
   // Yes I am casting uint8_t to a uint16_t and it could overwrite the data
   // buffer. I know at the time of writing this that the user config stays
   // under 256 bytes as defined by protobuf.
-  UserConfigStatus uc_status = UserConfigBytes(uc_buffer, (uint16_t *) &uc_buffer_length);
+  UserConfigStatus uc_status =
+      UserConfigBytes(uc_buffer, (uint16_t*)&uc_buffer_length);
 
   // Option to print bytes to the buffer
-  //printf("uc_buffer[%u]:", uc_buffer_length);
-  //for (uint8_t i = 0; i < uc_buffer_length; i++) {
+  // printf("uc_buffer[%u]:", uc_buffer_length);
+  // for (uint8_t i = 0; i < uc_buffer_length; i++) {
   //  printf(" %02x", uc_buffer[i]);
   //}
-  //printf("\n\n");
-
-
-
-
+  // printf("\n\n");
 
   // start service after connected
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
-
 
   // Print warning when using TEST_USER_CONFIG
 #ifdef TEST_USER_CONFIG
@@ -121,32 +100,22 @@ int main(void) {
   // Initialize controller interface
   ControllerInit();
 
- 
-
-  //UserConfigStatus uc_status = UserConfigLoad();
+  // UserConfigStatus uc_status = UserConfigLoad();
   //// start user config interface
-  //if (uc_status == USERCONFIG_OK) {
-  //  // print current user config
-  //  ulog_info("Current user configuration:");
-  //  ulog_info("---------------------------");
-  //  UserConfigPrint();
-  //} else {
-  //  ulog_error("Could not load user config.");
-  //}
-  
-
-
-
+  // if (uc_status == USERCONFIG_OK) {
+  //   // print current user config
+  //   ulog_info("Current user configuration:");
+  //   ulog_info("---------------------------");
+  //   UserConfigPrint();
+  // } else {
+  //   ulog_error("Could not load user config.");
+  // }
 
   // Load user config and start webservice with timeotu
   UserConfigStart(120 * 1000);
 
-
-
   // return codes
   int ret = 0;
-
-
 
   // Initialize LoRaWAN
 
@@ -165,31 +134,26 @@ int main(void) {
     return ret;
   }
 
-
-
   while (1) {
     // TODO: Create copy of counters
 
     ulog_trace("main loop");
 
-    
     // wait for callback
     yield_for(&has_data);
 
-
-
     //
     // Save data on matched command
-    // 
+    //
 
     if (cmd == 2) {
       // print out bytes
       //  Get number of bytes in buffer
       ulog_info("Received %d bytes:", meas_buffer_length);
-      //for (int i=1; i < meas_buffer_length; i++) {
-      //  printf("%x ", meas_buffer[i]);
-      //}
-      //printf("\n");
+      // for (int i=1; i < meas_buffer_length; i++) {
+      //   printf("%x ", meas_buffer[i]);
+      // }
+      // printf("\n");
 
       // store in buffer
       int ret = fifo_put(meas_buffer, meas_buffer_length);
@@ -198,19 +162,16 @@ int main(void) {
       }
       stats.meas++;
 
-
       // indicate data has been processed and trigger client
       has_data = false;
       ipc_notify_client(last_pid);
     }
 
-
-
     //
     // Always check buffer for an upload
     //
 
-    uint16_t meas_in_buffer = fifo_buffer_len();  
+    uint16_t meas_in_buffer = fifo_buffer_len();
 
     // batch into minium of 4 measurements
     while (meas_in_buffer > 4) {
@@ -220,7 +181,7 @@ int main(void) {
       uint8_t buffer[60] = {};
       int len = get_payload(buffer, sizeof(buffer));
       if (len != 0) {
-        ulog_debug("Uploading %d bytes", len); 
+        ulog_debug("Uploading %d bytes", len);
 
         stats.total++;
         ret = lorawan_upload(buffer, len);
@@ -237,23 +198,22 @@ int main(void) {
       meas_in_buffer = fifo_buffer_len();
     }
 
-
     //
     // print stats
-    // 
+    //
     if (!(stats.total % 6)) {
-      ulog_info("total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: %d\t", stats.total, stats.failed, stats.meas, stats.bytes);
+      ulog_info(
+          "total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: "
+          "%d\t",
+          stats.total, stats.failed, stats.meas, stats.bytes);
     }
-    
-
-
   }
 }
 
 static void ipc_callback(int pid, int len, int buf, void* ud) {
   ulog_trace("ipc_callabck");
 
-  uint8_t* buffer = (uint8_t*) buf;
+  uint8_t* buffer = (uint8_t*)buf;
 
   // payload format
   cmd = buffer[0];
@@ -267,11 +227,11 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
     // copy from user config to data
     memcpy(data, uc_buffer, uc_buffer_length);
     *length = uc_buffer_length;
- 
+
     // trigger client
     ipc_notify_client(pid);
 
-  // Store measurements into buffer
+    // Store measurements into buffer
   } else if (cmd == 2) {
     ulog_trace("measurement command");
 
@@ -284,13 +244,11 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
     last_pid = pid;
     has_data = true;
 
-  // Catch all other commands
+    // Catch all other commands
   } else {
     ulog_error("IPC command %d not implemented.", buffer[0]);
   }
-
 }
-
 
 static int get_payload(uint8_t* buffer, int size) {
   ulog_trace("get_payload");
@@ -307,24 +265,24 @@ static int get_payload(uint8_t* buffer, int size) {
 
   uint16_t i = 0;
   for (i = 0; i < length; i++) {
-    ret = fifo_peek(i, buffer, (uint8_t*) &len);
+    ret = fifo_peek(i, buffer, (uint8_t*)&len);
     if (ret < 0) {
       ulog_error("Could not read from buffer (error: %d)", ret);
       continue;
     }
     ulog_debug("Read %d bytes from buffer", len);
 
-
     // decode measuremnet
     ret = DecodeSensorMeasurement(buffer, len, &meas[i]);
     if (ret < 0) {
-      ulog_error("Could not decode measurement (error %d), malformed data?", ret);
+      ulog_error("Could not decode measurement (error %d), malformed data?",
+                 ret);
       // TODO: Removed failing measurement. Can't use drop, need to remove
       // specific index.
       continue;
     }
 
-    ret = RepeatedSensorMeasurementsSize(meta, meas, i+1, (size_t*) &len);
+    ret = RepeatedSensorMeasurementsSize(meta, meas, i + 1, (size_t*)&len);
     if (ret < 0) {
       ulog_error("Could not find size of payload (error %d)", ret);
       continue;
@@ -333,23 +291,23 @@ static int get_payload(uint8_t* buffer, int size) {
 
     // early stop when length exceeds size of buffer
     if (len > size) {
-      ulog_debug("Over sensors size limit of %d. Removing last measurement.", size);
-  
+      ulog_debug("Over sensors size limit of %d. Removing last measurement.",
+                 size);
+
       i--;
       break;
     }
   }
-  
 
-  ret = EncodeRepeatedSensorMeasurements(meta, meas, i+1, buffer, size, (size_t*) &len);
+  ret = EncodeRepeatedSensorMeasurements(meta, meas, i + 1, buffer, size,
+                                         (size_t*)&len);
   if (ret < 0) {
     ulog_error("Could not encode %d repeated measurements (error %d)", i, ret);
     return 0;
   }
 
-
   // Clear uploaded measurements
-  //ulog_debug("%d measurements to drop");
+  // ulog_debug("%d measurements to drop");
   for (uint16_t j = 0; j < i; j++) {
     ret = fifo_drop();
     if (ret < 0) {

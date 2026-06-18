@@ -16,12 +16,10 @@
 #include <NTPClient.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-
 #include <libents/proto/controller.pb.h>
 #include <libents/proto/transcoder.h>
 
 #include "dirtviz.hpp"
-
 #include "template_module.hpp"
 
 /**
@@ -45,12 +43,12 @@ class ModuleWiFi : public ModuleHandler::Module {
   /**
    * @see ModuleHandler::Module.OnReceive
    */
-  void OnReceive(const Esp32Command &cmd);
+  void OnReceive(const Esp32Command& cmd);
 
   /**
    * @see ModuleHandler::Module.OnRequest
    */
-  size_t OnRequest(uint8_t *buffer);
+  size_t OnRequest(uint8_t* buffer);
 
  private:
   typedef enum {
@@ -66,23 +64,23 @@ class ModuleWiFi : public ModuleHandler::Module {
    */
   Dirtviz dirtviz;
 
-  void Post(const Esp32Command &cmd);
+  void Post(const Esp32Command& cmd);
 
-  void Connect(const Esp32Command &cmd);
+  void Connect(const Esp32Command& cmd);
 
-  void CheckRequest(const Esp32Command &cmd);
+  void CheckRequest(const Esp32Command& cmd);
 
-  void Time(const Esp32Command &cmd);
+  void Time(const Esp32Command& cmd);
 
-  void Disconnect(const Esp32Command &cmd);
+  void Disconnect(const Esp32Command& cmd);
 
-  void CheckWiFi(const Esp32Command &cmd);
+  void CheckWiFi(const Esp32Command& cmd);
 
-  void CheckApi(const Esp32Command &cmd);
+  void CheckApi(const Esp32Command& cmd);
 
-  void NtpSync(const Esp32Command &cmd);
+  void NtpSync(const Esp32Command& cmd);
 
-  void Host(const Esp32Command &cmd);
+  void Host(const Esp32Command& cmd);
 
   void StopHost();
 
@@ -90,7 +88,7 @@ class ModuleWiFi : public ModuleHandler::Module {
 
   WiFiUDP ntpUDP;
 
-  NTPClient *timeClient;
+  NTPClient* timeClient;
 
   /** Buffer for i2c requests */
   uint8_t request_buffer[WiFiCommand_size] = {};

@@ -1,6 +1,6 @@
 /**
  * @file fram.h
- * @brief Storage interface for onboard FRAM chips. 
+ * @brief Storage interface for onboard FRAM chips.
  *
  * Ported from the baremetal STM32 HAL implementation in ENTS-node-firmware.
  * Uses libtock-c I2C master API instead of HAL_I2C_Mem_Write/Read.
@@ -30,10 +30,10 @@ extern "C" {
 
 /** Status codes for the FRAM library */
 typedef enum {
-  FRAM_OK           =  0,
-  FRAM_ERROR        = -1,
+  FRAM_OK = 0,
+  FRAM_ERROR = -1,
   FRAM_OUT_OF_RANGE = -2,
-  FRAM_BUFFER_FULL  = -3,
+  FRAM_BUFFER_FULL = -3,
   FRAM_BUFFER_EMPTY = -4,
 } fram_status;
 
@@ -48,7 +48,7 @@ typedef uint32_t fram_addr;
  * @param len   Number of bytes to write
  * @return FRAM_OK on success, FRAM_OUT_OF_RANGE or FRAM_ERROR on failure
  */
-fram_status fram_write(fram_addr addr, const uint8_t *data, size_t len);
+fram_status fram_write(fram_addr addr, const uint8_t* data, size_t len);
 
 /**
  * @brief Read bytes at the given address
@@ -58,7 +58,7 @@ fram_status fram_write(fram_addr addr, const uint8_t *data, size_t len);
  * @param data  Buffer to read into (must be at least len bytes)
  * @return FRAM_OK on success, FRAM_OUT_OF_RANGE or FRAM_ERROR on failure
  */
-fram_status fram_read(fram_addr addr, size_t len, uint8_t *data);
+fram_status fram_read(fram_addr addr, size_t len, uint8_t* data);
 
 /**
  * @brief Get the total size of FRAM in bytes

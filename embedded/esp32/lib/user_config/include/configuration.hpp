@@ -2,16 +2,15 @@
 #define LIB_USER_CONFIG_INCLUDE_CONFIGURATION_H
 
 #include <Arduino.h>
-#include <stdint.h>
-
 #include <libents/proto/user_config.pb.h>
+#include <stdint.h>
 
 /**
  * @brief Set the user configuration.
  *
  * Performs a deep copy of the configuration.
  */
-void setConfig(const UserConfiguration &new_config);
+void setConfig(const UserConfiguration& new_config);
 
 /**
  * @brief Get a copy of the current user configuration.
@@ -24,7 +23,7 @@ void setConfig(const UserConfiguration &new_config);
  *
  * @return A copy of the current user configuration.
  */
-const UserConfiguration &getConfig();
+const UserConfiguration& getConfig();
 
 /**
  * @brief Get the current configuration as a JSON string.
@@ -46,6 +45,6 @@ void printReceivedConfig();
  *
  * @param pconfig Config to print
  */
-void printConfig(const UserConfiguration &pconfig);
+void printConfig(const UserConfiguration& pconfig);
 
 #endif  // LIB_USER_CONFIG_INCLUDE_CONFIGURATION_H

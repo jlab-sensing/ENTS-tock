@@ -1,28 +1,26 @@
-#include <ulog.h>
 #include <libents/user_config.h>
+#include <ulog.h>
 
 int main() {
   ulog_info("Manually saving user configuration.");
 
   const static UserConfiguration testConfig = {
-    .logger_id = 200,
-    .cell_id = 200,
-    .Upload_method = Uploadmethod_WiFi,
-    .Upload_interval = 10,
-    .enabled_sensors_count = 2,
-    .enabled_sensors = {EnabledSensor_Voltage, EnabledSensor_Current},
-    // calibration values are taken from 2.2.3-033
-    .Voltage_Slope = -0.00039326,
-    .Voltage_Offset = 4.92916378e-05,
-    .Current_Slope = -1.18693164e-10,
-    .Current_Offset = 4.14518594e-05,
-    .WiFi_SSID = "HARE_Lab",
-    .WiFi_Password = "",
-    .API_Endpoint_URL = "http://dirtviz.jlab.ucsc.edu/api/sensor/",
-    // port is not used
-    .API_Endpoint_Port = 80};
-
-
+      .logger_id = 200,
+      .cell_id = 200,
+      .Upload_method = Uploadmethod_WiFi,
+      .Upload_interval = 10,
+      .enabled_sensors_count = 2,
+      .enabled_sensors = {EnabledSensor_Voltage, EnabledSensor_Current},
+      // calibration values are taken from 2.2.3-033
+      .Voltage_Slope = -0.00039326,
+      .Voltage_Offset = 4.92916378e-05,
+      .Current_Slope = -1.18693164e-10,
+      .Current_Offset = 4.14518594e-05,
+      .WiFi_SSID = "HARE_Lab",
+      .WiFi_Password = "",
+      .API_Endpoint_URL = "http://dirtviz.jlab.ucsc.edu/api/sensor/",
+      // port is not used
+      .API_Endpoint_Port = 80};
 
   // Load current configuration
   int status = 0;
@@ -36,8 +34,6 @@ int main() {
     ulog_info("--- END ---");
   }
 
-
- 
   // Save test configuration
   status = UserConfigSave(&testConfig);
   if (status != USERCONFIG_OK) {

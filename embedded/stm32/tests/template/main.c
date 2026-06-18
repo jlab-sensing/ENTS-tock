@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include <unity.h>
 
 /**
@@ -31,9 +30,8 @@ void setUp(void) {}
  */
 void tearDown(void) {}
 
-
 void test_template(void) {
-  int two = 1+1;
+  int two = 1 + 1;
   TEST_ASSERT_EQUAL_INT(2, two);
 }
 

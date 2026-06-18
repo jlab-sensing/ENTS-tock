@@ -7,7 +7,7 @@
 
 HttpClient::HttpClient() {}
 
-HttpClient::HttpClient(const std::string &resp) {
+HttpClient::HttpClient(const std::string& resp) {
   // find indicies of data
   size_t header_start = resp.find(LINE_END);
   size_t data_start = resp.find(LINE_END + LINE_END);
@@ -52,7 +52,7 @@ void HttpClient::DecodeHeaders(std::string headers_str) {
   }
 }
 
-void HttpClient::RemoveLeadingSpace(std::string *str) {
+void HttpClient::RemoveLeadingSpace(std::string* str) {
   // get first printable character
   auto end = std::find_if(str->begin(), str->end(),
                           [](char c) { return !isSpace(c); });
@@ -65,7 +65,7 @@ void HttpClient::RemoveLeadingSpace(std::string *str) {
   }
 }
 
-void HttpClient::RemoveTrailingSpace(std::string *str) {
+void HttpClient::RemoveTrailingSpace(std::string* str) {
   // reverse string
   std::reverse(str->begin(), str->end());
 
@@ -85,12 +85,12 @@ void HttpClient::RemoveTrailingSpace(std::string *str) {
   std::reverse(str->begin(), str->end());
 }
 
-void HttpClient::ExtractText(std::string *str) {
+void HttpClient::ExtractText(std::string* str) {
   RemoveLeadingSpace(str);
   RemoveTrailingSpace(str);
 }
 
-void HttpClient::RemoveSpace(std::string *str) {
+void HttpClient::RemoveSpace(std::string* str) {
   // remove whitespace
   str->erase(std::remove_if(str->begin(), str->end(),
                             [](char c) { return isSpace(c); }),

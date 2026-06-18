@@ -9,14 +9,13 @@
 // #include "ads.h"
 #include "app_lorawan.h"
 // #include "bme280_sensor.h"
+#include "../user_config.h"
 #include "board.h"
 #include "controller/controller.h"
 #include "dma.h"
 #include "fifo.h"
-#include "sensors.h"
-#include "../user_config.h"
-
 #include "payload.h"
+#include "sensors.h"
 
 /**
  * @brief Timer for uploads
@@ -124,8 +123,8 @@ void WiFiInit(void) {
 }
 
 void UploadEvent(void* context) {
-   // lower priority (higher value) than measure task
-  UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_WiFiUpload), CFG_SEQ_Prio_1); 
+  // lower priority (higher value) than measure task
+  UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_WiFiUpload), CFG_SEQ_Prio_1);
 }
 
 void Upload(void) {

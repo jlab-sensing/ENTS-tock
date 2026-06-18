@@ -57,14 +57,14 @@ bool ControllerUserConfigStart(void);
  * @param config Pointer to UserConfiguration structure
  * @return true if config is empty, false otherwise
  */
-bool isConfigEmpty(const UserConfiguration *config);
+bool isConfigEmpty(const UserConfiguration* config);
 
 /**
  * @brief Print user configuration details to log
  *
  * @param config Pointer to UserConfiguration structure
  */
-void printUserConfig(const UserConfiguration *config);
+void printUserConfig(const UserConfiguration* config);
 
 /**
  * @}

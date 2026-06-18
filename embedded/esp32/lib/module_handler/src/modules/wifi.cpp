@@ -17,7 +17,7 @@ ModuleWiFi::~ModuleWiFi(void) {
   delete timeClient;
 }
 
-void ModuleWiFi::OnReceive(const Esp32Command &cmd) {
+void ModuleWiFi::OnReceive(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::OnReceive");
 
   // check if WiFi command
@@ -91,13 +91,13 @@ void ModuleWiFi::OnReceive(const Esp32Command &cmd) {
   }
 }
 
-size_t ModuleWiFi::OnRequest(uint8_t *buffer) {
+size_t ModuleWiFi::OnRequest(uint8_t* buffer) {
   Log.traceln("ModuleWiFi::OnRequest");
   memcpy(buffer, request_buffer, request_buffer_len);
   return request_buffer_len;
 }
 
-void ModuleWiFi::Connect(const Esp32Command &cmd) {
+void ModuleWiFi::Connect(const Esp32Command& cmd) {
   // init return command
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_CONNECT;
@@ -131,7 +131,7 @@ void ModuleWiFi::Connect(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::Post(const Esp32Command &cmd) {
+void ModuleWiFi::Post(const Esp32Command& cmd) {
   // init return WiFi command
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_POST;
@@ -139,7 +139,7 @@ void ModuleWiFi::Post(const Esp32Command &cmd) {
   Log.traceln("ModuleWiFI::Post");
 
   // send measurement
-  const uint8_t *meas = cmd.command.wifi_command.resp.bytes;
+  const uint8_t* meas = cmd.command.wifi_command.resp.bytes;
   const size_t meas_len = cmd.command.wifi_command.resp.size;
   dirtviz.SendMeasurement(meas, meas_len);
 
@@ -148,7 +148,7 @@ void ModuleWiFi::Post(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::CheckRequest(const Esp32Command &cmd) {
+void ModuleWiFi::CheckRequest(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::CheckRequest");
 
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
@@ -157,8 +157,8 @@ void ModuleWiFi::CheckRequest(const Esp32Command &cmd) {
   // set url and port
   HttpClient resp_msg = dirtviz.GetResponse();
 
-  const uint8_t *resp =
-      reinterpret_cast<const uint8_t *>(resp_msg.Data().c_str());
+  const uint8_t* resp =
+      reinterpret_cast<const uint8_t*>(resp_msg.Data().c_str());
   size_t resp_len = resp_msg.Data().length();
   unsigned int status_code = resp_msg.ResponseCode();
 
@@ -175,7 +175,7 @@ void ModuleWiFi::CheckRequest(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::NtpSync(const Esp32Command &cmd) {
+void ModuleWiFi::NtpSync(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::NtpSync");
 
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
@@ -188,7 +188,7 @@ void ModuleWiFi::NtpSync(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::Time(const Esp32Command &cmd) {
+void ModuleWiFi::Time(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::Time");
 
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
@@ -205,7 +205,7 @@ void ModuleWiFi::Time(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::Disconnect(const Esp32Command &cmd) {
+void ModuleWiFi::Disconnect(const Esp32Command& cmd) {
   // init return command
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
   wifi_cmd.type = WiFiCommand_Type_CONNECT;
@@ -219,7 +219,7 @@ void ModuleWiFi::Disconnect(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::CheckWiFi(const Esp32Command &cmd) {
+void ModuleWiFi::CheckWiFi(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::CheckWiFi");
 
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
@@ -243,7 +243,7 @@ void ModuleWiFi::CheckWiFi(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::CheckApi(const Esp32Command &cmd) {
+void ModuleWiFi::CheckApi(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::CheckApi");
 
   WiFiCommand wifi_cmd = WiFiCommand_init_zero;
@@ -257,7 +257,7 @@ void ModuleWiFi::CheckApi(const Esp32Command &cmd) {
       EncodeWiFiCommand(&wifi_cmd, request_buffer, sizeof(request_buffer));
 }
 
-void ModuleWiFi::Host(const Esp32Command &cmd) {
+void ModuleWiFi::Host(const Esp32Command& cmd) {
   Log.traceln("ModuleWiFi::Host");
 
   WiFiCommand resp = WiFiCommand_init_zero;
