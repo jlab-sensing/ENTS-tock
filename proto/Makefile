@@ -1,7 +1,7 @@
 PROTOC = protoc
 NANOPB = nanopb_generator
 
-C_DIR = ../embedded/libents/proto
+C_DIR = ../embedded/libents/src/libents/proto
 
 PYTHON_DIR = ../python/src/ents/proto
 
