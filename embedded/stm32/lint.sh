@@ -9,6 +9,12 @@ bold=$(tput bold)
 normal=$(tput sgr0)
 
 
+# only check unstaged if not in CI
+if [ "${CI-}" != "true" ]; then
+    $SCRIPT_DIR/../libtock-c/tools/check_unstaged.sh || exit
+    export TOCK_NO_CHECK_UNSTAGED=1
+fi
+
 echo ""
 echo "${bold}Formatting examples${normal}"
 

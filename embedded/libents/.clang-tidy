@@ -12,8 +12,7 @@ ImplementationFileExtensions:
   - cc
   - cpp
   - cxx
-HeaderFilterRegex: '.*'
-ExcludeHeaderFilterRegex: '.*(libtock|libtock-sync|pb).*'
+HeaderFilterRegex: '.*libents/.*'
 FormatStyle:     Google
 #User:            jtmadden
 CheckOptions:    {}

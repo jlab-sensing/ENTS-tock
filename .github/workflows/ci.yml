@@ -1,11 +1,12 @@
 ---
 name: ci
 
+
+
+# using more recent ubuntu image for clang-format
 env:
   TERM: xterm
   python_version: "3.x"
-  # using more recent ubuntu image for clang-format
-  ubuntu_version: "ubuntu-26.04"
 
 on:
   pull_request:
@@ -15,7 +16,7 @@ on:
 
 jobs:
   ci-esp32-format:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,7 +28,7 @@ jobs:
         run: ./format.sh
 
   ci-esp32-lint:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,13 +54,13 @@ jobs:
         run: ./lint.sh
 
   ci-esp32-build:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           show-progress: false
-      
+
       - uses: actions/cache@v4
         with:
           path: |
@@ -85,7 +86,7 @@ jobs:
 
 
   ci-stm32-lint:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -111,7 +112,7 @@ jobs:
         run: ./lint.sh
 
   ci-stm32-format:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,7 +128,7 @@ jobs:
         run: ./format.sh
 
   ci-stm32-build:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -159,11 +160,11 @@ jobs:
 
 
   ci-libents-lint:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: recursive
           show-progress: false
 
       - name: Disable wget progress output
@@ -186,7 +187,7 @@ jobs:
 
 
   ci-libents-format:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -199,7 +200,7 @@ jobs:
 
 
   ci-libents-build:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -226,7 +227,7 @@ jobs:
 
 
   ci-python-lint:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -247,7 +248,7 @@ jobs:
         run: ./lint.sh
 
   ci-python-format:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -268,7 +269,7 @@ jobs:
         run: ./format.sh
 
   ci-python-build:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -289,7 +290,7 @@ jobs:
         run: ./build.sh
 
   ci-python-test:
-    runs-on: ${{ env.ubuntu_version }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
