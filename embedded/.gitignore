@@ -33,7 +33,7 @@
 # Executables
 *.exe
 *.out
-*.app
+#*.app
 *.i*86
 *.x86_64
 *.hex
@@ -97,7 +97,7 @@ dkms.conf
 # Executables
 *.exe
 *.out
-*.app
+#*.app
 
 # Build directories
 build/
