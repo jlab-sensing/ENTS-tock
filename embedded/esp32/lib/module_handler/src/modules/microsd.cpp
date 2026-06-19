@@ -2,7 +2,7 @@
 
 #include <ArduinoLog.h>
 #include <SD.h>
-#include <libents/nanopb/pb_decode.h>
+#include <nanopb/pb_decode.h>
 
 static const uint8_t chipSelect_pin = 7;
 static UserConfiguration uc = UserConfiguration_init_zero;

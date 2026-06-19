@@ -21,9 +21,7 @@
     "build": {
         "srcFilter": [
             "-<*>",
-            "+<libents/proto/*>",
-            "+<libents/nanopb/*.h>",
-            "+<libents/nanopb/*.c>"
+            "+<libents/proto/*>"
         ]
     }
 }

@@ -1,7 +1,7 @@
 #include "modules/wifi_userconfig.hpp"
 
-#include <libents/nanopb/pb_decode.h>
-#include <libents/nanopb/pb_encode.h>
+#include <nanopb/pb_decode.h>
+#include <nanopb/pb_encode.h>
 #include <string.h>
 
 #include "config_server.hpp"
