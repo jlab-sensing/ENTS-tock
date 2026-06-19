@@ -1,0 +1,51 @@
+# Base definitions
+TOCK_USERLAND_BASE_DIR ?= ../libtock-c
+LIBNAME := libents
+
+# Careful! Must be a path that resolves correctly **from where make is invoked**
+#
+# If you are only ever compiling a standalone library, then it's fine to simply set
+$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
+#$(LIBNAME)_DIR := .
+
+# If you will be asking applications to rebuild this library (see the development
+# section below), then you'll need to ensure that this directory is still correct
+# when invoked from inside the application folder.
+#
+# Tock accomplishes this for in-tree libraries by having all makefiles
+# conditionally set the TOCK_USERLAND_BASE_DIR variable, so that there
+# is a common relative path everywhere.
+#$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/$(LIBNAME)
+
+SRC_DIR = $($(LIBNAME)_DIR)/src/$(LIBNAME)
+
+# Or let make find them automatically:
+$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/controller/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/controller/modules/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/proto/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/bme280/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/storage/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/util/*.c)
+$(LIBNAME)_SRCS += $(SRC_DIR)/user_config.c
+
+# add external headers
+# NOTE This is basically a replication of each individual `Makefile.app`. There
+# is no way to include an external library when building a library
+
+EXT_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/
+
+# bme280
+override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/bme280
+override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/bme280/BME280_SensorAPI
+override CPPFLAGS += -DBME280_32BIT_ENABLE
+
+# microlog, maybe not needed? Depends if we ever want to use nice print
+# statements from within libents
+#override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/microlog/microlog/include
+#override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
+
+# nanopb
+override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/nanopb
+
+include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

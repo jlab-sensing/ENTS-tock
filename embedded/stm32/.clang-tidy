@@ -1,0 +1,21 @@
+---
+Checks: 'bugprone-*, clang-analyzer-*, google-*, modernize-*, performance-*, portability-*, readability-*'
+WarningsAsErrors: ''
+HeaderFileExtensions:
+  - ''
+  - h
+  - hh
+  - hpp
+  - hxx
+ImplementationFileExtensions:
+  - c
+  - cc
+  - cpp
+  - cxx
+HeaderFilterRegex: '.*(apps|examples|tests)/.*'
+FormatStyle:     Google
+#User:            jtmadden
+CheckOptions:    {}
+SystemHeaders:   false
+...
+

@@ -1,0 +1,310 @@
+---
+name: ci
+
+
+# using more recent ubuntu image for clang-format
+env:
+  TERM: xterm
+  python_version: "3.x"
+
+on:
+  pull_request:
+  workflow_dispatch:
+  merge_group:
+
+
+jobs:
+  ci-esp32-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - name: Format esp32
+        working-directory: ./embedded/esp32
+        run: ./format.sh
+
+  ci-esp32-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+          key: ${{ runner.os }}-pio
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Lint esp32
+        working-directory: ./embedded/esp32
+        run: ./lint.sh
+
+  ci-esp32-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          show-progress: false
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+          key: ${{ runner.os }}-pio
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build esp32
+        working-directory: ./embedded/esp32
+        run: ./build.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: esp32-build
+          path: embedded/esp32/.pio/build
+
+
+  ci-stm32-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          show-progress: false
+
+      - name: Disable wget progress output
+        run: |
+          echo "verbose = off" >> $HOME/.wgetrc
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-libtock-c
+
+      - name: Install toolchains
+        run: sudo apt-get install -y gcc-arm-none-eabi gcc-riscv64-unknown-elf bear
+
+      - name: Lint stm32
+        working-directory: ./embedded/stm32
+        run: ./lint.sh || true
+
+  ci-stm32-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - name: Lint stm32
+        working-directory: ./embedded/stm32
+        run: ./format.sh
+
+  ci-stm32-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          show-progress: false
+
+      - name: Disable wget progress output
+        run: |
+          echo "verbose = off" >> $HOME/.wgetrc
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-libtock-c
+
+      - name: Install toolchains
+        run: sudo apt-get install -y gcc-arm-none-eabi gcc-riscv64-unknown-elf
+
+      - name: Build stm32
+        working-directory: ./embedded/stm32
+        run: ./build_all.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stm32-build
+          path: "embedded/stm32/**/build/"
+
+
+  ci-libents-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          show-progress: false
+
+      - name: Disable wget progress output
+        run: |
+          echo "verbose = off" >> $HOME/.wgetrc
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-libtock-c
+
+      - name: Install toolchains
+        run: sudo apt-get install -y gcc-arm-none-eabi gcc-riscv64-unknown-elf bear
+
+      - name: Lint libents
+        working-directory: ./embedded/libents
+        run: ./lint.sh || true
+
+
+  ci-libents-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - name: Lint libents
+        working-directory: ./embedded/libents
+        run: ./format.sh
+
+
+  ci-libents-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          show-progress: false
+
+      - name: Disable wget progress output
+        run: |
+          echo "verbose = off" >> $HOME/.wgetrc
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-libtock-c
+
+      - name: Install toolchains
+        run: sudo apt-get install -y gcc-arm-none-eabi gcc-riscv64-unknown-elf
+
+      - name: Build libents
+        working-directory: ./embedded/libents
+        run: ./build.sh
+
+
+  ci-python-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+          cache: "pip"
+
+      - name: Install package
+        working-directory: python
+        run: pip install --force -e .[dev]
+
+      - name: Lint python
+        working-directory: python
+        run: ./lint.sh
+
+  ci-python-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+          cache: "pip"
+
+      - name: Install package
+        working-directory: python
+        run: pip install --force -e .[dev]
+
+      - name: Format python
+        working-directory: python
+        run: ./format.sh
+
+  ci-python-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+          cache: "pip"
+
+      - name: Install package
+        working-directory: python
+        run: pip install --force -e .[dev]
+
+      - name: Format python
+        working-directory: python
+        run: ./build.sh
+
+  ci-python-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+          cache: "pip"
+
+      - name: Install package
+        working-directory: python
+        run: pip install --force -e .[dev]
+
+      - name: Test python
+        working-directory: python
+        run: ./test.sh
