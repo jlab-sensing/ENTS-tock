@@ -1,0 +1,14 @@
+.PHONY: clean
+
+TOCK_USERLAND_BASE_DIR ?= ../../libtock-c
+
+SUBMODULE_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/template
+
+all: $(SUBMODULE_DIR)/README.md
+
+clean::
+	rm -rf build
+
+# confirm checkout
+$(SUBMODULE_DIR)/README.md:
+	git submodule update --init -- $(SUBMODULE_DIR)
