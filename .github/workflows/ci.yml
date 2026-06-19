@@ -41,7 +41,7 @@ jobs:
             ~/.platformio
           key: ${{ runner.os }}-pio
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
 
@@ -67,7 +67,7 @@ jobs:
             ~/.platformio
           key: ${{ runner.os }}-pio
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
 
@@ -233,7 +233,7 @@ jobs:
           submodules: false
           show-progress: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
           cache: "pip"
@@ -254,7 +254,7 @@ jobs:
           submodules: false
           show-progress: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
           cache: "pip"
@@ -275,7 +275,7 @@ jobs:
           submodules: false
           show-progress: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
           cache: "pip"
@@ -296,7 +296,7 @@ jobs:
           submodules: false
           show-progress: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python_version }}
           cache: "pip"
