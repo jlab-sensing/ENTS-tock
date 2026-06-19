@@ -150,7 +150,7 @@ jobs:
         working-directory: ./embedded/stm32
         run: ./build_all.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: stm32-build
           path: "embedded/stm32/**/build/"
