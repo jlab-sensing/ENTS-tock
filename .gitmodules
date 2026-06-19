@@ -7,3 +7,6 @@
 [submodule "embedded/libents/src/libents/microlog"]
 	path = embedded/libents/src/libents/microlog
 	url = https://github.com/an-dr/microlog.git
+[submodule "embedded/external/bme280/BME280_SensorAPI"]
+	path = embedded/external/bme280/BME280_SensorAPI
+	url = git@github.com:boschsensortec/BME280_SensorAPI.git

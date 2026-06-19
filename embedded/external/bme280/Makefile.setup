@@ -1,0 +1,16 @@
+.PHONY: clean
+
+TOCK_USERLAND_BASE_DIR ?= ../../libtock-c
+
+SRC_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/bme280
+SUBMODULE_DIR = $(SRC_DIR)/BME280_SensorAPI
+
+all: $(NANOPB_DIR)/README.md  $(MICROLOG_DIR)/README.md
+
+clean::
+	rm -rf build
+
+# confirm checkout
+$(SUBMODULE_DIR)/README.md:
+	git submodule update --init -- $(SUBMODULE_DIR)
+
