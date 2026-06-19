@@ -29,10 +29,10 @@ void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size);
  * @param buf Pointer to the shared buffer.
  */
 static void ipc_callback(int pid, int len, int buf, void* ud) {
-  (void) pid;
-  (void) len;
-  (void) buf;
-  (void) ud;
+  (void)pid;
+  (void)len;
+  (void)buf;
+  (void)ud;
 
   done = true;
 }
@@ -108,7 +108,7 @@ int load_userconfig(void) {
 }
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
-  (void) ev;
+  (void)ev;
 
   snprintf(prefix, prefix_size, "Sensors\t");
 }

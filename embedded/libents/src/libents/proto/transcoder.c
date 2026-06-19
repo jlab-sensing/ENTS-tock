@@ -358,7 +358,8 @@ size_t EncodeEsp32Command(const Esp32Command* cmd, uint8_t* buffer,
   return ostream.bytes_written;
 }
 
-size_t EncodeUserConfiguration(const UserConfiguration* config, uint8_t* buffer) {
+size_t EncodeUserConfiguration(const UserConfiguration* config,
+                               uint8_t* buffer) {
   // create output stream
   pb_ostream_t ostream = pb_ostream_from_buffer(buffer, UserConfiguration_size);
 

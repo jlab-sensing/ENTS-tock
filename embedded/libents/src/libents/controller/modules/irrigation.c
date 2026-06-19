@@ -52,8 +52,8 @@ IrrigationCommand_State ControllerIrrigationCheck(void) {
   }
 
   // Add verbose output
-  //const char* state_name = "UNKNOWN";
-  //switch (resp.state) {
+  // const char* state_name = "UNKNOWN";
+  // switch (resp.state) {
   //  case IrrigationCommand_State_OPEN:
   //    state_name = "OPEN";
   //    break;
@@ -64,7 +64,6 @@ IrrigationCommand_State ControllerIrrigationCheck(void) {
   //    state_name = "ERROR";
   //    break;
   //}
-
 
   // Control solenoid based on the received state
   switch (resp.state) {

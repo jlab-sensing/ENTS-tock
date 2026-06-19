@@ -16,10 +16,9 @@
 
 #pragma once
 
+#include <bme280.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include <bme280.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,8 +61,6 @@ BME280Status BME280Deinit(void);
  * @return Status code
  */
 BME280Status BME280MeasureAll(BME280Data* data);
-
-
 
 /**
  * @brief BME280 sensor library function

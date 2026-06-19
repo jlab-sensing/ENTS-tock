@@ -13,8 +13,8 @@
  * Copyright (c) 2026 jLab, UCSC
  */
 
-#include <stdio.h>
 #include <libents/storage/fram.h>
+#include <stdio.h>
 #include <string.h>
 #include <unity.h>
 

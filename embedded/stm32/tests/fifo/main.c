@@ -16,8 +16,8 @@
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
-#include <stdio.h>
 #include <libents/storage/fifo.h>
+#include <stdio.h>
 #include <string.h>
 #include <unity.h>
 

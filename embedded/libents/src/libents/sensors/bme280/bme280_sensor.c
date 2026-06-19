@@ -127,7 +127,7 @@ BME280Status BME280MeasureAll(BME280Data* data) {
 }
 
 uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
-  (void) idx;
+  (void)idx;
 
   // read sensor
   BME280Data sens_data;
@@ -159,8 +159,8 @@ uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
 }
 
 uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
-  (void) idx;
-  
+  (void)idx;
+
   // read sensor
   BME280Data sens_data;
   BME280Status status = BME280MeasureAll(&sens_data);
@@ -191,7 +191,7 @@ uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
 }
 
 uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx) {
-  (void) idx;
+  (void)idx;
 
   // read sensor
   BME280Data sens_data;
