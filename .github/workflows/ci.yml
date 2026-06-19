@@ -17,7 +17,7 @@ jobs:
   ci-esp32-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -29,7 +29,7 @@ jobs:
   ci-esp32-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -55,7 +55,7 @@ jobs:
   ci-esp32-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -87,7 +87,7 @@ jobs:
   ci-stm32-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -114,7 +114,7 @@ jobs:
   ci-stm32-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -126,7 +126,7 @@ jobs:
   ci-stm32-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -159,7 +159,7 @@ jobs:
   ci-libents-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -187,7 +187,7 @@ jobs:
   ci-libents-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -200,7 +200,7 @@ jobs:
   ci-libents-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -228,7 +228,7 @@ jobs:
   ci-python-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -249,7 +249,7 @@ jobs:
   ci-python-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -270,7 +270,7 @@ jobs:
   ci-python-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
@@ -291,7 +291,7 @@ jobs:
   ci-python-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false

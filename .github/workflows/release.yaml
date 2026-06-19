@@ -18,7 +18,7 @@ jobs:
   release-stm32-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -42,7 +42,7 @@ jobs:
   ci-esp32-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           show-progress: false
@@ -73,7 +73,7 @@ jobs:
   release-python-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
           show-progress: false
