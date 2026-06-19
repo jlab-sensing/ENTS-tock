@@ -1,11 +1,11 @@
 # Base definitions
-TOCK_USERLAND_BASE_DIR ?= ../../../libtock-c
+TOCK_USERLAND_BASE_DIR ?= ../../libtock-c
 LIBNAME := unity
 
 # Careful! Must be a path that resolves correctly **from where make is invoked**
 #
 # If you are only ever compiling a standalone library, then it's fine to simply set
-$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../stm32/tests/$(LIBNAME)
+$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../external/$(LIBNAME)
 #$(LIBNAME)_DIR := .
 
 # If you will be asking applications to rebuild this library (see the development
@@ -17,9 +17,12 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../stm32/tests/$(LIBNAME)
 # is a common relative path everywhere.
 #$(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/$(LIBNAME)
 
+SRC_DIR = $($(LIBNAME)_DIR)/Unity/src
 
 # Or let make find them automatically:
-$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/*.c)
+$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/*.c)
+
+override CPPFLAGS_$(LIBNAME) += -isystem $(SRC_DIR)
 
 #$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
 #$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)

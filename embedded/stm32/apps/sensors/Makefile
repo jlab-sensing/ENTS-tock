@@ -10,10 +10,10 @@ STACK_SIZE=4096
 # decrease heap size from default
 APP_HEAP_SIZE=4096
 
-LIBS_DIR = $(TOCK_USERLAND_BASE_DIR)/..
-EXT_DIR = $(LIBS_DIR)/external
+EMBED_DIR = $(TOCK_USERLAND_BASE_DIR)/..
+EXT_DIR = $(EMBED_DIR)/external
 
-EXTERN_LIBS += $(LIBS_DIR)/libents
+EXTERN_LIBS += $(EMBED_DIR)/libents
 EXTERN_LIBS += $(EXT_DIR)/bme280
 
 # Which files to compile.

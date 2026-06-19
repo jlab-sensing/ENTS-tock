@@ -2,8 +2,7 @@
 
 TOCK_USERLAND_BASE_DIR ?= ../../libtock-c
 
-SRC_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/bme280
-SUBMODULE_DIR = $(SRC_DIR)/BME280_SensorAPI
+SUBMODULE_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/unity/Unity
 
 all: $(SUBMODULE_DIR)/README.md
 
