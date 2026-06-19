@@ -1,2 +1,5 @@
-override CPPFLAGS += -isystem $(EXT_DIR)/microlog/microlog/include
-override CPPFLAGS += -DULOG_BUILD_PREFIX_SIZE=32
+# Add headers
+override CPPFLAGS += -isystem $(TOCK_USERLAND_BASE_DIR)/../external/template
+
+# Set 32-bit support
+override CPPFLAGS += -DTEMPLATE

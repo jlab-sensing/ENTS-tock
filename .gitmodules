@@ -2,7 +2,7 @@
 	path = embedded/libtock-c
 	url = https://github.com/tock/libtock-c.git
 [submodule "embedded/libents/src/libents/nanopb"]
-	path = embedded/libents/src/libents/nanopb
+	path = embedded/external/nanopb/nanopb
 	url = https://github.com/nanopb/nanopb.git
 [submodule "embedded/libents/src/libents/microlog"]
 	path = embedded/external/microlog/microlog

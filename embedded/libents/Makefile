@@ -52,4 +52,7 @@ override CPPFLAGS += -DBME280_32BIT_ENABLE
 #override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/microlog/microlog/include
 #override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
 
+# nanopb
+override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/nanopb/nanopb
+
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

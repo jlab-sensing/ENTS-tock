@@ -2,7 +2,7 @@
 
 TOCK_USERLAND_BASE_DIR ?= ../../libtock-c
 
-SUBMODULE_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/template/template
+SUBMODULE_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/nanopb/nanopb
 
 all: $(SUBMODULE_DIR)/README.md
 
