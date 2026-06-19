@@ -24,9 +24,9 @@ bear -- make -j $NUM_JOBS
 echo ""
 echo "${bold}Running clang-tidy${normal}"
 if [ "${CI-}" == "true" ]; then
-    run-clang-tidy -source-filter='^(?!.*(nanopb|microlog)).*' -j $NUM_JOBS
+    run-clang-tidy -j $NUM_JOBS -source-filter='^(?!.*\.pb\.(c|h)$).*$' -header-filter='^(?!.*\.pb\.(c|h)$).*$'
 else
-    run-clang-tidy -fix -format -source-filter='^(?!.*(nanopb|microlog)).*' -j $NUM_JOBS
+    run-clang-tidy -fix -format -j $NUM_JOBS -source-filter='^(?!.*\.pb\.(c|h)$).*$' -header-filter='^(?!.*\.pb\.(c|h)$).*$'
 fi
 
 echo "${bold}Done.${normal}"
