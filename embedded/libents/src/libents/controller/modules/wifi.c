@@ -4,6 +4,9 @@
 #include "../communication.h"
 
 ControllerStatus WiFiCommandTransaction(const WiFiCommand* input,
+                                        WiFiCommand* output);
+
+ControllerStatus WiFiCommandTransaction(const WiFiCommand* input,
                                         WiFiCommand* output) {
   // get reference to tx and rx buffers
   Buffer* tx = ControllerTx();

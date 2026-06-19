@@ -12,12 +12,6 @@
 
 #include "solenoid.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-static StatusSolenoid Solenoid;
-
 void SolenoidInit(void) {
   /*
   __HAL_RCC_GPIOA_CLK_ENABLE();  // Enable GPIOA clock

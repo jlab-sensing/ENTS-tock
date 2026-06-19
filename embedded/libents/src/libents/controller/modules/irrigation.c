@@ -7,6 +7,9 @@
 extern unsigned int g_controller_i2c_timeout;
 
 ControllerStatus IrrigationCommandTransaction(const IrrigationCommand* input,
+                                              IrrigationCommand* output);
+
+ControllerStatus IrrigationCommandTransaction(const IrrigationCommand* input,
                                               IrrigationCommand* output) {
   // get reference to tx and rx buffers
   Buffer* tx = ControllerTx();
@@ -49,18 +52,19 @@ IrrigationCommand_State ControllerIrrigationCheck(void) {
   }
 
   // Add verbose output
-  const char* state_name = "UNKNOWN";
-  switch (resp.state) {
-    case IrrigationCommand_State_OPEN:
-      state_name = "OPEN";
-      break;
-    case IrrigationCommand_State_CLOSE:
-      state_name = "CLOSE";
-      break;
-    default:
-      state_name = "ERROR";
-      break;
-  }
+  //const char* state_name = "UNKNOWN";
+  //switch (resp.state) {
+  //  case IrrigationCommand_State_OPEN:
+  //    state_name = "OPEN";
+  //    break;
+  //  case IrrigationCommand_State_CLOSE:
+  //    state_name = "CLOSE";
+  //    break;
+  //  default:
+  //    state_name = "ERROR";
+  //    break;
+  //}
+
 
   // Control solenoid based on the received state
   switch (resp.state) {

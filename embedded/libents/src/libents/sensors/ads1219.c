@@ -277,6 +277,8 @@ int measure(uint32_t* meas) {
 }
 
 uint8_t ads1219_sensor_voltage(uint8_t* data, uint32_t ts, uint32_t idx) {
+  (void) idx;
+  
   double voltage = 0.;
   ads1219_voltage(&voltage);
 
@@ -298,7 +300,9 @@ uint8_t ads1219_sensor_voltage(uint8_t* data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t ads1219_sensor_current(uint8_t* data, uint32_t ts, uint32_t idx) {
+uint8_t ads1219_sensor_current(uint8_t* data, uint32_t ts, uint32_t idx) {    
+  (void) idx;
+
   double current = 0.;
   ads1219_current(&current);
 

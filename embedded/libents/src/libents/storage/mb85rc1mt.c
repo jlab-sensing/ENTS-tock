@@ -199,7 +199,7 @@ fram_status mb85rc1mt_read(fram_addr addr, size_t len, uint8_t* data) {
     // interal buffer. We write a single byte at at time.
     // In the kernal see, `capsules/core/i2c_master.rs`.
 
-    for (int i = 0; i < read_len; i++) {
+    for (size_t i = 0; i < read_len; i++) {
       tock_status = i2c_master_read_sync(i2c_addr.dev, data + i, 1);
       if (tock_status < 0) {
         return FRAM_ERROR;

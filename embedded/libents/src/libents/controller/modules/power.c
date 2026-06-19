@@ -1,3 +1,5 @@
+#include "power.h"
+
 #include "../../proto/transcoder.h"
 #include "../communication.h"
 
