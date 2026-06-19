@@ -10,3 +10,6 @@
 [submodule "embedded/external/bme280/BME280_SensorAPI"]
 	path = embedded/external/bme280/BME280_SensorAPI
 	url = git@github.com:boschsensortec/BME280_SensorAPI.git
+[submodule "embedded/external/unity/Unity"]
+	path = embedded/external/unity/Unity
+	url = git@github.com:ThrowTheSwitch/Unity.git
