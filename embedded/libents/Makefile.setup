@@ -1,17 +1,5 @@
-.PHONY: clean
-
-TOCK_USERLAND_BASE_DIR ?= ../libtock-c
-
-SRC_DIR = $(TOCK_USERLAND_BASE_DIR)/../libents/src/libents
-
-NANOPB_DIR = $(SRC_DIR)/nanopb
-
-all: $(NANOPB_DIR)/README.md
+.PHONY: all clean
 
 clean::
 	rm -rf build
-
-# confirm nanopb is checked out
-$(NANOPB_DIR)/README.md:
-	git submodule update --init -- $(NANOPB_DIR)
 

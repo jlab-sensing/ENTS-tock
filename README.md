@@ -15,3 +15,13 @@ You can list files to be ignored by `clang-format` using `.clang-format-ignore`.
 ```
 unity/*
 ```
+
+## FAQ
+
+The following means there is likely something wrong with the include paths to the nanopb library.
+
+```
+../../../libtock-c/../libents/src/libents/controller/modules/../../proto/user_config.pb.h:9:2: error: #error Regenerate this file with the current version of nanopb generator.
+    9 | #error Regenerate this file with the current version of nanopb generator.
+      |  ^~~~~
+```

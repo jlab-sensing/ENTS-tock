@@ -45,11 +45,14 @@ function opt_rebuild {
 	fi
 }
 
-for mkfile in `find ./apps ./examples ./tests -maxdepth 6 -name Makefile`; do
+for mkfile in `find . -maxdepth 2 -name Makefile`; do
 	dir=`dirname $mkfile`
 	if [ $dir == "." ]; then continue; fi
 	# Skip directories with leading _'s, useful for leaving test apps around
 	if [[ $(basename $dir) == _* ]]; then continue; fi
+
+	# skip template directory
+	if [[ $(basename $dir) == "template" ]]; then continue; fi
 
 	# If running under CI, give a hint to the UX to show each app build independently
 	if [ "${CI-}" == "true" ]; then
@@ -59,7 +62,7 @@ for mkfile in `find ./apps ./examples ./tests -maxdepth 6 -name Makefile`; do
 	pushd $dir > /dev/null
 	echo ""
 	echo "Building $dir"
-	make CFLAGS=-Werror -j $NUM_JOBS || { echo "${bold} ⤤ Failure building $dir${normal}" ; opt_rebuild $dir; failures+=("$dir"); }
+	make -j $NUM_JOBS || { echo "${bold} ⤤ Failure building $dir${normal}" ; opt_rebuild $dir; failures+=("$dir"); }
 	popd > /dev/null
 
 	if [ "${CI-}" == "true" ]; then

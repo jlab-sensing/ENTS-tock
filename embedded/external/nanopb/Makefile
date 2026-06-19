@@ -7,10 +7,10 @@ LIBNAME := nanopb
 # If you are only ever compiling a standalone library, then it's fine to simply set
 $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../external/$(LIBNAME)
 
-SRC_DIR = $($(LIBNAME)_DIR)/nanopb
+SRC_DIR = $($(LIBNAME)_DIR)
 
 # Use the same line with := replace with += to add additional sources
-$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/*.c)
+$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/nanopb/*.c)
 
 # Adding include paths, must use +=
 override CPPFLAGS_$(LIBNAME) += -isystem $(SRC_DIR)

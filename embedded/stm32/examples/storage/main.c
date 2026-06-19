@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <storage/fram.h>
+#include <libents/storage/fram.h>
 
 int main(void) {
   printf("Hello World\n");

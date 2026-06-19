@@ -32,7 +32,7 @@ int main(void) {
       continue;
     }
 
-    printf("p: %d, t: %d, h: %d\n", data.pressure, data.temperature,
+    printf("p: %ld, t: %ld, h: %ld\n", data.pressure, data.temperature,
            data.humidity);
 
     libtocksync_alarm_delay_ms(2000);

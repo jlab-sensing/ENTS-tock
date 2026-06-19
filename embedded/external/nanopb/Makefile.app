@@ -1,1 +1,1 @@
-override CPPFLAGS += -isystem $(TOCK_USERLAND_BASE_DIR)/../external/nanopb/nanopb
+override CPPFLAGS += -isystem $(TOCK_USERLAND_BASE_DIR)/../external/nanopb

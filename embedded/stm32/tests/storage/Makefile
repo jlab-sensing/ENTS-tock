@@ -3,8 +3,11 @@
 # Specify this directory relative to the current application.
 TOCK_USERLAND_BASE_DIR = ../../../libtock-c
 
-EXTERN_LIBS += ../unity
-EXTERN_LIBS += ../../../libents
+EMBED_DIR = $(TOCK_USERLAND_BASE_DIR)/..
+EXT_DIR = $(EMBED_DIR)/external
+
+EXTERN_LIBS += $(EMBED_DIR)/libents
+EXTERN_LIBS += $(EXT_DIR)/unity
 
 # Which files to compile.
 C_SRCS := main.c

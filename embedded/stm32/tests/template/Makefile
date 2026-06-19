@@ -6,7 +6,6 @@ TOCK_USERLAND_BASE_DIR = ../../../libtock-c
 EMBED_DIR = $(TOCK_USERLAND_BASE_DIR)/..
 EXT_DIR = $(EMBED_DIR)/external
 
-
 EXTERN_LIBS += $(EMBED_DIR)/libents
 EXTERN_LIBS += $(EXT_DIR)/unity
 

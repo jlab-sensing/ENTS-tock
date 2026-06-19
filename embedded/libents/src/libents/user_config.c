@@ -164,7 +164,7 @@ UserConfigStatus UserConfigSave(const UserConfiguration* config) {
 
   uint8_t encoded_data[UserConfiguration_size];
   size_t encoded_length = EncodeUserConfiguration(config, encoded_data);
-  if (encoded_length == -1) {
+  if (encoded_length == 0) {
     return USERCONFIG_ENCODE_ERROR;
   }
 
@@ -188,8 +188,8 @@ UserConfigStatus UserConfigSave(const UserConfiguration* config) {
 
 void UserConfigPrintAny(const UserConfiguration* config) {
   // Print each member of the UserConfiguration
-  printf("Logger ID: %u\r\n", config->logger_id);
-  printf("Cell ID: %u\r\n", config->cell_id);
+  printf("Logger ID: %lu\r\n", config->logger_id);
+  printf("Cell ID: %lu\r\n", config->cell_id);
 
   if (config->Upload_method == 0) {
     printf("Upload Method: %u \"LoRa\"\r\n", config->Upload_method);
@@ -197,7 +197,7 @@ void UserConfigPrintAny(const UserConfiguration* config) {
     printf("Upload Method: %u \"WiFi\"\r\n", config->Upload_method);
   }
 
-  printf("Upload Interval: %u\r\n", config->Upload_interval);
+  printf("Upload Interval: %lu\r\n", config->Upload_interval);
 
   for (int i = 0; i < config->enabled_sensors_count; i++) {
     const char* sensor_name = NULL;
@@ -258,7 +258,7 @@ void UserConfigPrintAny(const UserConfiguration* config) {
 
   printf("API Endpoint URL: %s\r\n", config->API_Endpoint_URL);
 
-  printf("API Port: %u\r\n", config->API_Endpoint_Port);
+  printf("API Port: %lu\r\n", config->API_Endpoint_Port);
 }
 
 void UserConfigPrint(void) {

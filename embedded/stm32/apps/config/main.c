@@ -4,7 +4,7 @@
 int main() {
   ulog_info("Manually saving user configuration.");
 
-  const static UserConfiguration testConfig = {
+  static const UserConfiguration testConfig = {
       .logger_id = 200,
       .cell_id = 200,
       .Upload_method = Uploadmethod_WiFi,

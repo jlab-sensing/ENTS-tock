@@ -17,7 +17,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
 #include <stdio.h>
-#include <storage/fifo.h>
+#include <libents/storage/fifo.h>
 #include <string.h>
 #include <unity.h>
 
@@ -69,8 +69,8 @@ void test_fifo_put_Sequential_BufferFull(void) {
 }
 
 void test_fifo_BufferEmpty(void) {
-  uint8_t data[fifo_size()];
-  uint8_t data_len;
+  uint8_t data[16] = {};
+  uint8_t data_len = 0;
 
   fram_status status = fifo_get(data, &data_len);
 

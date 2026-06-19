@@ -9,8 +9,8 @@
 
 #include "transcoder.h"
 
-#include "../nanopb/pb_decode.h"
-#include "../nanopb/pb_encode.h"
+#include <nanopb/pb_decode.h>
+#include <nanopb/pb_encode.h>
 
 /**
  * @brief Encodes a measurement
@@ -358,14 +358,14 @@ size_t EncodeEsp32Command(const Esp32Command* cmd, uint8_t* buffer,
   return ostream.bytes_written;
 }
 
-size_t EncodeUserConfiguration(UserConfiguration* config, uint8_t* buffer) {
+size_t EncodeUserConfiguration(const UserConfiguration* config, uint8_t* buffer) {
   // create output stream
   pb_ostream_t ostream = pb_ostream_from_buffer(buffer, UserConfiguration_size);
 
   // Encode the UserConfiguration message and check if successful
   bool status = pb_encode(&ostream, UserConfiguration_fields, config);
   if (!status) {
-    return -1;
+    return 0;
   }
 
   // Return the number of bytes written

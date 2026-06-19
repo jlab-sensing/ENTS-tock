@@ -3,7 +3,7 @@
 
 #ifndef PB_CONTROLLER_PB_H_INCLUDED
 #define PB_CONTROLLER_PB_H_INCLUDED
-#include "../nanopb/pb.h"
+#include <nanopb/pb.h>
 #include "user_config.pb.h"
 #include "measurements.pb.h"
 

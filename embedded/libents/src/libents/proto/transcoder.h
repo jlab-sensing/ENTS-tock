@@ -403,7 +403,7 @@ size_t EncodePowerCommand(const PowerCommand* power_cmd, uint8_t* buffer,
  * @param buffer Buffer to store serialized data
  * @return Number of bytes in the buffer, or -1 on error
  */
-size_t EncodeUserConfiguration(UserConfiguration* config, uint8_t* buffer);
+size_t EncodeUserConfiguration(const UserConfiguration* config, uint8_t* buffer);
 
 /**
  * @brief Decodes user configuration data.

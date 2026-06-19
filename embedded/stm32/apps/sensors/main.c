@@ -9,17 +9,17 @@
 #include <stdio.h>
 #include <ulog.h>
 
-static int core_service = 0;
-
-static libtock_alarm_t sensor_alarm = {};
+static size_t core_service = 0;
 
 // buffer to share with core service
-static char core_buf[256] __attribute__((aligned(256)));
+static uint8_t core_buf[256] __attribute__((aligned(256)));
 
 // flag when ipc is don
 static bool done = false;
 
 static int meas_idx = 0;
+
+void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size);
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -28,8 +28,12 @@ static int meas_idx = 0;
  * @param len How long the buffer is that the client shared with us.
  * @param buf Pointer to the shared buffer.
  */
-static void ipc_callback(__attribute__((unused)) int pid, int len, int buf,
-                         void* ud) {
+static void ipc_callback(int pid, int len, int buf, void* ud) {
+  (void) pid;
+  (void) len;
+  (void) buf;
+  (void) ud;
+
   done = true;
 }
 
@@ -104,6 +108,8 @@ int load_userconfig(void) {
 }
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
+  (void) ev;
+
   snprintf(prefix, prefix_size, "Sensors\t");
 }
 

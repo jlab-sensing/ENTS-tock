@@ -13,7 +13,7 @@ all: c python
 
 c:
 	mkdir -p build
-	$(NANOPB) --output-dir=$(BUILD_DIR) -L"#include \"../nanopb/%s\"" $(PROTO_FILES)
+	$(NANOPB) --output-dir=$(BUILD_DIR) -L"#include <nanopb/%s>" $(PROTO_FILES)
 	cp $(wildcard $(BUILD_DIR)/*.pb.c) $(C_DIR)
 	cp $(wildcard $(BUILD_DIR)/*.pb.h) $(C_DIR)
 

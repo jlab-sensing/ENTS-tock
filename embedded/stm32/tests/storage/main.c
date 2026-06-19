@@ -14,7 +14,7 @@
  */
 
 #include <stdio.h>
-#include <storage/fram.h>
+#include <libents/storage/fram.h>
 #include <string.h>
 #include <unity.h>
 

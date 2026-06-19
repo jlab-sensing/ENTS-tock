@@ -6,12 +6,9 @@
 int main(void) {
   ulog_info("I2C communication example with esp32");
 
-  // Device address, match to what is in esp32
-  const int addr = 0x20 << 1;
-
   int ret = 0;
 
-  uint8_t data[5] = "hello";
+  uint8_t data[6] = "hello";
   ret = i2c_master_write_sync(0x20 << 1, data, 5);
   if (ret < 0) {
     ulog_error("Error writing to esp32: %d", ret);

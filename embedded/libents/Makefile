@@ -29,13 +29,6 @@ $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/storage/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/util/*.c)
 $(LIBNAME)_SRCS += $(SRC_DIR)/user_config.c
 
-# Sources for nanopb
-# Wasn't able to have a library require another library so having nanopb inside
-# the libents source tree
-$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_common.c
-$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_decode.c
-$(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_encode.c
-
 # add external headers
 # NOTE This is basically a replication of each individual `Makefile.app`. There
 # is no way to include an external library when building a library
@@ -53,6 +46,6 @@ override CPPFLAGS += -DBME280_32BIT_ENABLE
 #override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
 
 # nanopb
-override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/nanopb/nanopb
+override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/nanopb
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk
