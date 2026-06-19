@@ -15,6 +15,7 @@ EXT_DIR = $(EMBED_DIR)/external
 
 EXTERN_LIBS += $(EMBED_DIR)/libents
 EXTERN_LIBS += $(EXT_DIR)/bme280
+EXTERN_LIBS += $(EXT_DIR)/microlog
 
 # Which files to compile.
 C_SRCS := main.c

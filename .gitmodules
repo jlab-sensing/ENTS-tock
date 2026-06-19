@@ -5,7 +5,7 @@
 	path = embedded/libents/src/libents/nanopb
 	url = https://github.com/nanopb/nanopb.git
 [submodule "embedded/libents/src/libents/microlog"]
-	path = embedded/libents/src/libents/microlog
+	path = embedded/external/microlog/microlog
 	url = https://github.com/an-dr/microlog.git
 [submodule "embedded/external/bme280/BME280_SensorAPI"]
 	path = embedded/external/bme280/BME280_SensorAPI

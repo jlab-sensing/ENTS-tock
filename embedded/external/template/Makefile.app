@@ -1,5 +1,2 @@
-# Add headers
-override CPPFLAGS += -isystem $(TOCK_USERLAND_BASE_DIR)/../external/template
-
-# Flags
-override CPPFLAGS += -DTEMPLATE
+override CPPFLAGS += -isystem $(EXT_DIR)/microlog/microlog/include
+override CPPFLAGS += -DULOG_BUILD_PREFIX_SIZE=32

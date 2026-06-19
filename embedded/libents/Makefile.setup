@@ -5,9 +5,8 @@ TOCK_USERLAND_BASE_DIR ?= ../libtock-c
 SRC_DIR = $(TOCK_USERLAND_BASE_DIR)/../libents/src/libents
 
 NANOPB_DIR = $(SRC_DIR)/nanopb
-MICROLOG_DIR = $(SRC_DIR)/microlog
 
-all: $(NANOPB_DIR)/README.md  $(MICROLOG_DIR)/README.md
+all: $(NANOPB_DIR)/README.md
 
 clean::
 	rm -rf build
@@ -15,8 +14,4 @@ clean::
 # confirm nanopb is checked out
 $(NANOPB_DIR)/README.md:
 	git submodule update --init -- $(NANOPB_DIR)
-
-# confirm microlog is checkedo ut
-$(MICROLOG_DIR)/README.md:
-	git submodule update --init -- $(MICROLOG_DIR)
 

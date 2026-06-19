@@ -36,15 +36,6 @@ $(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_common.c
 $(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_decode.c
 $(LIBNAME)_SRCS += $(SRC_DIR)/nanopb/pb_encode.c
 
-# Sources for microlog
-$(LIBNAME)_SRCS += $(SRC_DIR)/microlog/src/ulog.c
-
-#$(LIBNAME)_SRCS := $(wildcard $($(LIBNAME)_DIR)/controller*.c)
-#$(LIBNAME)_SRCS  += $(wildcard $($(LIBNAME)_DIR)/c.c)
-
-override CPPFLAGS_$(LIBNAME) += -isystem $(SRC_DIR)/microlog/include
-override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
-
 # add external headers
 # NOTE This is basically a replication of each individual `Makefile.app`. There
 # is no way to include an external library when building a library
@@ -54,5 +45,11 @@ EXT_DIR = $(TOCK_USERLAND_BASE_DIR)/../external/
 # bme280
 override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/bme280
 override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/bme280/BME280_SensorAPI
+override CPPFLAGS += -DBME280_32BIT_ENABLE
+
+# microlog, maybe not needed? Depends if we ever want to use nice print
+# statements from within libents
+#override CPPFLAGS_$(LIBNAME) += -isystem $(EXT_DIR)/microlog/microlog/include
+#override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk
