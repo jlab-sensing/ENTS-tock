@@ -21,12 +21,21 @@ echo "${bold}Generating compile_commands.json${normal}"
 rm -rf build/
 bear -- make -j $NUM_JOBS
 
+
+mapfile -t FILES < <(find $SCRIPT_DIR/src/libents \( -name "*.c" -o -name "*.h" \) \
+    ! -name "*.pb.c" ! -name "*.pb.h")
+
+if [ ${#FILES[@]} -eq 0 ]; then
+    echo "No files found to lint."
+    exit 0
+fi
+
 echo ""
 echo "${bold}Running clang-tidy${normal}"
 if [ "${CI-}" == "true" ]; then
-    run-clang-tidy -j $NUM_JOBS -source-filter='^(?!.*\.pb\.(c|h)$).*$' -header-filter='^(?!.*\.pb\.(c|h)$).*$'
+    run-clang-tidy -j $NUM_JOBS "${FILES[@]}"
 else
-    run-clang-tidy -fix -format -j $NUM_JOBS -source-filter='^(?!.*\.pb\.(c|h)$).*$' -header-filter='^(?!.*\.pb\.(c|h)$).*$'
+    run-clang-tidy -fix -format -j $NUM_JOBS "${FILES[@]}"
 fi
 
 echo "${bold}Done.${normal}"

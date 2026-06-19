@@ -15,8 +15,43 @@ if [ "${CI-}" != "true" ]; then
     export TOCK_NO_CHECK_UNSTAGED=1
 fi
 
+
+# First compile external dependencies
+# Build dependencies without error checking 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build external dependencies"
+fi
+
+echo "Building external libraries"
+pushd $SCRIPT_DIR/../external > /dev/null
+./build_all.sh
+popd > /dev/null
 echo ""
-echo "${bold}Formatting examples${normal}"
+
+echo "Building libtock"
+pushd $SCRIPT_DIR/../libtock-c/libtock > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building libtock-sync"
+pushd $SCRIPT_DIR/../libtock-c/libtock-sync > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building RadioLib"
+pushd $SCRIPT_DIR/../libtock-c/RadioLib > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+
+if [ "${CI-}" == "true" ]; then
+	echo "::endgroup::"
+fi
+
+
+echo ""
+echo "${bold}Linting stm32${normal}"
 
 for mkfile in `find . -maxdepth 5 -name Makefile`; do
 	dir=`dirname $mkfile`

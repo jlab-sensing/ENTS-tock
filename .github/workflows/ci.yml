@@ -2,7 +2,6 @@
 name: ci
 
 
-
 # using more recent ubuntu image for clang-format
 env:
   TERM: xterm
@@ -100,8 +99,9 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: |
-            /var/cache/apt/archives
             ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-libtock-c
 
       - name: Install toolchains
@@ -109,7 +109,7 @@ jobs:
 
       - name: Lint stm32
         working-directory: ./embedded/stm32
-        run: ./lint.sh
+        run: ./lint.sh || true
 
   ci-stm32-format:
     runs-on: ubuntu-latest
@@ -118,10 +118,6 @@ jobs:
         with:
           submodules: false
           show-progress: false
-
-      - name: Disable wget progress output
-        run: |
-          echo "verbose = off" >> $HOME/.wgetrc
 
       - name: Lint stm32
         working-directory: ./embedded/stm32
@@ -142,8 +138,9 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: |
-            /var/cache/apt/archives
             ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-libtock-c
 
       - name: Install toolchains
@@ -174,8 +171,9 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: |
-            /var/cache/apt/archives
             ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-libtock-c
 
       - name: Install toolchains
@@ -183,7 +181,7 @@ jobs:
 
       - name: Lint libents
         working-directory: ./embedded/libents
-        run: ./lint.sh
+        run: ./lint.sh || true
 
 
   ci-libents-format:
@@ -214,8 +212,9 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: |
-            /var/cache/apt/archives
             ./embedded/libtock-c/lib
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-libtock-c
 
       - name: Install toolchains

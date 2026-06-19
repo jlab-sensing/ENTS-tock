@@ -2,6 +2,8 @@
 
 NUM_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || 4)
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Sentinel flag to indicate to apps that a `build all` is running.
 #
 # Generally, apps should not be sensitive to this flag. Build all is
@@ -45,6 +47,40 @@ function opt_rebuild {
 	fi
 }
 
+# Build dependencies without error checking 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build external dependencies"
+fi
+
+echo "Building external libraries"
+pushd $SCRIPT_DIR/../external > /dev/null
+./build_all.sh
+popd > /dev/null
+echo ""
+
+echo "Building libtock"
+pushd $SCRIPT_DIR/../libtock-c/libtock > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building libtock-sync"
+pushd $SCRIPT_DIR/../libtock-c/libtock-sync > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+echo ""
+
+echo "Building RadioLib"
+pushd $SCRIPT_DIR/../libtock-c/RadioLib > /dev/null
+make -j $NUM_JOBS
+popd > /dev/null
+
+if [ "${CI-}" == "true" ]; then
+	echo "::endgroup::"
+fi
+
+
+# build actual th tet
 for mkfile in `find ./apps ./examples ./tests -maxdepth 6 -name Makefile`; do
 	dir=`dirname $mkfile`
 	if [ $dir == "." ]; then continue; fi

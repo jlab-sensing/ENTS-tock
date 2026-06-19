@@ -12,7 +12,7 @@ ImplementationFileExtensions:
   - cc
   - cpp
   - cxx
-HeaderFilterRegex: '.*libents/.*'
+HeaderFilterRegex: '^(?=.*libents)(?!.*\.pb\.[ch]$).*$'
 FormatStyle:     Google
 #User:            jtmadden
 CheckOptions:    {}
