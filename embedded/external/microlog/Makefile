@@ -12,5 +12,6 @@ $(LIBNAME)_SRCS := $(SRC_DIR)/src/ulog.c
 
 # Adding include paths, must use +=
 override CPPFLAGS_$(LIBNAME) += -isystem $(SRC_DIR)/include
+override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk
