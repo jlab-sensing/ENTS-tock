@@ -7,17 +7,16 @@
 
 #include "lorawan.h"
 
-#include <libtock/net/eui64.h>
-#include <ulog.h>
-#include "RadioLib.h"
-#include "config.h"
 #include <libents/storage/fram.h>
 #include <libtock-sync/services/alarm.h>
+#include <libtock/net/eui64.h>
+#include <ulog.h>
 
+#include "RadioLib.h"
+#include "config.h"
 
 // address in fram to store persistant buffer
 #define LORAWAN_NONCES_ADDR 2200
-
 
 // Amount of time between connection retries
 static const int retry_ms = 15000;
@@ -80,7 +79,6 @@ int lorawan_join(void) {
   // status code
   int status = 0;
 
-
 #ifdef STATIC_DEV_EUI
   ulog_info("Using DevEUI from #define.");
 
@@ -102,9 +100,9 @@ int lorawan_join(void) {
   u64_to_bytes_be(devEUI, devEUI_bytes);
 #endif  // RADIOLIB_LORAWAN_DEV_EUI
 
-  ulog_info("DevEUI: %02x %02x %02x %02x %02x %02x %02x %02x", devEUI_bytes[0], devEUI_bytes[1],
-            devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4], devEUI_bytes[5],
-            devEUI_bytes[6], devEUI_bytes[7]);
+  ulog_info("DevEUI: %02x %02x %02x %02x %02x %02x %02x %02x", devEUI_bytes[0],
+            devEUI_bytes[1], devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4],
+            devEUI_bytes[5], devEUI_bytes[6], devEUI_bytes[7]);
 
   uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY);
   static const uint8_t joinEUI_bytes[8] =
@@ -115,14 +113,9 @@ int lorawan_join(void) {
 
   node->scanGuard = 100;
 
-
-
-  
-
-
   //
   // Setup the OTAA session info
-  // 
+  //
   state = node->beginOTAA(joinEUI, devEUI, nwkKey, appKey);
 
   if (state != RADIOLIB_ERR_NONE) {
@@ -131,8 +124,6 @@ int lorawan_join(void) {
   }
   ulog_debug("LoRaWAN OTAA setup success!");
 
-
-
   // get pointer to the buffer
   uint8_t persistant_nonces[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];
   status = fram_read(LORAWAN_NONCES_ADDR, RADIOLIB_LORAWAN_NONCES_BUF_SIZE,
@@ -140,20 +131,19 @@ int lorawan_join(void) {
 
   if (status < 0) {
     ulog_error("Could not read nonces data from persistant storage.");
-  } else { 
+  } else {
     state = node->setBufferNonces(persistant_nonces);
     if (state < 0) {
       if (state == RADIOLIB_ERR_NONCES_DISCARDED) {
-        ulog_error("LoRaWAN nonces is invalid."); 
+        ulog_error("LoRaWAN nonces is invalid.");
       } else {
-        ulog_error("Could not set LoRaWAN nonces buffer. RadioLib state = %d", state);
+        ulog_error("Could not set LoRaWAN nonces buffer. RadioLib state = %d",
+                   state);
       }
     }
   }
 
-
-
-  // 
+  //
   // Initiate join request
   //
   state = node->activateOTAA();
@@ -167,15 +157,12 @@ int lorawan_join(void) {
 
   ulog_debug("LoRaWAN OTAA activation success!");
 
-  uint8_t* current_nonces = node->getBufferNonces(); 
+  uint8_t* current_nonces = node->getBufferNonces();
   status = fram_write(LORAWAN_NONCES_ADDR, current_nonces,
                       RADIOLIB_LORAWAN_NONCES_BUF_SIZE);
   if (status < 0) {
     ulog_error("Could not write nonces data from persistant storage.");
   }
-    
-
-
 
   // set configuration for future uploads
 
