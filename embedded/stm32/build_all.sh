@@ -58,23 +58,38 @@ pushd $SCRIPT_DIR/../external > /dev/null
 popd > /dev/null
 echo ""
 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build libtock"
+fi
 echo "Building libtock"
 pushd $SCRIPT_DIR/../libtock-c/libtock > /dev/null
 make -j $NUM_JOBS
 popd > /dev/null
 echo ""
+if [ "${CI-}" == "true" ]; then
+	echo "::endgroup::"
+fi
 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build libtock"
+fi
 echo "Building libtock-sync"
 pushd $SCRIPT_DIR/../libtock-c/libtock-sync > /dev/null
 make -j $NUM_JOBS
 popd > /dev/null
 echo ""
+if [ "${CI-}" == "true" ]; then
+	echo "::endgroup::"
+fi
 
+if [ "${CI-}" == "true" ]; then
+	echo "::group::Build RadioLib"
+fi
 echo "Building RadioLib"
 pushd $SCRIPT_DIR/../libtock-c/RadioLib > /dev/null
 make -j $NUM_JOBS
 popd > /dev/null
-
+echo ""
 if [ "${CI-}" == "true" ]; then
 	echo "::endgroup::"
 fi
