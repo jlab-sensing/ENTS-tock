@@ -44,7 +44,7 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
  *
  * @return Number of bytes in data
  */
-typedef uint8_t (*SensorsPrototypeMeasure)(uint8_t* data, uint32_t ts,
+typedef uint8_t (*SensorsPrototypeMeasure)(uint8_t* data, Metadata meta,
                                            uint32_t idx);
 
 int measure_sensor(SensorsPrototypeMeasure cb);
@@ -62,9 +62,16 @@ int measure_sensor(SensorsPrototypeMeasure cb) {
   // send measurement command
   *cmd = 2;
 
+  // get metadata
+  const UserConfiguration* cfg = UserConfigGet();
+
+  Metadata meta = {};
+  meta.ts = epoch();
+  meta.logger_id = cfg->logger_id;
+  meta.cell_id = cfg->cell_id;
+
   // store measurement in buffer
-  uint32_t ts = epoch();
-  *length = cb(data, ts, meas_idx++);
+  *length = cb(data, meta, meas_idx++);
 
   // check for errors in cb
   if (*length < 255) {

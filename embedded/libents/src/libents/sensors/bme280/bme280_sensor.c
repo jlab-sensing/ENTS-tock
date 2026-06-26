@@ -126,7 +126,7 @@ BME280Status BME280MeasureAll(BME280Data* data) {
   return rslt;
 }
 
-uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasureTemperature(uint8_t* data, Metadata meta, uint32_t idx) {
   (void)idx;
 
   // read sensor
@@ -135,15 +135,6 @@ uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
   if (status != BME280_STATUS_OK) {
     return -1;
   }
-
-  // const UserConfiguration* cfg = UserConfigGet();
-
-  // metadata
-  Metadata meta = Metadata_init_zero;
-  meta.ts = ts;
-
-  // meta.logger_id = cfg->logger_id;
-  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
@@ -158,7 +149,7 @@ uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasurePressure(uint8_t* data, Metadata meta, uint32_t idx) {
   (void)idx;
 
   // read sensor
@@ -167,15 +158,6 @@ uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
   if (status != BME280_STATUS_OK) {
     return -1;
   }
-
-  // const UserConfiguration* cfg = UserConfigGet();
-
-  // metadata
-  Metadata meta = Metadata_init_zero;
-  meta.ts = ts;
-
-  // meta.logger_id = cfg->logger_id;
-  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
@@ -190,7 +172,7 @@ uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx) {
   return data_len;
 }
 
-uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx) {
+uint8_t BME280MeasureHumidity(uint8_t* data, Metadata meta, uint32_t idx) {
   (void)idx;
 
   // read sensor
@@ -199,15 +181,6 @@ uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx) {
   if (status != BME280_STATUS_OK) {
     return -1;
   }
-
-  // const UserConfiguration* cfg = UserConfigGet();
-
-  // metadata
-  Metadata meta = Metadata_init_zero;
-  meta.ts = ts;
-
-  // meta.logger_id = cfg->logger_id;
-  // meta.cell_id = cfg->cell_id;
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
