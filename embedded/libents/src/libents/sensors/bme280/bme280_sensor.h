@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "../../proto/sensor.pb.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,9 +79,9 @@ BME280Status BME280MeasureAll(BME280Data* data);
  * @see SensorsPrototypeMeasure
  */
 
-uint8_t BME280MeasureTemperature(uint8_t* data, uint32_t ts, uint32_t idx);
-uint8_t BME280MeasurePressure(uint8_t* data, uint32_t ts, uint32_t idx);
-uint8_t BME280MeasureHumidity(uint8_t* data, uint32_t ts, uint32_t idx);
+uint8_t BME280MeasureTemperature(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t BME280MeasurePressure(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t BME280MeasureHumidity(uint8_t* data, Metadata meta, uint32_t idx);
 
 #ifdef __cplusplus
 }

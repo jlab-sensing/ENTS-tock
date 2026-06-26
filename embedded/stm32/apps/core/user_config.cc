@@ -44,7 +44,7 @@ void UserConfigStart(uint32_t retry_ms) {
   // Get device address
   uint64_t dev_eui = 0;
   libtock_eui64_get(&dev_eui);
-  uint32_t devAddr = (uint32_t)(dev_eui & 0xFFFF);
+  uint32_t devAddr = (uint32_t)(dev_eui & 0xFFFFFFFF);
 
   snprintf(ssid, sizeof(ssid), "ents-%08X", devAddr);
 
