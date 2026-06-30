@@ -2,6 +2,7 @@
 
 #include <nanopb/pb_decode.h>
 #include <nanopb/pb_encode.h>
+#include <stdio.h>
 
 /**
  * @brief Compares two Metadata structures for equality.
@@ -33,6 +34,8 @@ unsigned int Format(RepeatedSensorMeasurements* meas);
  * @return SENSOR_OK on success, SENSOR_ERROR on failure.
  */
 SensorStatus Parse(RepeatedSensorMeasurements* meas);
+
+void PrintMetadata(const Metadata *meta);
 
 SensorStatus FormatRepeatedSensorMeasurements(Metadata meta,
                                               const SensorMeasurement meas[],
@@ -324,4 +327,65 @@ SensorStatus CheckSensorResponse(const SensorResponse* resp) {
   }
 
   return SENSOR_OK;
+}
+
+
+void PrintMetadata(const Metadata *meta)
+{
+    printf("      cell_id  : %d\n", meta->cell_id);
+    printf("      logger_id: %d\n", meta->logger_id);
+    printf("      ts       : %d\n", meta->ts);
+}
+
+void PrintSensorMeasurement(const SensorMeasurement *m)
+{
+    printf("    idx: %d\n", m->idx);
+    printf("    has_meta: %s\n", m->has_meta ? "true" : "false");
+
+    if (m->has_meta) {
+        printf("    Metadata:\n");
+        PrintMetadata(&m->meta);
+    }
+
+    printf("    type: %d\n", m->type);
+
+    printf("    value: ");
+    switch (m->which_value) {
+    case SensorMeasurement_unsigned_int_tag:
+        printf("%u (unsigned)\n", m->value.unsigned_int);
+        break;
+
+    case SensorMeasurement_signed_int_tag:
+        printf("%d (signed)\n", m->value.signed_int);
+        break;
+
+    case SensorMeasurement_decimal_tag:
+        printf("%f (decimal)\n", m->value.decimal);
+        break;
+
+    default:
+        printf("<unset>\n");
+        break;
+    }
+}
+
+void PrintRepeatedSensorMeasurements(
+    const RepeatedSensorMeasurements *msg)
+{
+    printf("RepeatedSensorMeasurements\n");
+    printf("  has_meta: %s\n", msg->has_meta ? "true" : "false");
+
+    if (msg->has_meta) {
+        printf("  Metadata:\n");
+        PrintMetadata(&msg->meta);
+    }
+
+    printf("  type: %d\n", msg->type);
+    printf("  measurements_count: %u\n",
+           (unsigned)msg->measurements_count);
+
+    for (pb_size_t i = 0; i < msg->measurements_count; i++) {
+        printf("  Measurement[%u]\n", (unsigned)i);
+        PrintSensorMeasurement(&msg->measurements[i]);
+    }
 }

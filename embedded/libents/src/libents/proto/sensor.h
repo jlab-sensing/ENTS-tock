@@ -221,6 +221,11 @@ SensorStatus DecodeRepeatedSensorReponses(const uint8_t* data, const size_t len,
  */
 SensorStatus CheckSensorResponse(const SensorResponse* resp);
 
+void PrintSensorMeasurement(const SensorMeasurement *m);
+
+void PrintRepeatedSensorMeasurements(
+    const RepeatedSensorMeasurements *msg);
+
 /**
  * @}
  */
