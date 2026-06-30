@@ -21,6 +21,9 @@
 // Amount of time between connection retries
 static const int retry_ms = 15000;
 
+// LoRaWAN upload port
+static const uint8_t fport = 2;
+
 static TockRadioLibHal* hal;
 static Module* mod;
 static SX1262* tock_module;
@@ -200,7 +203,7 @@ int lorawan_upload(uint8_t* buffer, int length) {
   ulog_debug("Sending uplink of %lu bytes.", length, buffer);
 
   // state indicates there was a downlink received
-  state = node->sendReceive(buffer, length);
+  state = node->sendReceive(buffer, (size_t)length, fport);
   ulog_debug("LoRaWAN send/receive code %d.", state);
   if (state < 0) {
     ulog_error("Upload failed.");
