@@ -297,6 +297,8 @@ static int get_payload(uint8_t* buffer, int size) {
       i--;
       break;
     }
+
+    PrintSensorMeasurement(&meas[i]);
   }
 
   ret = EncodeRepeatedSensorMeasurements(meta, meas, i + 1, buffer, size,
