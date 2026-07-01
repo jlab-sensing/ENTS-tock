@@ -193,7 +193,7 @@ int lorawan_timesync(void) {
     return state;
   }
 
-  state = node->sendReceive(nullptr, (size_t) 0);
+  state = node->sendReceive(nullptr, (size_t)0);
   if (state < 0) {
     ulog_error("Timesync uplink failed: %d", state);
     return state;

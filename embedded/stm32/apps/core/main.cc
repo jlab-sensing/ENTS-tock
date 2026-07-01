@@ -41,6 +41,8 @@ static int last_pid = 0;
 
 static bool has_data = false;
 
+static bool network_ready = false;
+
 /**
  * @brief Callback when receiving data for upload from individual apps.
  *
@@ -133,6 +135,8 @@ int main(void) {
   if (ret < 0) {
     return ret;
   }
+
+  network_ready = true;
 
   while (1) {
     // TODO: Create copy of counters
@@ -243,6 +247,15 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
     // basically hold sensors in an interrupt until we store the measurement
     last_pid = pid;
     has_data = true;
+
+    // ready command
+  } else if (cmd == 3) {
+    ulog_trace("ready command");
+
+    buffer[1] = (uint8_t)network_ready;
+
+    // trigger client
+    ipc_notify_client(pid);
 
     // Catch all other commands
   } else {
