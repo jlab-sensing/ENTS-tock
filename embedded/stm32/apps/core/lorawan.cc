@@ -8,6 +8,7 @@
 #include "lorawan.h"
 
 #include <libents/storage/fram.h>
+#include <libents/util/time.h>
 #include <libtock-sync/services/alarm.h>
 #include <libtock/net/eui64.h>
 #include <ulog.h>
@@ -184,7 +185,30 @@ int lorawan_join(void) {
 int lorawan_timesync(void) {
   ulog_trace("lorawan_timesync");
 
-  ulog_warn("Timesync not implemented.");
+  int state = 0;
+
+  state = node->sendMacCommandReq(RADIOLIB_LORAWAN_MAC_DEVICE_TIME);
+  if (state < 0) {
+    ulog_error("Failed to queue DeviceTimeReq: %d", state);
+    return state;
+  }
+
+  state = node->sendReceive(nullptr, (size_t)0);
+  if (state < 0) {
+    ulog_error("Timesync uplink failed: %d", state);
+    return state;
+  }
+
+  uint32_t unix_epoch = 0;
+  uint8_t ms = 0;
+  state = node->getMacDeviceTimeAns(&unix_epoch, &ms);
+  if (state < 0) {
+    ulog_error("No DeviceTimeAns received: %d", state);
+    return state;
+  }
+
+  ulog_info("Current unix epoch is %d", unix_epoch);
+  set_epoch(unix_epoch);
 
   return 0;
 }
@@ -193,8 +217,6 @@ int lorawan_upload(uint8_t* buffer, int length) {
   ulog_trace("lorawan_upload");
 
   int state = 0;
-
-  static int counter = 0;
 
   // Ensure there are no pending callbacks
   yield_no_wait();
@@ -212,8 +234,6 @@ int lorawan_upload(uint8_t* buffer, int length) {
 
   // Wait until next uplink - observing legal & TTN FUP constraints
   // hal->delay(uplinkIntervalSeconds * 1000UL);
-
-  counter++;
 
   return state;
 }

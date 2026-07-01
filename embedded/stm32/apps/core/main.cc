@@ -41,6 +41,8 @@ static int last_pid = 0;
 
 static bool has_data = false;
 
+static bool network_ready = false;
+
 /**
  * @brief Callback when receiving data for upload from individual apps.
  *
@@ -64,7 +66,18 @@ static void ipc_callback(int pid, int len, int buf, void* ud);
  */
 static int get_payload(uint8_t* buffer, int size);
 
+/**
+ * @brief Callback to add prefix to ulog messages.
+ *
+ * @param ev Pointer to ulog event.
+ * @param prefix Pointer to prefix buffer.
+ * @param prefix_size Size of prefix buffer.
+ */
+void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size);
+
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
+  (void)ev;
+
   snprintf(prefix, prefix_size, "Core\t");
 }
 
@@ -81,6 +94,9 @@ int main(void) {
   // under 256 bytes as defined by protobuf.
   UserConfigStatus uc_status =
       UserConfigBytes(uc_buffer, (uint16_t*)&uc_buffer_length);
+  if (uc_status != USERCONFIG_OK) {
+    ulog_error("Could not load user config.");
+  }
 
   // Option to print bytes to the buffer
   // printf("uc_buffer[%u]:", uc_buffer_length);
@@ -134,6 +150,8 @@ int main(void) {
     return ret;
   }
 
+  network_ready = true;
+
   while (1) {
     // TODO: Create copy of counters
 
@@ -156,7 +174,7 @@ int main(void) {
       // printf("\n");
 
       // store in buffer
-      int ret = fifo_put(meas_buffer, meas_buffer_length);
+      ret = fifo_put(meas_buffer, meas_buffer_length);
       if (ret < 0) {
         ulog_error("Could not store measurement in buffer");
       }
@@ -211,6 +229,9 @@ int main(void) {
 }
 
 static void ipc_callback(int pid, int len, int buf, void* ud) {
+  (void)len;
+  (void)ud;
+
   ulog_trace("ipc_callabck");
 
   uint8_t* buffer = (uint8_t*)buf;
@@ -243,6 +264,15 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
     // basically hold sensors in an interrupt until we store the measurement
     last_pid = pid;
     has_data = true;
+
+    // ready command
+  } else if (cmd == 3) {
+    ulog_trace("ready command");
+
+    buffer[1] = (uint8_t)network_ready;
+
+    // trigger client
+    ipc_notify_client(pid);
 
     // Catch all other commands
   } else {

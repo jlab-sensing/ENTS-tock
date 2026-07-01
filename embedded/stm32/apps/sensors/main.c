@@ -51,6 +51,8 @@ int measure_sensor(SensorsPrototypeMeasure cb);
 
 int load_userconfig(void);
 
+void wait_for_ready(void);
+
 int measure_sensor(SensorsPrototypeMeasure cb) {
   ulog_trace("measure_sensor");
 
@@ -110,6 +112,28 @@ int load_userconfig(void) {
   return uc_status;
 }
 
+void wait_for_ready(void) {
+  ulog_trace("wait_for_ready");
+
+  bool ready = false;
+
+  core_buf[0] = 3;
+
+  while (!ready) {
+    // Send to core for upload
+    ipc_notify_service(core_service);
+    yield_for(&done);
+
+    // check ready flag
+    ready = (bool)core_buf[1];
+
+    done = false;
+
+    // wait 1 second before checking again
+    libtocksync_alarm_delay_ms(5000);
+  }
+}
+
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
   (void)ev;
 
@@ -140,6 +164,9 @@ int main() {
   // register ipc callback with buffer
   ipc_register_client_callback(core_service, ipc_callback, NULL);
   ipc_share(core_service, core_buf, 256);
+
+  // wait for network configuration to be ready
+  wait_for_ready();
 
   //
   // Get user config code

@@ -47,4 +47,4 @@ void UserConfigStop(uint32_t retry_ms);
  *
  * @return Current state.
  */
-int UserConfigCurrentState(void);
+int UserConfigCurrentStatus(void);
