@@ -46,7 +46,7 @@ void UserConfigStart(uint32_t retry_ms) {
   libtock_eui64_get(&dev_eui);
   uint32_t devAddr = (uint32_t)(dev_eui & 0xFFFFFFFF);
 
-  snprintf(ssid, sizeof(ssid), "ents-%08X", devAddr);
+  snprintf(ssid, sizeof(ssid), "ents-%08lX", devAddr);
 
   bool controller_status = true;
   controller_status = ControllerWiFiHost(ssid, pass);

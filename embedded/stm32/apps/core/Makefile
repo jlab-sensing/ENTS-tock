@@ -22,6 +22,10 @@ EXTERN_LIBS += $(TOCK_USERLAND_BASE_DIR)/RadioLib
 # Option to use static parameters for dev eui
 #override CPPFLAGS += -DSTATIC_DEV_EUI
 
+# ignore old () rather than reinterpret because we are forced to compile cc
+# from RadioLib
+override CPPFLAGS += -Wno-old-style-cast
+
 # Which files to compile.
 CXX_SRCS := user_config.cc lorawan.cc main.cc
 

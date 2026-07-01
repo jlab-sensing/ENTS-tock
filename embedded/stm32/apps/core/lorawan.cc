@@ -200,7 +200,7 @@ int lorawan_timesync(void) {
   }
 
   uint32_t unix_epoch = 0;
-  uint16_t ms = 0;
+  uint8_t ms = 0;
   state = node->getMacDeviceTimeAns(&unix_epoch, &ms);
   if (state < 0) {
     ulog_error("No DeviceTimeAns received: %d", state);
@@ -218,8 +218,6 @@ int lorawan_upload(uint8_t* buffer, int length) {
 
   int state = 0;
 
-  static int counter = 0;
-
   // Ensure there are no pending callbacks
   yield_no_wait();
 
@@ -236,8 +234,6 @@ int lorawan_upload(uint8_t* buffer, int length) {
 
   // Wait until next uplink - observing legal & TTN FUP constraints
   // hal->delay(uplinkIntervalSeconds * 1000UL);
-
-  counter++;
 
   return state;
 }

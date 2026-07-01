@@ -71,7 +71,7 @@ if [ "${CI-}" == "true" ]; then
 fi
 
 if [ "${CI-}" == "true" ]; then
-	echo "::group::Build libtock"
+	echo "::group::Build libtock-sync"
 fi
 echo "Building libtock-sync"
 pushd $SCRIPT_DIR/../libtock-c/libtock-sync > /dev/null
@@ -87,7 +87,7 @@ if [ "${CI-}" == "true" ]; then
 fi
 echo "Building RadioLib"
 pushd $SCRIPT_DIR/../libtock-c/RadioLib > /dev/null
-make -j $NUM_JOBS
+make -j $NUM_JOBS 2> /dev/null
 popd > /dev/null
 echo ""
 if [ "${CI-}" == "true" ]; then
@@ -110,7 +110,7 @@ for mkfile in `find ./apps ./examples ./tests -maxdepth 6 -name Makefile`; do
 	pushd $dir > /dev/null
 	echo ""
 	echo "Building $dir"
-	make CFLAGS=-Werror -j $NUM_JOBS || { echo "${bold} ⤤ Failure building $dir${normal}" ; opt_rebuild $dir; failures+=("$dir"); }
+	make CFLAGS=-Werror CXXFLAGS=-Werror -j $NUM_JOBS || { echo "${bold} ⤤ Failure building $dir${normal}" ; opt_rebuild $dir; failures+=("$dir"); }
 	popd > /dev/null
 
 	if [ "${CI-}" == "true" ]; then
