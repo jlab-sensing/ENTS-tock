@@ -97,23 +97,23 @@ typedef union {
  *
  * @see data_ready_pin
  */
-void power_on(void);
+void ads1219_power_on(void);
 
 /**
  * @brief Turn off power to analog circuit
  *
  * @see data_ready_pin
  */
-void power_off(void);
+void ads1219_power_off(void);
 
 /**
  * @brief Measure from the adc
  *
- * @param mwas Raw measurement
+ * @param mwas Raw ads1219_measurement
  *
- * @return Raw measurement from adc
+ * @return Raw ads1219_measurement from adc
  */
-int measure(uint32_t* meas);
+int ads1219_measure(int32_t* meas);
 
 /**
  * @brief This function reconfigures the ADS1219 based on the parameter reg_data
@@ -121,7 +121,7 @@ int measure(uint32_t* meas);
  * @param reg_data
  * @return int
  */
-int configure(const ConfigReg reg_data);
+int ads1219_configure(const ConfigReg reg_data);
 
 int ads1219_reset(void) {
   int ret = RETURNCODE_SUCCESS;
@@ -139,7 +139,7 @@ int ads1219_reset(void) {
   return ADS1219_SUCCESS;
 }
 
-int configure(const ConfigReg reg_data) {
+int ads1219_configure(const ConfigReg reg_data) {
   int ret = RETURNCODE_SUCCESS;
   uint8_t i2c_data[2] = {cmd_wreg, reg_data.value};
   ret = i2c_master_write_sync(addrls, (uint8_t*)i2c_data, sizeof(i2c_data));
@@ -150,7 +150,7 @@ int configure(const ConfigReg reg_data) {
   return ADS1219_SUCCESS;
 }
 
-int ads1219_voltage_raw(uint32_t* voltage) {
+int ads1219_voltage_raw(int32_t* voltage) {
   int ret = ADS1219_SUCCESS;
 
   ConfigReg reg_data = {0};
@@ -158,12 +158,12 @@ int ads1219_voltage_raw(uint32_t* voltage) {
 
   // 0x21 is single shot and 0x23 is continuos
   // configure to read voltage
-  ret = configure(reg_data);
+  ret = ads1219_configure(reg_data);
   if (ret != ADS1219_SUCCESS) {
     return ret;
   }
 
-  ret = measure(voltage);
+  ret = ads1219_measure(voltage);
   if (ret != ADS1219_SUCCESS) {
     return ret;
   }
@@ -174,7 +174,7 @@ int ads1219_voltage_raw(uint32_t* voltage) {
 int ads1219_voltage(double* voltage) {
   int ret = ADS1219_SUCCESS;
 
-  uint32_t raw = 0;
+  int32_t raw = 0;
   ret = ads1219_voltage_raw(&raw);
 
   *voltage = (voltage_calibration_m * (double)raw) + voltage_calibration_b;
@@ -183,7 +183,7 @@ int ads1219_voltage(double* voltage) {
   return ret;
 }
 
-int ads1219_current_raw(uint32_t* current) {
+int ads1219_current_raw(int32_t* current) {
   int ret = ADS1219_SUCCESS;
   double meas = 0.0;
 
@@ -193,12 +193,12 @@ int ads1219_current_raw(uint32_t* current) {
 
   // 0x21 is single shot and 0x23 is continuos
   // configure to read voltage
-  ret = configure(reg_data);
+  ret = ads1219_configure(reg_data);
   if (ret != ADS1219_SUCCESS) {
     return -1;
   }
 
-  ret = measure(current);
+  ret = ads1219_measure(current);
   if (ret != ADS1219_SUCCESS) {
     return -1;
   }
@@ -209,31 +209,31 @@ int ads1219_current_raw(uint32_t* current) {
 int ads1219_current(double* current) {
   int ret = ADS1219_SUCCESS;
 
-  uint32_t raw = 0;
+  int32_t raw = 0;
   ret = ads1219_current_raw(&raw);
 
   *current = (current_calibration_m * (double)raw) + current_calibration_b;
   return ret;
 }
 
-void power_on(void) {
+void ads1219_power_on(void) {
   //// set high
   // HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_SET);
   //// delay for settling of analog components
   // HAL_Delay(1);
 }
 
-void power_off(void) {
+void ads1219_power_off(void) {
   //// set low
   // HAL_GPIO_WritePin(POWERDOWN_GPIO_Port, POWERDOWN_Pin, GPIO_PIN_RESET);
 }
 
-int measure(uint32_t* meas) {
+int ads1219_measure(int32_t* meas) {
   int ret = RETURNCODE_SUCCESS;
 
   uint8_t rx_data[3] = {0x00, 0x00, 0x00};
 
-  power_on();
+  ads1219_power_on();
 
   // start conversion
   uint8_t buf[1] = {cmd_start};
@@ -262,11 +262,12 @@ int measure(uint32_t* meas) {
     return ADS1219_MEASURE;
   }
 
-  power_off();
+  ads1219_power_off();
 
   // Combine the 3 bytes into a 24-bit value
   *meas = ((int32_t)rx_data[0] << 16) | ((int32_t)rx_data[1] << 8) |
           ((int32_t)rx_data[2]);
+  
   // Check if the sign bit (24th bit) is set
   if (*meas & 0x800000) {
     // Extend the sign to 32 bits

@@ -72,7 +72,7 @@ int ads1219_reset(void);
  * @return Return code.
  */
 int ads1219_voltage(double* voltage);
-int ads1219_voltage_raw(uint32_t* voltage);
+int ads1219_voltage_raw(int32_t* voltage);
 
 /**
  * @brief This function reads the current ADC ampere value.
@@ -85,7 +85,7 @@ int ads1219_voltage_raw(uint32_t* voltage);
  * @return Return code.
  */
 int ads1219_current(double* current);
-int ads1219_current_raw(uint32_t* current);
+int ads1219_current_raw(int32_t* current);
 
 /**
  * @brief Sensor measure functions.
