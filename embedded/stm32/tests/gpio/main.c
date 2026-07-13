@@ -14,15 +14,13 @@
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
-#include <unity.h>
-
 #include <libtock-sync/services/alarm.h>
 #include <libtock/peripherals/gpio.h>
+#include <unity.h>
 
 #ifndef OUTPUT_PIN
 #define OUTPUT_PIN 3
 #endif  // OUTPUT_PIN
-
 
 static const int output_pin = OUTPUT_PIN;
 
