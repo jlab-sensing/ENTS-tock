@@ -267,7 +267,7 @@ int ads1219_measure(int32_t* meas) {
   // Combine the 3 bytes into a 24-bit value
   *meas = ((int32_t)rx_data[0] << 16) | ((int32_t)rx_data[1] << 8) |
           ((int32_t)rx_data[2]);
-  
+
   // Check if the sign bit (24th bit) is set
   if (*meas & 0x800000) {
     // Extend the sign to 32 bits

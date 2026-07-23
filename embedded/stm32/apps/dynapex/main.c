@@ -1,7 +1,7 @@
 #include <libents/sensors/ads1219.h>
+#include <libtock-sync/interface/console.h>
 #include <libtock-sync/services/alarm.h>
 #include <libtock/peripherals/gpio.h>
-#include <libtock-sync/interface/console.h>
 #include <stdio.h>
 #include <ulog.h>
 
@@ -56,7 +56,7 @@ void measure(void);
  */
 void discharge(void);
 
-void process_cmd(const char * cmd);
+void process_cmd(const uint8_t* cmd);
 
 /**
  * @brief Print the current config.
@@ -64,7 +64,7 @@ void process_cmd(const char * cmd);
 void print_config(void);
 
 void print_cmd_start(void);
-      
+
 void print_backspace(void);
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
@@ -160,24 +160,22 @@ void measure(void) {
 }
 
 void print_cmd_start(void) {
+  const uint8_t cmd_start[3] = "> ";
 
-    const char cmd_start[3] = "> ";
-
-    // write back to console
-    int write = 0;
-    libtocksync_console_write(cmd_start, 2, &write);
+  // write back to console
+  int write = 0;
+  libtocksync_console_write(cmd_start, 2, &write);
 }
-
 
 void print_backspace(void) {
-    const char back[4] = "\b \b";
+  const uint8_t back[4] = "\b \b";
 
-    // write back to console
-    int write = 0;
-    libtocksync_console_write(back, 3, &write);
+  // write back to console
+  int write = 0;
+  libtocksync_console_write(back, 3, &write);
 }
 
-void process_cmd(const char * cmd) {
+void process_cmd(const uint8_t* cmd) {
   char first = cmd[0];
 
   switch (first) {
@@ -198,7 +196,9 @@ void process_cmd(const char * cmd) {
       break;
     case 'H':
     default:
-      printf("Available commands are: [C]HARGE, [D]ISCHARGE, [M]EASURE, [R]ESET, [W]AIT, [H]ELP\n");
+      printf(
+          "Available commands are: [C]HARGE, [D]ISCHARGE, [M]EASURE, [R]ESET, "
+          "[W]AIT, [H]ELP\n");
   }
 }
 
@@ -208,7 +208,6 @@ int main() {
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("=== Dynapex Initialized ===");
 
-  
   print_config();
 
   reset();
@@ -219,20 +218,19 @@ int main() {
   while (1) {
     int ret = 0;
 
-    static char buf[16] = {};
+    static uint8_t buf[16] = {};
     static int idx = 0;
 
-
-    //printf("buffer:");
-    //for (int i = 0; i < sizeof(buf); i++) {
-    //  printf(" %x", buf[i]);
-    //}
-    //printf("\n");
+    // printf("buffer:");
+    // for (int i = 0; i < sizeof(buf); i++) {
+    //   printf(" %x", buf[i]);
+    // }
+    // printf("\n");
 
     // check overflow
-    if ((size_t) idx >= sizeof(buf)) {
+    if ((size_t)idx >= sizeof(buf)) {
       ulog_error("Input buffer overlow. Resetting buffer.");
-      
+
       // clear
       memset(buf, 0, sizeof(buf));
       idx = 0;
@@ -240,10 +238,9 @@ int main() {
       continue;
     }
 
-
     // read next character
     int read = 0;
-    ret = libtocksync_console_read((uint8_t *) buf+idx, 1, &read);
+    ret = libtocksync_console_read((uint8_t*)buf + idx, 1, &read);
     if (ret < 0) {
       ulog_error("Could not read from console, %d. Resetting buffer.", ret);
 
@@ -259,11 +256,10 @@ int main() {
       printf("\n");
 
       process_cmd(buf);
-      
+
       // clear
       memset(buf, 0, sizeof(buf));
       idx = 0;
-
 
       print_cmd_start();
 
@@ -286,13 +282,11 @@ int main() {
 
     // write back to console
     int write = 0;
-    libtocksync_console_write(&buf[idx], 1, &write); 
+    libtocksync_console_write(&buf[idx], 1, &write);
 
     // increment buffer
     ++idx;
-
   }
-
 
   //
   // Test code
