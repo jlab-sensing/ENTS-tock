@@ -160,7 +160,7 @@ int main(void) {
     // wait for callback
     // NOTE (jmadden173): I believe having just a yeild and and an if statement
     // for has_data allows for the stop user config callback to run.
-    //yield_for(&has_data);
+    // yield_for(&has_data);
     yield();
 
     //
