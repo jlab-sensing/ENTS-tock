@@ -3,7 +3,7 @@
 # Specify this directory relative to the current application.
 TOCK_USERLAND_BASE_DIR = ../../../libtock-c
 
-PACKAGE_NAME = org.ents.apps.template
+PACKAGE_NAME = org.ents.apps.dynapex
 
 # (Optional) Adjust stack and heap size
 #STACK_SIZE=8192
