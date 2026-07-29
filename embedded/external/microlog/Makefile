@@ -13,5 +13,8 @@ $(LIBNAME)_SRCS := $(SRC_DIR)/src/ulog.c
 # Adding include paths, must use +=
 override CPPFLAGS_$(LIBNAME) += -isystem $(SRC_DIR)/include
 override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_PREFIX_SIZE=32
+# Number of log sinks beyond stdout. Without this ulog_output_add() is compiled
+# out and returns ULOG_OUTPUT_INVALID. One slot is enough for the microSD sink.
+override CPPFLAGS_$(LIBNAME) += -DULOG_BUILD_EXTRA_OUTPUTS=1
 
 include $(TOCK_USERLAND_BASE_DIR)/TockLibrary.mk

@@ -127,6 +127,8 @@ message MicroSDCommand {
     SAVE = 0;
     /* Send UserConfig for CSV header creation */
     USERCONFIG = 1;
+    /* Append a plain text line to the log file on the microSD card */
+    LOG = 2;
   }
   enum ReturnCode {
     SUCCESS = 0;
@@ -149,6 +151,8 @@ message MicroSDCommand {
     Measurement meas = 4;
     /* userConfig to be saved */
     UserConfiguration uc = 5;
+    /* preformatted log line to be appended */
+    string log = 6;
   }
 }
 

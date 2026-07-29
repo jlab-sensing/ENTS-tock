@@ -5,3 +5,4 @@ WiFiCommand.resp max_size:222
 WiFiCommand.mac max_size:18
 
 MicroSDCommand.filename max_length:255
+MicroSDCommand.log max_length:127
