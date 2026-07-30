@@ -26,6 +26,7 @@ void setConfig(const UserConfiguration& new_config) {
   strncpy(config.API_Endpoint_URL, new_config.API_Endpoint_URL,
           sizeof(config.API_Endpoint_URL));
   config.API_Endpoint_Port = new_config.API_Endpoint_Port;
+  config.clear_buffer = new_config.clear_buffer;
 
   // Check that the user config can be encoded/decoded?? (John)
   uint8_t buffer[UserConfiguration_size];

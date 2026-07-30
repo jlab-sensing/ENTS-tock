@@ -3,6 +3,7 @@
 #include <libents/controller/modules/power.h>
 #include <libents/controller/modules/wifi.h>
 #include <libents/controller/modules/wifi_userconfig.h>
+#include <libents/storage/fifo.h>
 #include <libents/user_config.h>
 #include <libtock/net/eui64.h>
 #include <libtock/services/alarm.h>
@@ -112,6 +113,25 @@ void UserConfigStart(uint32_t retry_ms) {
     ulog_info("Updated user configuration:");
     ulog_info("---------------------------");
     UserConfigPrint();
+
+    // Check if clear_buffer was requested via the new proto field
+    const UserConfiguration* cfg = UserConfigGet();
+    if (cfg->clear_buffer) {
+      ulog_info("clear_buffer flag set — clearing FRAM measurement buffer...");
+      ulog_info("FIFO buffer length before clear: %u", fifo_buffer_len());
+      HandleClearBuffer();
+      ulog_info("FIFO buffer length after clear: %u", fifo_buffer_len());
+
+      // Reset the flag so it doesn't repeat on next boot
+      UserConfiguration cleared = *cfg;
+      cleared.clear_buffer = false;
+      UserConfigStatus save_status = UserConfigSave(&cleared);
+      if (save_status == USERCONFIG_OK) {
+        ulog_info("clear_buffer flag reset in FRAM.");
+      } else {
+        ulog_error("Failed to reset clear_buffer flag in FRAM (status=%d)", save_status);
+      }
+    }
   }
 
   state = USERCONFIG_STATE_ON;
@@ -162,3 +182,14 @@ void UserConfigStopCallback(uint32_t, uint32_t, void* ptr) {
 }
 
 int UserConfigCurrentStatus(void) { return state; }
+
+bool HandleClearBuffer(void) {
+  fram_status status = fifo_buffer_clear();
+  if (status == FRAM_OK) {
+    ulog_info("fifo_buffer_clear: OK");
+    return true;
+  } else {
+    ulog_error("fifo_buffer_clear: FAILED (%d)", status);
+    return false;
+  }
+}

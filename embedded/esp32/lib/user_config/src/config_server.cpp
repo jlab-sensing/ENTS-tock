@@ -40,6 +40,15 @@ void handleConfig();
 void handleIdentity();
 
 /**
+ * @brief Handle clear-buffer POST request.
+ *
+ * Sends a CLEAR_BUFFER command to the STM32 via ControllerClearBuffer().
+ * Responds with HTTP 200 and {"status":"ok"} on success, or HTTP 500 and
+ * {"status":"error","message":"STM32 command failed"} on failure.
+ */
+void handleClearBuffer();
+
+/**
  * @brief Prints debug information for http queries.
  *
  * Must be called within the web server request handler to log the query.
@@ -189,6 +198,12 @@ void handleSave() {
   // Log.noticeln("-----------------------");
   // printConfig(config);
 
+    // Use clear_buffer field to signal the STM32 to clear the FRAM buffer on next boot.
+  config.clear_buffer = server.hasArg("clear_buffer_on_save");
+  if (config.clear_buffer) {
+    Log.noticeln("[WebUI] clear_buffer_on_save requested — STM32 will clear FRAM on next boot");
+  }
+
   setConfig(config);
   printReceivedConfig();
 
@@ -199,6 +214,9 @@ void handleSave() {
   // Prepare success message
   String successMessage = "Configuration saved successfully!\\n";
   successMessage += "Please RESET the STM32 to update the configurations";
+  if (config.clear_buffer) {
+    successMessage += " and clear the buffer";
+  }
   String successJson = "{\"success\":\"" + successMessage + "\"}";
   server.send(200, "application/json", successJson);
 }

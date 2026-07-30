@@ -49,6 +49,8 @@ typedef struct _UserConfiguration {
     /* Deprecated
  Embedded into the endpoint URL */
     uint32_t API_Endpoint_Port;
+    /* If true, STM32 clears the FRAM measurement buffer on next boot */
+    bool clear_buffer;
 } UserConfiguration;
 
 
@@ -70,8 +72,8 @@ extern "C" {
 
 
 /* Initializer values for message structs */
-#define UserConfiguration_init_default           {0, 0, _Uploadmethod_MIN, 0, 0, {_EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN}, 0, 0, 0, 0, "", "", "", 0}
-#define UserConfiguration_init_zero              {0, 0, _Uploadmethod_MIN, 0, 0, {_EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN}, 0, 0, 0, 0, "", "", "", 0}
+#define UserConfiguration_init_default           {0, 0, _Uploadmethod_MIN, 0, 0, {_EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN}, 0, 0, 0, 0, "", "", "", 0, 0}
+#define UserConfiguration_init_zero              {0, 0, _Uploadmethod_MIN, 0, 0, {_EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN, _EnabledSensor_MIN}, 0, 0, 0, 0, "", "", "", 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define UserConfiguration_logger_id_tag          1
@@ -87,6 +89,7 @@ extern "C" {
 #define UserConfiguration_WiFi_Password_tag      11
 #define UserConfiguration_API_Endpoint_URL_tag   12
 #define UserConfiguration_API_Endpoint_Port_tag  13
+#define UserConfiguration_clear_buffer_tag       14
 
 /* Struct field encoding specification for nanopb */
 #define UserConfiguration_FIELDLIST(X, a) \
@@ -102,7 +105,8 @@ X(a, STATIC,   SINGULAR, DOUBLE,   Current_Offset,    9) \
 X(a, STATIC,   SINGULAR, STRING,   WiFi_SSID,        10) \
 X(a, STATIC,   SINGULAR, STRING,   WiFi_Password,    11) \
 X(a, STATIC,   SINGULAR, STRING,   API_Endpoint_URL,  12) \
-X(a, STATIC,   SINGULAR, UINT32,   API_Endpoint_Port,  13)
+X(a, STATIC,   SINGULAR, UINT32,   API_Endpoint_Port,  13) \
+X(a, STATIC,   SINGULAR, BOOL,     clear_buffer,     14)
 #define UserConfiguration_CALLBACK NULL
 #define UserConfiguration_DEFAULT NULL
 
@@ -113,7 +117,7 @@ extern const pb_msgdesc_t UserConfiguration_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define USER_CONFIG_PB_H_MAX_SIZE                UserConfiguration_size
-#define UserConfiguration_size                   238
+#define UserConfiguration_size                   240
 
 #ifdef __cplusplus
 } /* extern "C" */

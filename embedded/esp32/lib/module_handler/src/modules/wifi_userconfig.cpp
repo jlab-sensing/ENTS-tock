@@ -80,11 +80,17 @@ void ModuleUserConfig::requestConfig(const UserConfigCommand& cmd) {
   if (!pb_encode(&ostream, Esp32Command_fields, &response)) {
     Log.errorln("Failed to encode response");
     buffer_len = 0;
+  } 
+  else {
+
+    buffer_len = ostream.bytes_written;
+
+    Log.noticeln("Successfully encoded configuration (%d bytes)", buffer_len);
   }
 
-  buffer_len = ostream.bytes_written;
-
-  Log.noticeln("Successfully encoded configuration (%d bytes)", buffer_len);
+  if (config.clear_buffer == true) {
+    Log.noticeln("clear_buffer flag is set — STM32 will clear FRAM on boot");
+  }
 }
 
 void ModuleUserConfig::responseConfig(const UserConfigCommand& cmd) {
@@ -110,9 +116,8 @@ void ModuleUserConfig::start() {
   if (!pb_encode(&ostream, Esp32Command_fields, &response)) {
     Log.errorln("Failed to encode response");
     buffer_len = 0;
-    ;
+  } else {
+    buffer_len = ostream.bytes_written;
   }
-
-  buffer_len = ostream.bytes_written;
 }
 }  // namespace ModuleHandler

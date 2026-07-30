@@ -48,3 +48,13 @@ void UserConfigStop(uint32_t retry_ms);
  * @return Current state.
  */
 int UserConfigCurrentStatus(void);
+
+/**
+ * @brief Clear the FIFO buffer
+ *
+ * Calls fifo_buffer_clear() to reset the measurement FIFO and persists the
+ * cleared state to FRAM.
+ *
+ * @return true on success, false on failure.
+ */
+bool HandleClearBuffer(void);

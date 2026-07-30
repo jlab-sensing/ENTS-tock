@@ -125,6 +125,8 @@ uint16_t fifo_buffer_len(void);
  *
  * Read and write addresses are set to their default values allowing for the
  * buffer to be overwritten.
+ * 
+ * @return FRAM_OK on success.
  */
 fram_status fifo_buffer_clear(void);
 

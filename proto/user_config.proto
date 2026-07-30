@@ -22,6 +22,9 @@ message UserConfiguration {
   // Deprecated
   // Embedded into the endpoint URL
   uint32 API_Endpoint_Port = 13;
+
+  // If true, STM32 clears the FRAM measurement buffer on next boot
+  bool clear_buffer = 14;
 }
 
 

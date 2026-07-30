@@ -20,7 +20,8 @@ int main() {
       .WiFi_Password = "",
       .API_Endpoint_URL = "http://dirtviz.jlab.ucsc.edu/api/sensor/",
       // port is not used
-      .API_Endpoint_Port = 80};
+      .API_Endpoint_Port = 80,
+      .clear_buffer = false};
 
   // Load current configuration
   int status = 0;
