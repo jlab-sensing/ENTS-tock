@@ -423,11 +423,11 @@ extern const pb_msgdesc_t PowerCommand_msg;
 #define CONTROLLER_PB_H_MAX_SIZE                 Esp32Command_size
 #define Esp32Command_size                        632
 #define IrrigationCommand_size                   4
-#define MicroSDCommand_size                      503
+#define MicroSDCommand_size                      505
 #define PageCommand_size                         20
 #define PowerCommand_size                        10
 #define TestCommand_size                         13
-#define UserConfigCommand_size                   243
+#define UserConfigCommand_size                   245
 #define WiFiCommand_size                         629
 
 #ifdef __cplusplus

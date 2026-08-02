@@ -25,7 +25,8 @@ const static UserConfiguration testConfig = {
     .WiFi_Password = "",
     .API_Endpoint_URL = "http://dirtviz.jlab.ucsc.edu/api/sensor/",
     // port is not used
-    .API_Endpoint_Port = 80};
+    .API_Endpoint_Port = 80,
+    .clear_buffer = false};
 #endif  // TEST_USER_CONFIG
 
 /**
@@ -258,6 +259,8 @@ void UserConfigPrintAny(const UserConfiguration* config) {
   printf("API Endpoint URL: %s\r\n", config->API_Endpoint_URL);
 
   printf("API Port: %lu\r\n", config->API_Endpoint_Port);
+
+  printf("Check clear_buffer: %u\r\n", config->clear_buffer);
 }
 
 void UserConfigPrint(void) {
