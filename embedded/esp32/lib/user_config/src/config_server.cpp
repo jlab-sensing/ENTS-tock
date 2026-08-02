@@ -198,10 +198,13 @@ void handleSave() {
   // Log.noticeln("-----------------------");
   // printConfig(config);
 
-    // Use clear_buffer field to signal the STM32 to clear the FRAM buffer on next boot.
+  // Use clear_buffer field to signal the STM32 to clear the FRAM buffer on next
+  // boot.
   config.clear_buffer = server.hasArg("clear_buffer_on_save");
   if (config.clear_buffer) {
-    Log.noticeln("[WebUI] clear_buffer_on_save requested — STM32 will clear FRAM on next boot");
+    Log.noticeln(
+        "[WebUI] clear_buffer_on_save requested — STM32 will clear FRAM on "
+        "next boot");
   }
 
   setConfig(config);

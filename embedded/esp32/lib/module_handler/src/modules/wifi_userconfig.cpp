@@ -80,9 +80,7 @@ void ModuleUserConfig::requestConfig(const UserConfigCommand& cmd) {
   if (!pb_encode(&ostream, Esp32Command_fields, &response)) {
     Log.errorln("Failed to encode response");
     buffer_len = 0;
-  } 
-  else {
-
+  } else {
     buffer_len = ostream.bytes_written;
 
     Log.noticeln("Successfully encoded configuration (%d bytes)", buffer_len);

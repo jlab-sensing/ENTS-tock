@@ -129,7 +129,8 @@ void UserConfigStart(uint32_t retry_ms) {
       if (save_status == USERCONFIG_OK) {
         ulog_info("clear_buffer flag reset in FRAM.");
       } else {
-        ulog_error("Failed to reset clear_buffer flag in FRAM (status=%d)", save_status);
+        ulog_error("Failed to reset clear_buffer flag in FRAM (status=%d)",
+                   save_status);
       }
     }
   }
