@@ -34,7 +34,10 @@ static void microsd_log_output(ulog_event* ev, void* arg) {
   }
   busy = true;
 
-  char line[LOG_LINE_SIZE];
+  // static to keep 128 bytes off the stack, matching microlog's own examples.
+  // Safe despite being shared state because the busy guard above prevents
+  // re-entry.
+  static char line[LOG_LINE_SIZE];
   if (ulog_event_to_cstr(ev, line, sizeof(line)) == ULOG_STATUS_OK) {
     ControllerMicroSDLog(line);
   }

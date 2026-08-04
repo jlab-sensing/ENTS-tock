@@ -162,8 +162,8 @@ uint32_t ControllerMicroSDLog(const char* msg) {
 
   microsd_cmd.which_data = MicroSDCommand_log_tag;
   // truncate rather than overflow, the field is a fixed size array
-  strncpy(microsd_cmd.log, msg, sizeof(microsd_cmd.log) - 1);
-  microsd_cmd.log[sizeof(microsd_cmd.log) - 1] = '\0';
+  strncpy(microsd_cmd.data.log, msg, sizeof(microsd_cmd.data.log) - 1);
+  microsd_cmd.data.log[sizeof(microsd_cmd.data.log) - 1] = '\0';
 
   // encode command
   tx->len = EncodeMicroSDCommand(&microsd_cmd, tx->data, tx->size);
