@@ -18,8 +18,13 @@ What has been proven, by compiling and running on the host with plain `gcc`:
 - The proto change round trips. A `MicroSDCommand` of type `LOG` encodes to 15
   bytes and decodes back with `log == "hello world"`, `type == 2`,
   `which_data == 6`.
-- `MicroSDCommand_size` is 503 and `Esp32Command_size` is 632, both unchanged
-  from `main`. The new oneof arm genuinely costs no RAM.
+- `sizeof(MicroSDCommand)` is 512, unchanged from `main` even with `log` widened
+  to 240 bytes, because `UserConfiguration` already sets the union's size. The
+  field genuinely costs no RAM. `MicroSDCommand_size` grows by exactly one byte,
+  503 to 504, for the wider length varint. `Esp32Command_size` stays at 632.
+- The protos regenerate cleanly. `controller_pb2.py` comes out byte identical,
+  since `max_length` is a nanopb-only option and `controller.proto` did not
+  change.
 - `ulog_output_add()` returns a valid id when microlog is compiled with
   `ULOG_BUILD_EXTRA_OUTPUTS=1`, and returns `ULOG_OUTPUT_INVALID` without it.
   The handler fires once per `ulog_info()` and `ulog_event_to_cstr()` fills the
@@ -65,11 +70,23 @@ ulog_info("hello world")            stm32, microlog
 | File | Change |
 | --- | --- |
 | `proto/controller.proto` | Adds `MicroSDCommand.Type.LOG = 2` and a `string log = 6` arm to the `data` oneof. |
-| `proto/controller.options` | Bounds `MicroSDCommand.log` to `max_length:127`. |
+| `proto/controller.options` | Bounds `MicroSDCommand.log` to `max_length:239`. |
 
-Because `data` is a oneof and the new arm is smaller than the existing
-`Measurement` arm, `MicroSDCommand_size` (503) and `Esp32Command_size` (632) are
-both unchanged. The new field therefore costs no additional RAM.
+The size was chosen by measuring the oneof. `UserConfiguration` is 240 bytes and
+already sets the union's size, while `Measurement` is only 56, so the `log` arm
+can occupy the full 240 bytes without the union growing:
+
+```
+sizeof(Measurement)       =  56
+sizeof(UserConfiguration) = 240   <- sets the union size
+sizeof(union data)        = 240
+sizeof(MicroSDCommand)    = 512   <- unchanged by the log field
+```
+
+So the field costs **no additional RAM**. On the wire it costs exactly one byte:
+`MicroSDCommand_size` goes from 503 to 504, because a 239 byte string needs a two
+byte length varint where 127 needed one. `Esp32Command_size` stays at 632, so the
+i2c buffer sizing is untouched.
 
 ### Build
 
@@ -159,25 +176,31 @@ as the card.
    `PB_PROTO_HEADER_VERSION 40`, so they are compatible with the runtime `pb.h`
    either way. Decide with John whether to keep the regeneration in this PR or
    split it out.
-4. **Prefix truncation can eat the whole message. Design question, not a typo.**
-   `ulog_event_to_cstr()` writes `LEVEL  FILE:LINE: MESSAGE` into the buffer, so
-   the 128 bytes are shared between the prefix and the message. The prefix grows
-   with whatever `__FILE__` expands to under the Tock build. Observed on the
-   host with an absolute path:
+4. **Prefix truncation. Mitigated, but `__FILE__` is still unbounded.**
+
+   `ulog_event_to_cstr()` writes `LEVEL  FILE:LINE: MESSAGE` into one buffer, so
+   the prefix and the message share the space. With the original 128 bytes and a
+   long `__FILE__` the message was pushed out entirely. Observed on the host:
 
    ```
    captured: 'INFO  C:/Users/Azam Mohamed/AppData/.../scratchpad/tes'
    ```
 
-   The actual message, `"hello world"`, was truncated away completely and the
-   line that would have reached the card carried only a file path. The same test
-   passes when `__FILE__` is a short relative path. So whether this bites
-   depends entirely on how the build invokes the compiler, and it fails
-   silently: nothing returns an error, the card just gets a useless line.
+   `"hello world"` never made it. Nothing returns an error, so the card would
+   just receive a useless line.
 
-   Options: log `ulog_event_get_message()` instead of the full formatted line,
-   raise `MicroSDCommand.log` above 127, or shorten the prefix. Worth deciding
-   before the PR.
+   The prefix is wanted, since `file:line` is the point of logging to the card,
+   and microlog cannot shorten it: `ULOG_BUILD_SOURCE_LOCATION` is boolean, all
+   or nothing, with no basename-only mode (`doc/features.md:564`). So the buffer
+   was widened instead, from 127 to 239 in `controller.options`, and
+   `LOG_LINE_SIZE` in the example raised to match. Both were needed: the example
+   truncates into its own buffer before the proto ever sees the line.
+
+   **Still open:** this raises the ceiling, it does not bound the prefix. A deep
+   enough build path can still eat 239 bytes. The real fix is to bound `__FILE__`
+   at compile time with `-ffile-prefix-map=`, or to confirm the Tock build
+   already compiles with short relative paths. Not yet verified, because the ARM
+   build has never run.
 
 5. **Cost per line.** Every forwarded line is a full i2c transaction plus an SD
    mount and unmount. This is fine for occasional `ULOG_LEVEL_INFO` messages and

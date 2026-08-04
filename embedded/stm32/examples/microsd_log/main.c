@@ -14,8 +14,11 @@
 #include <stdbool.h>
 #include <ulog.h>
 
-/** Must be >= the MicroSDCommand.log field, which is 128 bytes */
-#define LOG_LINE_SIZE 128
+/** Must match the MicroSDCommand.log field, which is 240 bytes (239 chars plus
+ * the NUL). Anything smaller truncates the line here, before the proto sees it,
+ * and ulog_event_to_cstr() writes "LEVEL FILE:LINE: MESSAGE" into this buffer,
+ * so a long __FILE__ eats into the space left for the message. */
+#define LOG_LINE_SIZE 240
 
 /**
  * @brief microlog output handler that forwards a log line to the esp32.

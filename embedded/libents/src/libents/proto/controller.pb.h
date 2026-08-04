@@ -178,7 +178,7 @@ typedef struct _MicroSDCommand {
         /* userConfig to be saved */
         UserConfiguration uc;
         /* preformatted log line to be appended */
-        char log[128];
+        char log[240];
     } data;
 } MicroSDCommand;
 
@@ -429,7 +429,7 @@ extern const pb_msgdesc_t PowerCommand_msg;
 #define CONTROLLER_PB_H_MAX_SIZE                 Esp32Command_size
 #define Esp32Command_size                        632
 #define IrrigationCommand_size                   4
-#define MicroSDCommand_size                      503
+#define MicroSDCommand_size                      504
 #define PageCommand_size                         20
 #define PowerCommand_size                        10
 #define TestCommand_size                         13
