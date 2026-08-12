@@ -167,72 +167,77 @@ int main(void) {
     ulog_trace("main loop");
 
     // wait for callback
-    yield_for(&has_data);
+    // NOTE (jmadden173): I believe having just a yeild and and an if statement
+    // for has_data allows for the stop user config callback to run.
+    // yield_for(&has_data);
+    yield();
 
     //
     // Save data on matched command
     //
 
-    if (cmd == 2) {
-      // print out bytes
-      //  Get number of bytes in buffer
-      ulog_info("Received %d bytes:", meas_buffer_length);
-      // for (int i=1; i < meas_buffer_length; i++) {
-      //   printf("%x ", meas_buffer[i]);
-      // }
-      // printf("\n");
+    if (has_data) {
+      if (cmd == 2) {
+        // print out bytes
+        //  Get number of bytes in buffer
+        ulog_info("Received %d bytes:", meas_buffer_length);
+        // for (int i=1; i < meas_buffer_length; i++) {
+        //   printf("%x ", meas_buffer[i]);
+        // }
+        // printf("\n");
 
-      // store in buffer
-      ret = fifo_put(meas_buffer, meas_buffer_length);
-      if (ret < 0) {
-        ulog_error("Could not store measurement in buffer");
-      }
-      stats.meas++;
-
-      // indicate data has been processed and trigger client
-      has_data = false;
-      ipc_notify_client(last_pid);
-    }
-
-    //
-    // Always check buffer for an upload
-    //
-
-    uint16_t meas_in_buffer = fifo_buffer_len();
-
-    // batch into minium of 4 measurements
-    while (meas_in_buffer > 4) {
-      ulog_debug("Buffer has %d measurements", meas_in_buffer);
-
-      // format payload
-      uint8_t buffer[60] = {};
-      int len = get_payload(buffer, sizeof(buffer));
-      if (len != 0) {
-        ulog_debug("Uploading %d bytes", len);
-
-        stats.total++;
-        ret = lorawan_upload(buffer, len);
+        // store in buffer
+        ret = fifo_put(meas_buffer, meas_buffer_length);
         if (ret < 0) {
-          stats.failed++;
-          ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
-        } else {
-          ulog_debug("Uploaded %d bytes with LoRaWAN.");
-
-          stats.bytes += len;
+          ulog_error("Could not store measurement in buffer");
         }
+        stats.meas++;
+
+        // indicate data has been processed and trigger client
+        has_data = false;
+        ipc_notify_client(last_pid);
       }
 
-      meas_in_buffer = fifo_buffer_len();
-    }
+      //
+      // Always check buffer for an upload
+      //
 
-    //
-    // print stats
-    //
-    if (!(stats.total % 6)) {
-      ulog_info(
-          "total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: "
-          "%d\t",
-          stats.total, stats.failed, stats.meas, stats.bytes);
+      uint16_t meas_in_buffer = fifo_buffer_len();
+
+      // batch into minium of 4 measurements
+      while (meas_in_buffer > 4) {
+        ulog_debug("Buffer has %d measurements", meas_in_buffer);
+
+        // format payload
+        uint8_t buffer[60] = {};
+        int len = get_payload(buffer, sizeof(buffer));
+        if (len != 0) {
+          ulog_debug("Uploading %d bytes", len);
+
+          stats.total++;
+          ret = lorawan_upload(buffer, len);
+          if (ret < 0) {
+            stats.failed++;
+            ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+          } else {
+            ulog_debug("Uploaded %d bytes with LoRaWAN.");
+
+            stats.bytes += len;
+          }
+        }
+
+        meas_in_buffer = fifo_buffer_len();
+      }
+
+      //
+      // print stats
+      //
+      if (!(stats.total % 6)) {
+        ulog_info(
+            "total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: "
+            "%d\t",
+            stats.total, stats.failed, stats.meas, stats.bytes);
+      }
     }
   }
 }
