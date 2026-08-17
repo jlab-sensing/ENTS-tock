@@ -1,0 +1,277 @@
+/*
+ * @file main.c
+ * @brief Test application for ALIA (Adaptive Level-crossing Interval Algorithm)
+ *
+ * Exercises basic functionality of algorithm
+ * using the Unity testing framework.
+ *
+ * Based on stm32/test/fifo/main.c from ENTS-tock.
+ *
+ * @author Alec Levy
+ * @date 2026-08-17
+ *
+ * Copyright (c) 2026 jLab, UCSC
+ */
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
+#include "../../../libents/src/libents/ALIA/filter.h"
+#include <stdbool.h>
+#include <math.h>
+#include <unity.h>
+
+WelfordState welfordState;
+HeartbeatState heartbeatState;
+RunState runState;
+ALIAUserConfig config;
+
+void setUp(void){
+	welford_init(&welfordState);
+	heartbeatState.last_event_ts = 0;
+	heartbeatState.has_logged = false;
+	runState.run_count = 0;
+	config.event_delta_threshold = 2;
+	config.base_heartbeat_hours = 1;
+	config.doubling_hours = 6;
+	config.max_heartbeat_hours = 24;
+}
+
+void tearDown(void){}
+
+// ---- naive reference helpers, used to sanity-check the incremental math ----
+
+static double naive_mean(const double *values, size_t n){
+	double sum = 0.0;
+	for (size_t i = 0; i < n; i++){
+		sum += values[i];
+	}
+	return sum / (double)n;
+}
+
+static double naive_sample_variance(const double *values, size_t n){
+	if (n < 2){
+		return 0.0;
+	}
+	double mean = naive_mean(values, n);
+	double sum_sq_diff = 0.0;
+	for (size_t i = 0; i < n; i++){
+		double diff = values[i] - mean;
+		sum_sq_diff += diff * diff;
+	}
+	return sum_sq_diff / (double)(n - 1);
+}
+
+// ==== welford_init ====
+
+void test_welford_init_ZeroState(void){
+	welford_init(&welfordState);
+	TEST_ASSERT_EQUAL(0, welfordState.count);
+	TEST_ASSERT_EQUAL(0, welfordState.head);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, welfordState.mean);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, welfordState.M2);
+}
+
+// ==== welford_push: fill phase ====
+
+void test_welford_push_SingleValue_MeanEqualsValue(void){
+	welford_push(&welfordState, 5.0);
+	TEST_ASSERT_EQUAL_DOUBLE(5.0, welford_get_mean(&welfordState));
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, welford_get_variance(&welfordState));
+}
+
+void test_welford_push_KnownSequence_MatchesNaiveRecompute(void){
+	double values[] = {2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0};
+	size_t n = sizeof(values) / sizeof(values[0]);
+
+	for (size_t i = 0; i < n; i++){
+		welford_push(&welfordState, values[i]);
+	}
+
+	double expected_mean = naive_mean(values, n);
+	double expected_variance = naive_sample_variance(values, n);
+
+	TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected_mean, welford_get_mean(&welfordState));
+	TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected_variance, welford_get_variance(&welfordState));
+}
+
+void test_welford_push_ConstantValues_VarianceIsZero(void){
+	for (int i = 0; i < 10; i++){
+		welford_push(&welfordState, 3.14);
+	}
+	TEST_ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
+}
+
+// ==== welford_push: steady-state phase (window full, evicting) ====
+void test_welford_push_PastCapacity_MatchesNaiveSlidingWindow(void){
+	int total = ALIA_STD_DEV_WINDOW_SAMPLES + 50;
+	double history[ALIA_STD_DEV_WINDOW_SAMPLES + 50];
+
+	for (int i = 0; i < total; i++){
+		double v = (double)(i % 17) + 0.5;
+		history[i] = v;
+		welford_push(&welfordState, v);
+
+		int window_start = (i + 1 > ALIA_STD_DEV_WINDOW_SAMPLES)
+			? (i + 1 - ALIA_STD_DEV_WINDOW_SAMPLES)
+			: 0;
+		int window_len = (i + 1) - window_start;
+
+		double expected_mean = naive_mean(&history[window_start], window_len);
+		double expected_variance = naive_sample_variance(&history[window_start], window_len);
+
+		TEST_ASSERT_DOUBLE_WITHIN(1e-6, expected_mean, welford_get_mean(&welfordState));
+		TEST_ASSERT_DOUBLE_WITHIN(1e-6, expected_variance, welford_get_variance(&welfordState));
+	}
+}
+
+void test_welford_push_HeadWrapsCorrectly(void){
+	for (int i = 0; i < ALIA_STD_DEV_WINDOW_SAMPLES; i++){
+		welford_push(&welfordState, (double)i);
+	}
+	TEST_ASSERT_EQUAL(0, welfordState.head);
+
+	welford_push(&welfordState, 999.0);
+	TEST_ASSERT_EQUAL(1, welfordState.head);
+	TEST_ASSERT_EQUAL_DOUBLE(999.0, welfordState.sensorMeasurements[0]);
+}
+
+void test_welford_push_ConstantValues_PastCapacity_VarianceStaysZero(void){
+	for (int i = 0; i < ALIA_STD_DEV_WINDOW_SAMPLES + 20; i++){
+		welford_push(&welfordState, 7.0);
+	}
+	TEST_ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
+}
+
+// ==== welford_get_stddev / welford_get_variance edge cases ====
+
+void test_welford_get_variance_LessThanTwoSamples_ReturnsZero(void){
+	welford_push(&welfordState, 1.0);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, welford_get_variance(&welfordState));
+}
+
+void test_welford_get_stddev_MatchesSqrtOfVariance(void){
+	double values[] = {1.0, 3.0, 5.0, 7.0};
+	for (size_t i = 0; i < 4; i++){
+		welford_push(&welfordState, values[i]);
+	}
+	double expected = sqrt(welford_get_variance(&welfordState));
+	TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected, welford_get_stddev(&welfordState));
+}
+
+// ==== welford_window_is_full ====
+
+void test_welford_window_is_full_FalseBeforeCapacity(void){
+	for (int i = 0; i < ALIA_STD_DEV_WINDOW_SAMPLES - 1; i++){
+		welford_push(&welfordState, (double)i);
+	}
+	TEST_ASSERT_FALSE(welford_window_is_full(&welfordState));
+}
+
+void test_welford_window_is_full_TrueAtCapacity(void){
+	for (int i = 0; i < ALIA_STD_DEV_WINDOW_SAMPLES; i++){
+		welford_push(&welfordState, (double)i);
+	}
+	TEST_ASSERT_TRUE(welford_window_is_full(&welfordState));
+}
+
+// ==== backoff ====
+
+void test_backoff_NotYetLogged_ReturnsBaseHeartbeat(void){
+	heartbeatState.has_logged = false;
+	double result = backoff(&heartbeatState, &config, 1000);
+	TEST_ASSERT_EQUAL_DOUBLE(config.base_heartbeat_hours, result);
+}
+
+void test_backoff_ZeroElapsed_ReturnsBaseHeartbeat(void){
+	heartbeatState.has_logged = true;
+	heartbeatState.last_event_ts = 1000;
+	double result = backoff(&heartbeatState, &config, 1000);
+	TEST_ASSERT_EQUAL_DOUBLE(config.base_heartbeat_hours, result);
+}
+
+void test_backoff_GrowsWithElapsedTime(void){
+	heartbeatState.has_logged = true;
+	heartbeatState.last_event_ts = 0;
+	uint32_t now = config.doubling_hours * 3600;
+	double result = backoff(&heartbeatState, &config, now);
+	TEST_ASSERT_DOUBLE_WITHIN(1e-6, config.base_heartbeat_hours * 2.0, result);
+}
+
+void test_backoff_CapsAtMaxHeartbeat(void){
+	heartbeatState.has_logged = true;
+	heartbeatState.last_event_ts = 0;
+	uint32_t now = config.doubling_hours * 3600 * 20;  // many doubling periods
+	double result = backoff(&heartbeatState, &config, now);
+	TEST_ASSERT_EQUAL_DOUBLE(config.max_heartbeat_hours, result);
+}
+
+// ==== should_log ====
+
+void test_should_log_FirstCall_ReturnsTrue(void){
+	bool result = should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	TEST_ASSERT_TRUE(result);
+	TEST_ASSERT_TRUE(heartbeatState.has_logged);
+}
+
+void test_should_log_NoEventNoHeartbeat_ReturnsFalse(void){
+	for (int i = 0; i < 5; i++){
+		should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	}
+	uint32_t prev_run_count = runState.run_count;
+	bool result = should_log(50.1, &welfordState, &heartbeatState, &runState, &config);
+	TEST_ASSERT_FALSE(result);
+	TEST_ASSERT_EQUAL(prev_run_count + 1, runState.run_count);
+}
+
+void test_should_log_LargeDeviation_TriggersEvent(void){
+	for (int i = 0; i < 5; i++){
+		should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	}
+	bool result = should_log(9999.0, &welfordState, &heartbeatState, &runState, &config);
+	TEST_ASSERT_TRUE(result);
+}
+
+void test_should_log_HeartbeatElapsed_TriggersEvenWithoutDeviation(void){
+	should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	heartbeatState.last_event_ts -= (config.max_heartbeat_hours * 3600 + 1);
+	bool result = should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	TEST_ASSERT_TRUE(result);
+}
+
+void test_should_log_AlwaysUpdatesWindow(void){
+	size_t count_before = welfordState.count;
+	should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+	TEST_ASSERT_EQUAL(count_before + 1, welfordState.count);
+}
+
+int main(void){
+	UNITY_BEGIN();
+
+	RUN_TEST(test_welford_init_ZeroState);
+
+	RUN_TEST(test_welford_push_SingleValue_MeanEqualsValue);
+	RUN_TEST(test_welford_push_KnownSequence_MatchesNaiveRecompute);
+	RUN_TEST(test_welford_push_ConstantValues_VarianceIsZero);
+
+	RUN_TEST(test_welford_push_PastCapacity_MatchesNaiveSlidingWindow);
+	RUN_TEST(test_welford_push_HeadWrapsCorrectly);
+	RUN_TEST(test_welford_push_ConstantValues_PastCapacity_VarianceStaysZero);
+
+	RUN_TEST(test_welford_get_variance_LessThanTwoSamples_ReturnsZero);
+	RUN_TEST(test_welford_get_stddev_MatchesSqrtOfVariance);
+
+	RUN_TEST(test_welford_window_is_full_FalseBeforeCapacity);
+	RUN_TEST(test_welford_window_is_full_TrueAtCapacity);
+
+	RUN_TEST(test_backoff_NotYetLogged_ReturnsBaseHeartbeat);
+	RUN_TEST(test_backoff_ZeroElapsed_ReturnsBaseHeartbeat);
+	RUN_TEST(test_backoff_GrowsWithElapsedTime);
+	RUN_TEST(test_backoff_CapsAtMaxHeartbeat);
+
+	RUN_TEST(test_should_log_FirstCall_ReturnsTrue);
+	RUN_TEST(test_should_log_NoEventNoHeartbeat_ReturnsFalse);
+	RUN_TEST(test_should_log_LargeDeviation_TriggersEvent);
+	RUN_TEST(test_should_log_HeartbeatElapsed_TriggersEvenWithoutDeviation);
+	RUN_TEST(test_should_log_AlwaysUpdatesWindow);
+
+	return UNITY_END();
+}
