@@ -1,5 +1,7 @@
 #include "microsd.h"
 
+#include <string.h>
+
 #include "../../proto/transcoder.h"
 #include "../../util/time.h"
 #include "../communication.h"
@@ -146,6 +148,40 @@ uint32_t ControllerMicroSDUserConfig(UserConfiguration* uc,
   //            cmd.command.microsd_command.rc);
   //    break;
   //}
+
+  return cmd.command.microsd_command.rc;
+}
+
+uint32_t ControllerMicroSDLog(const char* msg) {
+  // get reference to tx and rx buffers
+  Buffer* tx = ControllerTx();
+  Buffer* rx = ControllerRx();
+
+  MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
+  microsd_cmd.type = MicroSDCommand_Type_LOG;
+
+  microsd_cmd.which_data = MicroSDCommand_log_tag;
+  // truncate rather than overflow, the field is a fixed size array
+  strncpy(microsd_cmd.data.log, msg, sizeof(microsd_cmd.data.log) - 1);
+  microsd_cmd.data.log[sizeof(microsd_cmd.data.log) - 1] = '\0';
+
+  // encode command
+  tx->len = EncodeMicroSDCommand(&microsd_cmd, tx->data, tx->size);
+
+  // return if communication fails
+  ControllerStatus status = ControllerTransaction();
+  if (status != CONTROLLER_SUCCESS) {
+    return MicroSDCommand_ReturnCode_ERROR_GENERAL;
+  }
+
+  // check for errors
+  if (rx->len == 0) {
+    return MicroSDCommand_ReturnCode_ERROR_GENERAL;
+  }
+
+  // decode command
+  Esp32Command cmd = Esp32Command_init_default;
+  cmd = DecodeEsp32Command(rx->data, rx->len);
 
   return cmd.command.microsd_command.rc;
 }
