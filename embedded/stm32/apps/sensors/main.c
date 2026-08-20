@@ -256,12 +256,12 @@ int main() {
 
       if (sensor == EnabledSensor_Current) {
         measure_sensor(ads1219_sensor_current);
-        ulog_info("Measured Current");
+        ulog_info("Measured current");
       }
-      // if (sensor == EnabledSensor_Teros12) {
-      //   ulog_info("Teros12");
-      //   measure_sensor(Teros12Measure);
-      // }
+      if (sensor == EnabledSensor_Teros12) {
+        ulog_info("Measured Teros12");
+        measure_sensor(Teros12Measure);
+      }
       // if (sensor == EnabledSensor_Teros21) {
       //   measure_sensor(Teros21Measure);
       //   ulog_info("Teros21");
