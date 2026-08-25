@@ -85,4 +85,3 @@ bool should_log(double data, WelfordState *state,
 double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
                uint32_t now);
 
-#endif
