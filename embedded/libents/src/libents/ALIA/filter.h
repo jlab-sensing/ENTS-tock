@@ -1,6 +1,4 @@
 #pragma once
-#ifndef ALIA_H
-#define ALIA_H
 #define ALIA_STD_DEV_WINDOW_SAMPLES 144
 #include <stdbool.h>
 #include <stdint.h>
