@@ -25,7 +25,7 @@ typedef struct {
 
 //calculate number of statup samples needed for stdDevWindowHours 
 static inline void  numSamplesInStartup(struct ALIAUserConfig *cfg){
-	cfg->numStartupSamples = (cfg->stdDevWindowHours*3600)/cfg->sampleRate;
+	cfg->num_startup_samples = (cfg->std_dev_window_hours*3600)/cfg->sample_rate;
 }
 
 //run length encoding struct to keep track of run length
@@ -37,6 +37,7 @@ typedef struct RunState{
 typedef struct HeartbeatState{
 	time_t last_event_ts;
 	bool has_logged;
+    double last_transmitted_value;
 } HeartbeatState;
 
 //initictes a struct for calculating the std deviation over a rolling window of the past n values

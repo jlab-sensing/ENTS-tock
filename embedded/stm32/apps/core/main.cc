@@ -117,6 +117,22 @@ int main(void) {
   ulog_warn("TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
 
+#ifdef ALIA_ENABLED
+  WelfordState welfordState;
+  HeartbeatState heartbeatState;
+  RunState runState;
+  ALIAUserConfig config;
+
+  welford_init(&welfordState);
+  heartbeatState.last_event_ts = 0;
+  heartbeatState.has_logged = false;
+  runState.run_count = 0;
+  config.event_delta_threshold = 2;
+  config.sensor_resolution = 0.1;
+  config.base_heartbeat_hours = 1;
+  config.doubling_hours = 6;
+  config.max_heartbeat_hours = 24;
+#endif
   // Initialize controller interface
   ControllerInit();
 
@@ -199,8 +215,47 @@ int main(void) {
     //
 
     uint16_t meas_in_buffer = fifo_buffer_len();
-
+    //i fdef this block with ALIA configurable
     // batch into minium of 4 measurements
+#ifdef ALIA_ENABLED
+    if (cmd == 2) {
+      SensorMeasurement meas = {};
+      ret = DecodeSensorMeasurement(meas_buffer, meas_buffer_length, &meas);
+      if (ret < 0) {
+        ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
+      } else {
+        double value = meas.value;  // match your actual field name
+        uint32_t rle = runState.run_count;
+        bool transmit = should_log(value, &welfordState, &heartbeatState,
+                                    &runState, &config);
+
+        if (transmit) {
+            heartbeatState->last_transmitted_value = value;
+            meas.rle_count = rle;
+          uint8_t buffer[60] = {};
+          int len = 0;
+          Metadata meta = {};
+          SensorMeasurement single[1] = {meas};
+
+          ret = EncodeRepeatedSensorMeasurements(meta, single, 1, buffer,
+                                                  sizeof(buffer), (size_t*)&len);
+          if (ret < 0) {
+            ulog_error("Could not encode single measurement (error %d)", ret);
+          } else {
+            ulog_debug("Uploading %d bytes (single triggering measurement)", len);
+            stats.total++;
+            ret = lorawan_upload(buffer, len);
+            if (ret < 0) {
+              stats.failed++;
+              ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+            } else {
+              stats.bytes += len;
+            }
+          }
+        }
+      }
+    }
+#else
     while (meas_in_buffer > 4) {
       ulog_debug("Buffer has %d measurements", meas_in_buffer);
 
@@ -225,6 +280,7 @@ int main(void) {
       meas_in_buffer = fifo_buffer_len();
     }
 
+#endif
     //
     // print stats
     //
