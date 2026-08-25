@@ -13,3 +13,6 @@
 [submodule "embedded/external/unity/Unity"]
 	path = embedded/external/unity/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "embedded/extras/tock"]
+	path = embedded/extras/tock
+	url = git@github.com:jlab-sensing/tock.git

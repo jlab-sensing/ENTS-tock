@@ -23,6 +23,8 @@ typedef struct {
   int failed;
   /** Total number of measurements */
   int meas;
+  /** Number of heartbeats */
+  int heartbeat;
 } upload_stats;
 
 upload_stats stats = {};
@@ -46,6 +48,9 @@ static bool network_ready = false;
 
 /** Time between repeated timesync requests. */
 static int timesync_retry_delay_ms = 10000;
+
+/** Time between upload intervals. */
+static int upload_interval = 60000;
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -177,18 +182,23 @@ int main(void) {
   network_ready = true;
 
   while (1) {
-    // TODO: Create copy of counters
-
     ulog_trace("main loop");
 
-    // wait for callback
-    yield_for(&has_data);
+    ret = libtocksync_alarm_yield_for_with_timeout(&has_data, upload_interval);
+    if (ret == 0) {
+      ulog_info("Loop triggered with condition");
+    } else if (ret == -1) {
+      ulog_info("Loop triggered with timeout");
+    } else {
+      ulog_warn("Unknown behavior with yield_for_with_timeout (error: %d)",
+                ret);
+    }
 
     //
     // Save data on matched command
     //
 
-    if (cmd == 2) {
+    if (has_data && cmd == 2) {
       // print out bytes
       //  Get number of bytes in buffer
       ulog_info("Received %d bytes:", meas_buffer_length);
@@ -207,10 +217,13 @@ int main(void) {
       // indicate data has been processed and trigger client
       has_data = false;
       ipc_notify_client(last_pid);
+
+      // skip uploads if received ipc call
+      continue;
     }
 
     //
-    // Always check buffer for an upload
+    // Upload data
     //
 
     uint16_t meas_in_buffer = fifo_buffer_len();
@@ -254,28 +267,44 @@ int main(void) {
       }
     }
 #else
-    while (meas_in_buffer > 4) {
-      ulog_debug("Buffer has %d measurements", meas_in_buffer);
+    if (meas_in_buffer > 1) {
+      // batch into minium of 4 measurements
+      while (meas_in_buffer > 1) {
+        ulog_debug("Buffer has %d measurements", meas_in_buffer);
 
-      // format payload
-      uint8_t buffer[60] = {};
-      int len = get_payload(buffer, sizeof(buffer));
-      if (len != 0) {
-        ulog_debug("Uploading %d bytes", len);
+        // format payload
+        uint8_t buffer[60] = {};
+        int len = get_payload(buffer, sizeof(buffer));
+        if (len != 0) {
+          ulog_debug("Uploading %d bytes", len);
 
-        stats.total++;
-        ret = lorawan_upload(buffer, len);
-        if (ret < 0) {
-          stats.failed++;
-          ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
-        } else {
-          ulog_debug("Uploaded %d bytes with LoRaWAN.");
+          stats.total++;
+          ret = lorawan_upload(buffer, len);
+          if (ret < 0) {
+            stats.failed++;
+            ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+          } else {
+            ulog_debug("Uploaded %d bytes with LoRaWAN.");
 
-          stats.bytes += len;
+            stats.bytes += len;
+          }
         }
-      }
 
-      meas_in_buffer = fifo_buffer_len();
+        meas_in_buffer = fifo_buffer_len();
+      }
+    } else {
+      stats.total++;
+
+      ulog_debug("Sending heartbeat");
+
+      ret = lorawan_heartbeat();
+      if (ret < 0) {
+        stats.failed++;
+        ulog_error("Error sending heartbeat (error: %d)");
+      } else {
+        stats.heartbeat++;
+        ulog_debug("Heartbeat sent");
+      }
     }
 
 #endif

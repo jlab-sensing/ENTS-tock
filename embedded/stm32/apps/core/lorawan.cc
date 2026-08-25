@@ -23,12 +23,15 @@
 static const int retry_ms = 15000;
 
 // LoRaWAN upload port
-static const uint8_t fport = 2;
+static const uint8_t upload_fport = 2;
+static const uint8_t heartbeat_fport = 3;
 
 static TockRadioLibHal* hal;
 static Module* mod;
 static SX1262* tock_module;
 static LoRaWANNode* node;
+
+int lorawan_upload_fport(uint8_t* buffer, int length, int fport);
 
 // the entry point for the program
 int lorawan_init(void) {
@@ -217,8 +220,8 @@ int lorawan_timesync(void) {
   return 0;
 }
 
-int lorawan_upload(uint8_t* buffer, int length) {
-  ulog_trace("lorawan_upload");
+int lorawan_upload_fport(uint8_t* buffer, int length, int fport) {
+  ulog_trace("lorawan_upload_fport");
 
   int state = 0;
 
@@ -229,7 +232,7 @@ int lorawan_upload(uint8_t* buffer, int length) {
   ulog_debug("Sending uplink of %lu bytes.", length, buffer);
 
   // state indicates there was a downlink received
-  state = node->sendReceive(buffer, (size_t)length, fport);
+  state = node->sendReceive(buffer, (size_t)length, (uint8_t)fport);
   ulog_debug("LoRaWAN send/receive code %d.", state);
   if (state < 0) {
     ulog_error("Upload failed.");
@@ -240,4 +243,16 @@ int lorawan_upload(uint8_t* buffer, int length) {
   // hal->delay(uplinkIntervalSeconds * 1000UL);
 
   return state;
+}
+
+int lorawan_upload(uint8_t* buffer, int length) {
+  ulog_trace("lorawan_upload");
+
+  return lorawan_upload_fport(buffer, length, upload_fport);
+}
+
+int lorawan_heartbeat(void) {
+  ulog_trace("lorawan_heartbeat");
+
+  return lorawan_upload_fport(NULL, 0, heartbeat_fport);
 }
