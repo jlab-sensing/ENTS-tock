@@ -214,7 +214,6 @@ int main(void) {
     //
 
     uint16_t meas_in_buffer = fifo_buffer_len();
-    //i fdef this block with ALIA configurable
     // batch into minium of 4 measurements
 #ifdef ALIA_ENABLED
     if (cmd == 2) {
@@ -223,7 +222,7 @@ int main(void) {
       if (ret < 0) {
         ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
       } else {
-        double value = meas.value;  // match your actual field name
+        double value = meas.value;  // match upcoming changes to sensor measurement name with proto
         uint32_t rle = runState.run_count;
         bool transmit = should_log(value, &welfordState, &heartbeatState,
                                     &runState, &config);
