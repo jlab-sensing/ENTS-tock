@@ -113,7 +113,6 @@ int main(void) {
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
 
   // Print warning when using TEST_USER_CONFIG
-#ifdef TEST_USER_CONFIG
   ulog_warn("TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
 
