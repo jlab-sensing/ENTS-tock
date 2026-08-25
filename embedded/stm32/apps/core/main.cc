@@ -235,25 +235,27 @@ int main(void) {
       if (ret < 0) {
         ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
       } else {
-        double value = meas.value;  // match upcoming changes to sensor measurement name with proto
+        double value = meas.value;  // match upcoming changes to sensor
+                                    // measurement name with proto
         uint32_t rle = runState.run_count;
         bool transmit = should_log(value, &welfordState, &heartbeatState,
-                                    &runState, &config);
+                                   &runState, &config);
 
         if (transmit) {
-            heartbeatState->last_transmitted_value = value;
-            meas.rle_count = rle;
+          heartbeatState->last_transmitted_value = value;
+          meas.rle_count = rle;
           uint8_t buffer[60] = {};
           int len = 0;
           Metadata meta = {};
           SensorMeasurement single[1] = {meas};
 
           ret = EncodeRepeatedSensorMeasurements(meta, single, 1, buffer,
-                                                  sizeof(buffer), (size_t*)&len);
+                                                 sizeof(buffer), (size_t*)&len);
           if (ret < 0) {
             ulog_error("Could not encode single measurement (error %d)", ret);
           } else {
-            ulog_debug("Uploading %d bytes (single triggering measurement)", len);
+            ulog_debug("Uploading %d bytes (single triggering measurement)",
+                       len);
             stats.total++;
             ret = lorawan_upload(buffer, len);
             if (ret < 0) {
