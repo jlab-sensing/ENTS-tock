@@ -99,26 +99,6 @@ void UserConfigUpdateFromServer(void) {
 
   if (status != USERCONFIG_OK) {
     ulog_error("Something went wrong with getting user config");
-  } else {
-    // Check if clear_buffer was requested via the new proto field
-    const UserConfiguration* cfg = UserConfigGet();
-    if (cfg->clear_buffer) {
-      ulog_info("clear_buffer flag set — clearing FRAM measurement buffer...");
-      ulog_info("FIFO buffer length before clear: %u", fifo_buffer_len());
-      HandleClearBuffer();
-      ulog_info("FIFO buffer length after clear: %u", fifo_buffer_len());
-
-      // Reset the flag so it doesn't repeat on next boot
-      UserConfiguration cleared = *cfg;
-      cleared.clear_buffer = false;
-      UserConfigStatus save_status = UserConfigSave(&cleared);
-      if (save_status == USERCONFIG_OK) {
-        ulog_info("clear_buffer flag reset in FRAM.");
-      } else {
-        ulog_error("Failed to reset clear_buffer flag in FRAM (status=%d)",
-                   save_status);
-      }
-    }
   }
 
   // Reload user config from FRAM
@@ -128,6 +108,27 @@ void UserConfigUpdateFromServer(void) {
 
     while (1);
   }
+
+  // Check if clear_buffer was requested via the new proto field
+  const UserConfiguration* cfg = UserConfigGet();
+  if (cfg->clear_buffer) {
+    ulog_info("clear_buffer flag set — clearing FRAM measurement buffer...");
+    ulog_info("FIFO buffer length before clear: %u", fifo_buffer_len());
+    HandleClearBuffer();
+    ulog_info("FIFO buffer length after clear: %u", fifo_buffer_len());
+
+    // Reset the flag so it doesn't repeat on next boot
+    UserConfiguration cleared = *cfg;
+    cleared.clear_buffer = false;
+    UserConfigStatus save_status = UserConfigSave(&cleared);
+    if (save_status == USERCONFIG_OK) {
+      ulog_info("clear_buffer flag reset in FRAM.");
+    } else {
+      ulog_error("Failed to reset clear_buffer flag in FRAM (status=%d)",
+                 save_status);
+    }
+  }
+
 
   // Print updated config
   ulog_info("Updated user configuration:");
