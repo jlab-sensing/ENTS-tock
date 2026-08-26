@@ -4,26 +4,23 @@ This is a step by step documentation to flash both boards, bring up the web UI, 
 
 ---
 
-## Part 1 — Flash the STM32
+## Part 1 - Installing firmware
 
-The STM32 runs on Tock OS. Use `tockloader` to install the apps.
+Use the following bash script to install stm32 kernel, stm32 core app, stm32 sensors app, esp32 firmware, and esp32 html files.
 
-**1. Erase existing apps and install fresh**
-
-```bash
-cd /ENTS-tock/embedded/stm32
-make install
+```
+./embedded/install.sh
 ```
 
-This erases the existing app state and installs the current STM32 apps.
+### STM32
 
-Then open the serial console:
+You can view the serial printout with the following.
 
 ```bash
 tockloader listen
 ```
 
-You should see startup logs such as:
+You should see something similar to these startup logs.
 
 ```text
 Core    === App Initialized ===
@@ -32,19 +29,11 @@ Core    Current user configuration:
 
 If this is the first flash, the configuration may be empty and the app may wait for a new config. That is expected.
 
----
 
-## 2. Flash the ESP32
+### ESP32
 
-```bash
-cd /ENTS-tock/embedded/esp32
-pio run -e release -t uploadfs
-pio run -e release -t upload
-```
 
-If the ESP32 is not entering boot mode correctly, hold BOOT while pressing RESET, then release BOOT before uploading.
-
-Open the monitor with the correct port:
+Open the monitor with the correct port.
 
 ```bash
 pio device monitor
@@ -61,7 +50,7 @@ User Config http://192.168.4.1/
 
 ---
 
-## 3. Open the web UI
+## 2. Open the web UI
 
 1. Connect to the WiFi access point shown by the ESP32 serial output.
    - Password: `ilovedirt`
@@ -70,7 +59,7 @@ User Config http://192.168.4.1/
 
 ---
 
-## 4. Save a new configuration
+## 3. Save a new configuration
 
 1. Fill in a valid config.
    - Logger ID: `1`
@@ -90,13 +79,13 @@ Expected result:
 
 ---
 
-## 5. Verify the buffer-clear feature
+## 4. Verify the buffer-clear feature
 
-### Step A — Create some buffered data
+### Step A - Create some buffered data
 
 Let the STM32 run long enough for measurements to accumulate in the FIFO buffer.
 
-### Step B — Enable buffer clearing
+### Step B - Enable buffer clearing
 
 1. Re-open the web UI.
 2. Check the red **Clear buffer on save** box.

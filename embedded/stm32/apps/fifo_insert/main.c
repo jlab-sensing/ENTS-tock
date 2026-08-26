@@ -21,7 +21,7 @@ int main(void) {
     return 1;
   }
 
-  ulog_info("Inserted %zu bytes into FIFO.", payload_len);
+  ulog_info("Inserted %lu bytes into FIFO.", payload_len);
   ulog_info("FIFO buffer length: %u", fifo_buffer_len());
   return 0;
 }
