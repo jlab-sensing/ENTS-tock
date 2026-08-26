@@ -394,6 +394,17 @@
           value="http://dirtviz.jlab.ucsc.edu/api/sensor/">
       </div>
 
+      <!-- Clear buffer checkbox — shown above the Save button -->
+      <div class="group" id="clearBufferSection" style="border-color: #ff6b6b;">
+        <h2 style="color: #cc0000;">Clear Buffer</h2>
+        <p style="margin: 0 0 10px;">If checked, all stored measurements will be permanently deleted when you save the configuration.</p>
+        <div class="checkbox-row">
+          <input type="checkbox" id="clear_buffer_on_save" name="clear_buffer_on_save">
+          <label for="clear_buffer_on_save" style="color: #cc0000; font-weight: bold;">Clear buffer with new configuration (cannot be undone)</label>
+        </div>
+        <div id="clearBufferStatus" style="margin-top: 8px; display: none;"></div>
+      </div>
+
       <!-- Error display will appear here, above the form buttons -->
       <div id="errorDisplay" class="error" style="display: none;"></div>
 
@@ -438,6 +449,10 @@
         event.preventDefault();
         hideError();
 
+        const clearBuffer = document.getElementById('clear_buffer_on_save').checked;
+        const clearBufferStatus = document.getElementById('clearBufferStatus');
+        clearBufferStatus.style.display = 'none';
+
         try {
           const formData = new FormData(configForm);
 
@@ -450,6 +465,13 @@
 
           if (!response.ok) {
             throw new Error(result.error || 'Failed to save configuration');
+          }
+
+          if (clearBuffer) {
+            clearBufferStatus.textContent = 'Buffer will be cleared on next STM32 reset';
+            clearBufferStatus.style.color = '#28a745';
+            clearBufferStatus.style.display = 'block';
+            document.getElementById('clear_buffer_on_save').checked = false;
           }
 
           // Show success modal if save was successful

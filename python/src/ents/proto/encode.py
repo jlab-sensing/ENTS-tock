@@ -230,6 +230,7 @@ def encode_user_configuration(
     WiFi_Password: str,
     API_Endpoint_URL: str,
     API_Endpoint_Port: int,
+    clear_buffer: bool,
 ) -> bytes:
     """Encodes a UserConfiguration message
 
@@ -247,6 +248,7 @@ def encode_user_configuration(
         WiFi_Password: WiFi password.
         API_Endpoint_URL
         API_Endpoint_Port
+        clear_buffer
 
     Returns:
         Serialized UserConfiguration message
@@ -294,5 +296,6 @@ def encode_user_configuration(
     user_config.WiFi_Password = WiFi_Password
     user_config.API_Endpoint_URL = API_Endpoint_URL
     user_config.API_Endpoint_Port = API_Endpoint_Port
+    user_config.clear_buffer = clear_buffer
 
     return user_config.SerializeToString()

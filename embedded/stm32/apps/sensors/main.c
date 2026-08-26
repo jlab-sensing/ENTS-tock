@@ -157,9 +157,8 @@ int main() {
   if (ret < 0) {
     ulog_fatal("No core service %d", ret);
     return -1;
-  } else {
-    ulog_info("Found core service");
   }
+  ulog_info("Found core service");
 
   // register ipc callback with buffer
   ipc_register_client_callback(core_service, ipc_callback, NULL);
@@ -188,7 +187,7 @@ int main() {
   // FIFO_Init();
 
   // setup repeating measurement call
-  uint32_t period_ms = (uint32_t)(cfg->Upload_interval * 1000);
+  uint32_t period_ms = (cfg->Upload_interval * 1000);
 
   //
   // Infinite measurement loop
@@ -301,7 +300,7 @@ int main() {
       //  measure_sensor(pcap02_measure);
       //  ulog_info("PCAP02");
       //}
-      // TODO add support for dummy sensor
+      // TODO(ahmedfalah): add support for dummy sensor
     }
 
     // set initialized flag

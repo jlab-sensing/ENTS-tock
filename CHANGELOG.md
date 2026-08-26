@@ -4,21 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased] - No date
 
 ### Added
 
 - App to clear LoRaWAN devices nonces [#25](i25)
 - Retry on timesync request [#28](i28)
+- Support for the `fm24cl16b` fram chip [#35](i35)
 - Added `CONTRIBUTING.md` with remote dev env docs [#44](i44)
 - Synced reset between stm32 and esp32 [#46](i46)
 - Add install script for tock kernel [#51](i51)
 - Added LoRaWAN heartbeat and `Makefile` vars for static params [#53](i53)
 - Reset on downlink to `fport = 4` [#52](i52)
 
+### Changed
+
+- Default behavior for measurement buffer to be persistant [#35](i35)
+
 [i25]: https://github.com/jlab-sensing/ENTS-tock/pull/25
 [i28]: https://github.com/jlab-sensing/ENTS-tock/pull/28
+[i35]: https://github.com/jlab-sensing/ENTS-tock/pull/35
 [i44]: https://github.com/jlab-sensing/ENTS-tock/pull/44
 [i46]: https://github.com/jlab-sensing/ENTS-tock/pull/46
 [i51]: https://github.com/jlab-sensing/ENTS-tock/pull/51

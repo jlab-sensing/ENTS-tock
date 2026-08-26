@@ -7,7 +7,10 @@
 #if defined(FRAM_FM24CL16B) && defined(FRAM_MB85RC1MT)
 #error Only one FRAM chip can be enabled
 #elif defined(FRAM_FM24CL16B)
-#error FM24CL16B Not Implemented
+#include "fm24cl16b.h"
+const fram_interface_t fram_interface = {.write_ptr = fm24cl16b_write,
+                                         .read_ptr = fm24cl16b_read,
+                                         .size_ptr = fm24cl16b_size};
 #elif defined(FRAM_MB85RC1MT)
 #include "mb85rc1mt.h"
 const fram_interface_t fram_interface = {.write_ptr = mb85rc1mt_write,

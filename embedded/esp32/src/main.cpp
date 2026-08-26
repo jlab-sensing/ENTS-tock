@@ -125,9 +125,9 @@ void setup() {
   bool i2c_status = Wire.begin(dev_addr, sda_pin, scl_pin, 400000);
 
   if (i2c_status) {
-    Log.noticeln("Success!");
+    Log.noticeln("I2C slave started successfully");
   } else {
-    Log.noticeln("Failed!");
+    Log.errorln("I2C slave FAILED to start");
   }
 }
 

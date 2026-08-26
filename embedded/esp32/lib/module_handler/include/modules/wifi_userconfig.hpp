@@ -61,6 +61,11 @@ class ModuleUserConfig : public Module {
    * @brief Start the user config webserver
    */
   void start();
+
+  /**
+   * @brief Handle clear buffer command and prepare acknowledgement response
+   */
+  void clearBuffer();
 };
 
 }  // namespace ModuleHandler

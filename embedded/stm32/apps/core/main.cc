@@ -99,6 +99,14 @@ int main(void) {
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("=== Core App Initialized ===");
 
+  fram_status fifo_status = fifo_init();
+  if (fifo_status != FRAM_OK) {
+    ulog_error("Failed to initialize FIFO buffer state: %d", fifo_status);
+  } else {
+    ulog_info("FIFO buffer state loaded from FRAM.");
+    ulog_info("FIFO buffer length at startup: %u", fifo_buffer_len());
+  }
+
   // Load bytes into userconfig buffer
   //
   // Yes I am casting uint8_t to a uint16_t and it could overwrite the data

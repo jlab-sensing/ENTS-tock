@@ -11,6 +11,7 @@
 
 #include <nanopb/pb_decode.h>
 #include <nanopb/pb_encode.h>
+#include <string.h>
 
 /**
  * @brief Encodes a measurement
@@ -244,10 +245,12 @@ int DecodeMeasurement(Measurement* meas, const uint8_t* buffer,
 }
 
 Esp32Command DecodeEsp32Command(const uint8_t* data, const size_t len) {
-  Esp32Command cmd;
+  Esp32Command cmd = {0};
 
   pb_istream_t istream = pb_istream_from_buffer(data, len);
-  pb_decode(&istream, Esp32Command_fields, &cmd);
+  if (!pb_decode(&istream, Esp32Command_fields, &cmd)) {
+    return cmd;
+  }
 
   return cmd;
 }
@@ -375,6 +378,14 @@ size_t EncodeUserConfiguration(const UserConfiguration* config,
 
 int DecodeUserConfiguration(const uint8_t* data, const size_t len,
                             UserConfiguration* config) {
+  if (config == NULL) {
+    return -1;
+  }
+
+  // Zero-initialize the target before decode so omitted fields do not retain
+  // stale values from a previous config.
+  memset(config, 0, sizeof(*config));
+
   // Create a protobuf input stream from the data buffer
   pb_istream_t istream = pb_istream_from_buffer(data, len);
 
