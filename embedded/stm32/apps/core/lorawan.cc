@@ -25,6 +25,8 @@ static const int retry_ms = 15000;
 // LoRaWAN upload port
 static const uint8_t upload_fport = 2;
 static const uint8_t heartbeat_fport = 3;
+static const uint8_t reset_fport = 4;
+static const uint8_t timesync_fport = 202;
 
 static TockRadioLibHal* hal;
 static Module* mod;
@@ -145,7 +147,8 @@ int lorawan_join(void) {
       state = node->setBufferNonces(persistant_nonces);
       if (state < 0) {
         if (state == RADIOLIB_ERR_NONCES_DISCARDED) {
-          ulog_error("LoRaWAN nonces is invalid.");
+          ulog_error("LoRaWAN nonces is invalid. Resetting to 0.");
+          memset(persistant_nonces, 0, sizeof(persistant_nonces));
         } else {
           ulog_error("Could not set LoRaWAN nonces buffer. RadioLib state = %d",
                      state);
@@ -200,7 +203,7 @@ int lorawan_timesync(void) {
     return state;
   }
 
-  state = node->sendReceive(nullptr, (size_t)0);
+  state = node->sendReceive(nullptr, (size_t)0, timesync_fport);
   if (state < 0) {
     ulog_error("Timesync uplink failed: %d", state);
     return state;
@@ -231,16 +234,40 @@ int lorawan_upload_fport(uint8_t* buffer, int length, int fport) {
   // Form payload to send
   ulog_debug("Sending uplink of %lu bytes.", length, buffer);
 
+  // downlink data
+  uint8_t recv_data[16] = {};
+  size_t len_recv_data = 0;
+
+  // packet information
+  LoRaWANEvent_t up_event = {};
+  LoRaWANEvent_t down_event = {};
+
   // state indicates there was a downlink received
-  state = node->sendReceive(buffer, (size_t)length, (uint8_t)fport);
+  state = node->sendReceive(buffer, (size_t)length, (uint8_t)fport, recv_data,
+                            &len_recv_data, false, &up_event, &down_event);
   ulog_debug("LoRaWAN send/receive code %d.", state);
   if (state < 0) {
-    ulog_error("Upload failed.");
-    return -1;
-  }
+    ulog_error("Upload failed. LoRaWAN state %d", state);
+  } else if (state > 0) {
+    int down_fport = down_event.fPort;
+    ulog_debug("Received downlink (window number = %d, bytes = %d, fport = %d)",
+               state, len_recv_data, down_fport);
+    ulog_info("recv_data: %u", recv_data[0]);
 
-  // Wait until next uplink - observing legal & TTN FUP constraints
-  // hal->delay(uplinkIntervalSeconds * 1000UL);
+    // handle downlinks
+    switch (down_fport) {
+      case reset_fport:
+        ulog_info("Restarting");
+        tock_restart(0);
+        ulog_info("Failed to restart.");
+        break;
+      default:
+        ulog_warn("Downlink fport = %d not implemented", down_fport);
+        break;
+    }
+  } else {
+    ulog_debug("No downlink received");
+  }
 
   return state;
 }

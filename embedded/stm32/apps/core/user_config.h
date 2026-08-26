@@ -58,3 +58,5 @@ int UserConfigCurrentStatus(void);
  * @return true on success, false on failure.
  */
 bool HandleClearBuffer(void);
+
+void UserConfigUpdateFromServer(void);

@@ -66,6 +66,12 @@ void UserConfigStart(uint32_t retry_ms) {
     return;
   }
 
+  ulog_info("Sending FRAM configuration to ESP32...");
+  UserConfigStatus status = ControllerUserConfigSend();
+  if (status != USERCONFIG_OK) {
+    ulog_info("Failed to send config to ESP32: %d", status);
+  }
+
   // Get host info
   ControllerWiFiHostInfo(ssid, ip, mac, NULL);
   ulog_info("WiFi AP Info:");
@@ -75,45 +81,25 @@ void UserConfigStart(uint32_t retry_ms) {
   ulog_info("User Config http://%s/", ip);
   ulog_info("WiFi AP MAC: \"%s\"", mac);
 
+  state = USERCONFIG_STATE_ON;
+
+  // autostop if retry_ms is specified
+  if (retry_ms > 0) {
+    UserConfigStop(retry_ms);
+  }
+}
+
+void UserConfigUpdateFromServer(void) {
+  // Reload user config from FRAM
+  // UserConfigStatus status_load = UserConfigLoad();
+
   // Get Config from esp32
   ulog_info("Requesting configuration from ESP32...");
   UserConfigStatus status = ControllerUserConfigRequest();
 
-  // If esp32 responded with an empty config
-  if (status == USERCONFIG_EMPTY_CONFIG || status != USERCONFIG_OK) {
-    // Don't do anything if we don't have a saved config
-    if (status_load != USERCONFIG_OK) {
-      ulog_info("No configuration to send to ESP32!");
-      // it's a trap! No valid userconfig
-      // Waiting for new configuration on reset
-      while (1);
-
-      // Otherwise send the saved config and continue
-    } else {
-      // If ESP32 has empty config or request failed, send our config
-      ulog_info("Sending FRAM configuration to ESP32...");
-      status = ControllerUserConfigSend();
-
-      if (status != USERCONFIG_OK) {
-        ulog_info("Failed to send config to ESP32: %d", status);
-      }
-    }
-
-    // if ESP32 provided a config
+  if (status != USERCONFIG_OK) {
+    ulog_error("Something went wrong with getting user config");
   } else {
-    // Reload user config from FRAM
-    if (UserConfigLoad() != USERCONFIG_OK) {
-      ulog_error("Error saved configuration not valid!");
-      ulog_info("Try sending configuration again.");
-
-      while (1);
-    }
-
-    // Print updated config
-    ulog_info("Updated user configuration:");
-    ulog_info("---------------------------");
-    UserConfigPrint();
-
     // Check if clear_buffer was requested via the new proto field
     const UserConfiguration* cfg = UserConfigGet();
     if (cfg->clear_buffer) {
@@ -135,12 +121,18 @@ void UserConfigStart(uint32_t retry_ms) {
     }
   }
 
-  state = USERCONFIG_STATE_ON;
+  // Reload user config from FRAM
+  if (UserConfigLoad() != USERCONFIG_OK) {
+    ulog_error("Error saved configuration not valid!");
+    ulog_info("Try sending configuration again.");
 
-  // autostop if retry_ms is specified
-  if (retry_ms > 0) {
-    UserConfigStop(retry_ms);
+    while (1);
   }
+
+  // Print updated config
+  ulog_info("Updated user configuration:");
+  ulog_info("---------------------------");
+  UserConfigPrint();
 }
 
 void UserConfigStop(uint32_t retry_ms) {

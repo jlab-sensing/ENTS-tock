@@ -7,8 +7,9 @@
 #include "../proto/controller.pb.h"
 #include "communication.h"
 
-// TODO: Update with correct value.
-static const uint8_t esp32_wakeup_pin = 5;
+static const uint8_t esp32_wakeup_pin = 1;
+
+static const uint8_t esp32_reset_pin = 6;
 
 void ControllerInit(void) {
   const size_t buffer_size = Esp32Command_size;
@@ -27,8 +28,14 @@ void ControllerInit(void) {
   rx->size = buffer_size;
   rx->len = 0;
 
-  // Enable output pin
+  // Enable output pin (default low)
+  libtock_gpio_clear(esp32_wakeup_pin);
   libtock_gpio_enable_output(esp32_wakeup_pin);
+
+  // Enabe reset pin (default high)
+  // Want the esp32 to be enabled to get updated userconfig
+  libtock_gpio_set(esp32_reset_pin);
+  libtock_gpio_enable_output(esp32_reset_pin);
 }
 
 void ControllerDeinit(void) {
@@ -58,4 +65,16 @@ void ControllerWakeup(void) {
   libtock_gpio_clear(esp32_wakeup_pin);
 
   libtocksync_alarm_delay_ms(50);
+}
+
+void ControllerDeviceReset(void) {
+  const int off_delay_ms = 100;
+  const int on_delay_ms = 500;
+
+  // Reset esp32
+  libtock_gpio_clear(esp32_reset_pin);
+  libtock_gpio_enable_output(esp32_reset_pin);
+  libtocksync_alarm_delay_ms(off_delay_ms);
+  libtock_gpio_set(esp32_reset_pin);
+  libtocksync_alarm_delay_ms(on_delay_ms);
 }

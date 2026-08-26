@@ -24,7 +24,7 @@ typedef struct {
   /** Total number of measurements */
   int meas;
   /** Number of heartbeats */
-  int heartbeat;
+  int heartbeats;
 } upload_stats;
 
 upload_stats stats = {};
@@ -51,6 +51,9 @@ static int timesync_retry_delay_ms = 10000;
 
 /** Time between upload intervals. */
 static int upload_interval = 60000;
+
+/** Time before user config webserver is turned off */
+static const int userconfig_timeout_ms = 300 * 1000;
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -133,19 +136,12 @@ int main(void) {
   // Initialize controller interface
   ControllerInit();
 
-  // UserConfigStatus uc_status = UserConfigLoad();
-  //// start user config interface
-  // if (uc_status == USERCONFIG_OK) {
-  //   // print current user config
-  //   ulog_info("Current user configuration:");
-  //   ulog_info("---------------------------");
-  //   UserConfigPrint();
-  // } else {
-  //   ulog_error("Could not load user config.");
-  // }
+  // Get update configuration from server
+  UserConfigUpdateFromServer();
 
-  // Load user config and start webservice with timeotu
-  UserConfigStart(120 * 1000);
+  // Reset esp32 and start webserver
+  ControllerDeviceReset();
+  UserConfigStart(userconfig_timeout_ms);
 
   // return codes
   int ret = 0;
@@ -256,7 +252,7 @@ int main(void) {
         stats.failed++;
         ulog_error("Error sending heartbeat (error: %d)");
       } else {
-        stats.heartbeat++;
+        stats.heartbeats++;
         ulog_debug("Heartbeat sent");
       }
     }
@@ -266,9 +262,9 @@ int main(void) {
     //
     if (!(stats.total % 6)) {
       ulog_info(
-          "total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: "
-          "%d\t",
-          stats.total, stats.failed, stats.meas, stats.bytes);
+          "total uploads: %d  failed uploads: %d  measurements: %d  bytes: "
+          "%d  heartbeats: %d",
+          stats.total, stats.failed, stats.meas, stats.bytes, stats.heartbeats);
     }
   }
 }
