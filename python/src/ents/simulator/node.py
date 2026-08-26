@@ -1,42 +1,41 @@
 from math import sin
 
-import requests
 import numpy as np
+import requests
 
 from ..proto.encode import (
+    encode_bme280_measurement,
     encode_power_measurement,
     encode_teros12_measurement,
     encode_teros21_measurement,
-    encode_bme280_measurement,
 )
-
 from ..proto.sensor import encode_repeated_sensor_measurements
 
 
 class NodeSimulator:
     """Simulation class to simulate measurements for different sensors"""
 
-    # temporary storage for measurements to be uploaded
-    measurement_buffer: list[bytes] = []
-    # all measurements uploaded
-    measurements: list[bytes] = []
-    # all responses
-    responses: list[str] = []
-
-    # metrics for uploads
-    metrics: dict[str, int] = {
-        "total_requests": 0,
-        "failed_requests": 0,
-        "successful_requests": 0,
-    }
-
-    latency: list[float] = []
-
     def __init__(self, cell: int, logger: int, sensors: list[str], fn=sin):
         self.cell = cell
         self.logger = logger
         self.sensors = sensors
         self.fn = fn
+
+        # temporary storage for measurements to be uploaded
+        self.measurement_buffer: list[bytes] = []
+        # all measurements uploaded
+        self.measurements: list[bytes] = []
+        # all responses
+        self.responses: list[str] = []
+
+        self.latency: list[float] = []
+
+        # metrics for uploads
+        self.metrics: dict[str, int] = {
+            "total_requests": 0,
+            "failed_requests": 0,
+            "successful_requests": 0,
+        }
 
     def __str__(self):
         """String representation of the simulation class
@@ -162,24 +161,6 @@ class NodeSimulator:
 class NodeSimulatorGeneric:
     """Simulation class to simulate measurements for different sensors"""
 
-    # temporary storage for measurements to be uploaded
-    measurement_buffer: list[bytes] = []
-    # all measurements uploaded
-    measurements: list[bytes] = []
-    # all responses
-    responses: list[str] = []
-    # all requests in format (headers, body)
-    requests: list[tuple[str, str]] = []
-
-    # metrics for uploads
-    metrics: dict[str, int] = {
-        "total_requests": 0,
-        "failed_requests": 0,
-        "successful_requests": 0,
-    }
-
-    latency: list[float] = []
-
     def __init__(
         self, cell: int, logger: int, sensors: list[str], _min=-1, _max=1, fn=sin
     ):
@@ -193,6 +174,24 @@ class NodeSimulatorGeneric:
             _max: Maximum value for the simulated sensor data.
             fn: Function to generate the simulated sensor data.
         """
+
+        # temporary storage for measurements to be uploaded
+        self.measurement_buffer: list[bytes] = []
+        # all measurements uploaded
+        self.measurements: list[bytes] = []
+        # all responses
+        self.responses: list[str] = []
+        # all requests in format (headers, body)
+        self.requests: list[tuple[str, str]] = []
+
+        self.latency: list[float] = []
+
+        # metrics for uploads
+        self.metrics: dict[str, int] = {
+            "total_requests": 0,
+            "failed_requests": 0,
+            "successful_requests": 0,
+        }
 
         self.cell = cell
         self.logger = logger

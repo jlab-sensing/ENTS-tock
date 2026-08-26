@@ -17,3 +17,7 @@ updates:
     directory: "/python"
     schedule:
       interval: "daily"
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "daily"

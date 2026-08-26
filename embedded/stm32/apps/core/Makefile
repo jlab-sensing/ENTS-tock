@@ -20,7 +20,12 @@ EXTERN_LIBS += $(EXT_DIR)/nanopb
 EXTERN_LIBS += $(TOCK_USERLAND_BASE_DIR)/RadioLib
 
 # Option to use static parameters for dev eui
-#override CPPFLAGS += -DSTATIC_DEV_EUI
+LORAWAN_DEV ?= 0
+ifeq ($(LORAWAN_DEV), 1)
+	override CPPFLAGS += -DSTATIC_DEV_EUI
+	override CPPFLAGS += -DRADIOLIB_LORAWAN_APP_KEY=02,B0,7E,01,50,16,02,80,AE,0D,20,A6,0A,B0,F7,01
+	override CPPFLAGS += -DRADIOLIB_LORAWAN_NWK_KEY=B8,2D,91,3F,AF,B0,99,EE,2E,3B,BE,9B,31,96,C1,09
+endif
 
 # ignore old () rather than reinterpret because we are forced to compile cc
 # from RadioLib

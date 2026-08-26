@@ -1,6 +1,6 @@
 [submodule "embedded/libtock-c"]
 	path = embedded/libtock-c
-	url = https://github.com/tock/libtock-c.git
+	url = https://github.com/jlab-sensing/libtock-c.git
 [submodule "embedded/libents/src/libents/nanopb"]
 	path = embedded/external/nanopb/nanopb
 	url = https://github.com/nanopb/nanopb.git
@@ -9,7 +9,10 @@
 	url = https://github.com/an-dr/microlog.git
 [submodule "embedded/external/bme280/BME280_SensorAPI"]
 	path = embedded/external/bme280/BME280_SensorAPI
-	url = git@github.com:boschsensortec/BME280_SensorAPI.git
+	url = https://github.com/boschsensortec/BME280_SensorAPI.git
 [submodule "embedded/external/unity/Unity"]
 	path = embedded/external/unity/Unity
-	url = git@github.com:ThrowTheSwitch/Unity.git
+	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "embedded/extras/tock"]
+	path = embedded/extras/tock
+	url = git@github.com:jlab-sensing/tock.git
