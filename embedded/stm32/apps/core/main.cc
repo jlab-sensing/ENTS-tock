@@ -1,6 +1,6 @@
 /* vim: set sw=2 expandtab tw=80: */
 
-#include <libents/alia/filter.h>
+#include <libents/ALIA/filter.h>
 #include <libents/controller/controller.h>
 #include <libents/proto/sensor.h>
 #include <libents/storage/fifo.h>
