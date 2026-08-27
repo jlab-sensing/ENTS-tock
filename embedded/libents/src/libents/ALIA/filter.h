@@ -26,6 +26,7 @@ extern "C" {
 #endif
 #ifndef ALIA_H
 #define ALIA_H
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -242,4 +243,5 @@ bool should_log(double data, WelfordState *state,
 double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
                uint32_t now);
 #endif
+#ifdef __cplusplus
 }
