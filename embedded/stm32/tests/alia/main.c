@@ -19,6 +19,11 @@
 #include <stdbool.h>
 #include <unity.h>
 
+#define ASSERT_DOUBLE_EQUAL(expected, actual) \
+  TEST_ASSERT_TRUE(fabs((expected) - (actual)) <= 1e-9)
+#define ASSERT_DOUBLE_WITHIN(delta, expected, actual) \
+  TEST_ASSERT_TRUE(fabs((expected) - (actual)) <= (delta))
+
 WelfordState welfordState;
 HeartbeatState heartbeatState;
 RunState runState;
@@ -67,16 +72,16 @@ void test_welford_init_ZeroState(void) {
   welford_init(&welfordState);
   TEST_ASSERT_EQUAL(0, welfordState.count);
   TEST_ASSERT_EQUAL(0, welfordState.head);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, welfordState.mean);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, welfordState.M2);
+  ASSERT_DOUBLE_EQUAL(0.0, welfordState.mean);
+  ASSERT_DOUBLE_EQUAL(0.0, welfordState.M2);
 }
 
 // ==== welford_push: fill phase ====
 
 void test_welford_push_SingleValue_MeanEqualsValue(void) {
   welford_push(&welfordState, 5.0);
-  TEST_ASSERT_EQUAL_DOUBLE(5.0, welford_get_mean(&welfordState));
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, welford_get_variance(&welfordState));
+  ASSERT_DOUBLE_EQUAL(5.0, welford_get_mean(&welfordState));
+  ASSERT_DOUBLE_EQUAL(0.0, welford_get_variance(&welfordState));
 }
 
 void test_welford_push_KnownSequence_MatchesNaiveRecompute(void) {
@@ -90,17 +95,16 @@ void test_welford_push_KnownSequence_MatchesNaiveRecompute(void) {
   double expected_mean = naive_mean(values, n);
   double expected_variance = naive_sample_variance(values, n);
 
-  TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected_mean,
-                            welford_get_mean(&welfordState));
-  TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected_variance,
-                            welford_get_variance(&welfordState));
+  ASSERT_DOUBLE_WITHIN(1e-9, expected_mean, welford_get_mean(&welfordState));
+  ASSERT_DOUBLE_WITHIN(1e-9, expected_variance,
+                       welford_get_variance(&welfordState));
 }
 
 void test_welford_push_ConstantValues_VarianceIsZero(void) {
   for (int i = 0; i < 10; i++) {
     welford_push(&welfordState, 3.14);
   }
-  TEST_ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
+  ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
 }
 
 // ==== welford_push: steady-state phase (window full, evicting) ====
@@ -122,10 +126,9 @@ void test_welford_push_PastCapacity_MatchesNaiveSlidingWindow(void) {
     double expected_variance =
         naive_sample_variance(&history[window_start], window_len);
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-6, expected_mean,
-                              welford_get_mean(&welfordState));
-    TEST_ASSERT_DOUBLE_WITHIN(1e-6, expected_variance,
-                              welford_get_variance(&welfordState));
+    ASSERT_DOUBLE_WITHIN(1e-6, expected_mean, welford_get_mean(&welfordState));
+    ASSERT_DOUBLE_WITHIN(1e-6, expected_variance,
+                         welford_get_variance(&welfordState));
   }
 }
 
@@ -137,21 +140,21 @@ void test_welford_push_HeadWrapsCorrectly(void) {
 
   welford_push(&welfordState, 999.0);
   TEST_ASSERT_EQUAL(1, welfordState.head);
-  TEST_ASSERT_EQUAL_DOUBLE(999.0, welfordState.sensorMeasurements[0]);
+  ASSERT_DOUBLE_EQUAL(999.0, welfordState.sensorMeasurements[0]);
 }
 
 void test_welford_push_ConstantValues_PastCapacity_VarianceStaysZero(void) {
   for (int i = 0; i < ALIA_STD_DEV_WINDOW_SAMPLES + 20; i++) {
     welford_push(&welfordState, 7.0);
   }
-  TEST_ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
+  ASSERT_DOUBLE_WITHIN(1e-9, 0.0, welford_get_variance(&welfordState));
 }
 
 // ==== welford_get_stddev / welford_get_variance edge cases ====
 
 void test_welford_get_variance_LessThanTwoSamples_ReturnsZero(void) {
   welford_push(&welfordState, 1.0);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, welford_get_variance(&welfordState));
+  ASSERT_DOUBLE_EQUAL(0.0, welford_get_variance(&welfordState));
 }
 
 void test_welford_get_stddev_MatchesSqrtOfVariance(void) {
@@ -160,7 +163,7 @@ void test_welford_get_stddev_MatchesSqrtOfVariance(void) {
     welford_push(&welfordState, values[i]);
   }
   double expected = sqrt(welford_get_variance(&welfordState));
-  TEST_ASSERT_DOUBLE_WITHIN(1e-9, expected, welford_get_stddev(&welfordState));
+  ASSERT_DOUBLE_WITHIN(1e-9, expected, welford_get_stddev(&welfordState));
 }
 
 // ==== welford_window_is_full ====
@@ -184,14 +187,14 @@ void test_welford_window_is_full_TrueAtCapacity(void) {
 void test_backoff_NotYetLogged_ReturnsBaseHeartbeat(void) {
   heartbeatState.has_logged = false;
   double result = backoff(&heartbeatState, &config, 1000);
-  TEST_ASSERT_EQUAL_DOUBLE(config.base_heartbeat_hours, result);
+  ASSERT_DOUBLE_EQUAL(config.base_heartbeat_hours, result);
 }
 
 void test_backoff_ZeroElapsed_ReturnsBaseHeartbeat(void) {
   heartbeatState.has_logged = true;
   heartbeatState.last_event_ts = 1000;
   double result = backoff(&heartbeatState, &config, 1000);
-  TEST_ASSERT_EQUAL_DOUBLE(config.base_heartbeat_hours, result);
+  ASSERT_DOUBLE_EQUAL(config.base_heartbeat_hours, result);
 }
 
 void test_backoff_GrowsWithElapsedTime(void) {
@@ -199,7 +202,7 @@ void test_backoff_GrowsWithElapsedTime(void) {
   heartbeatState.last_event_ts = 0;
   uint32_t now = config.doubling_hours * 3600;
   double result = backoff(&heartbeatState, &config, now);
-  TEST_ASSERT_DOUBLE_WITHIN(1e-6, config.base_heartbeat_hours * 2.0, result);
+  ASSERT_DOUBLE_WITHIN(1e-6, config.base_heartbeat_hours * 2.0, result);
 }
 
 void test_backoff_CapsAtMaxHeartbeat(void) {
@@ -207,7 +210,7 @@ void test_backoff_CapsAtMaxHeartbeat(void) {
   heartbeatState.last_event_ts = 0;
   uint32_t now = config.doubling_hours * 3600 * 20;  // many doubling periods
   double result = backoff(&heartbeatState, &config, now);
-  TEST_ASSERT_EQUAL_DOUBLE(config.max_heartbeat_hours, result);
+  ASSERT_DOUBLE_EQUAL(config.max_heartbeat_hours, result);
 }
 
 // ==== should_log ====
