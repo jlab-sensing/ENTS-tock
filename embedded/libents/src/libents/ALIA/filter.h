@@ -88,7 +88,7 @@ typedef struct {
 } ALIATransmitRecord;
 
 /**
- * @struct numSamplesInStartup
+ * @fn numSamplesInStartup
  * @brief Calculates the number of samples needed to fill the user configured
  * std dev window for std_dev_window_hours at a set sample_rate
  *
@@ -245,3 +245,4 @@ double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
 #endif
 #ifdef __cplusplus
 }
+#endif
