@@ -226,4 +226,3 @@ void welford_push(WelfordState *state, double x);
  double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
                uint32_t now);
 
-#endif
