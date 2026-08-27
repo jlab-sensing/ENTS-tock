@@ -1,10 +1,16 @@
+/**
+ * @file filter.c
+ * @brief Implementation of ALIA's statistics (Welford's algorithm)
+ *        and event/heartbeat decision logic. See alia.h for the public
+ *        interface and full function documentation.
+ */
 #include "filter.h"
 
 #include <math.h>
-#include <stdio.h>
 
 #include "../util/time.h"
 
+/** @see welford_init */
 void welford_init(WelfordState *state) {
   state->head = 0;
   state->count = 0;
@@ -12,6 +18,7 @@ void welford_init(WelfordState *state) {
   state->M2 = 0.0;
 }
 
+/** @see welford_add */
 void welford_add(WelfordState *state, double x) {
   state->sensorMeasurements[state->head] = x;
   state->head = (state->head + 1) % ALIA_STD_DEV_WINDOW_SAMPLES;
@@ -21,6 +28,7 @@ void welford_add(WelfordState *state, double x) {
   state->M2 += (x - old_mean) * (x - state->mean);
 }
 
+/** @see welford_remove */
 void welford_remove(WelfordState *state) {
   state->count -= 1;
   double old_mean = state->mean;
@@ -30,6 +38,7 @@ void welford_remove(WelfordState *state) {
                (state->sensorMeasurements[state->head] - state->mean);
 }
 
+/** @see welford_push*/
 void welford_push(WelfordState *state, double x) {
   if (state->count < ALIA_STD_DEV_WINDOW_SAMPLES) {
     welford_add(state, x);
@@ -39,6 +48,7 @@ void welford_push(WelfordState *state, double x) {
   }
 }
 
+/** @see welford_get_stddev */
 double welford_get_stddev(const WelfordState *state) {
   if (state->count < 2) {
     return 0.0;
@@ -46,8 +56,10 @@ double welford_get_stddev(const WelfordState *state) {
   return sqrt(welford_get_variance(state));
 }
 
+/** @see welford_get_mean */
 double welford_get_mean(const WelfordState *state) { return state->mean; }
 
+/** @see welford_get_variance */
 double welford_get_variance(const WelfordState *state) {
   if (state->count < 2) {
     return 0.0;
@@ -55,6 +67,7 @@ double welford_get_variance(const WelfordState *state) {
   return state->M2 / (state->count - 1);
 }
 
+/** @see welford_window_is_full */
 bool welford_window_is_full(const WelfordState *state) {
   if (state->count < ALIA_STD_DEV_WINDOW_SAMPLES) {
     return false;
@@ -62,6 +75,7 @@ bool welford_window_is_full(const WelfordState *state) {
   return true;
 }
 
+/** @see backoff */
 double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
                uint32_t now) {
   double calm_hours = 0;
@@ -80,6 +94,7 @@ double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
   return config->max_heartbeat_hours;
 }
 
+/** @see should_log */
 bool should_log(double data, WelfordState *state,
                 HeartbeatState *heartbeatState, RunState *runState,
                 ALIAUserConfig *config) {
@@ -107,12 +122,7 @@ bool should_log(double data, WelfordState *state,
     heartbeat_fired = elapsed_hours >= interval;
   }
   bool should_transmit = heartbeat_fired || event_fired;
-  if (heartbeat_fired) {
-    printf("heartbeat\n");
-  } else {
-    printf("event_fired\n");
-  }
-  fflush(stdout);
+
   welford_push(state, data);
 
   if (should_transmit) {
