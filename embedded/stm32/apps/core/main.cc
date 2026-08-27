@@ -1,5 +1,6 @@
 /* vim: set sw=2 expandtab tw=80: */
 
+#include <libents/alia/filter.h>
 #include <libents/controller/controller.h>
 #include <libents/proto/sensor.h>
 #include <libents/storage/fifo.h>
@@ -242,7 +243,7 @@ int main(void) {
                                    &runState, &config);
 
         if (transmit) {
-          heartbeatState->last_transmitted_value = value;
+          heartbeatState.last_transmitted_value = value;
           meas.rle_count = rle;
           uint8_t buffer[60] = {};
           int len = 0;
@@ -286,7 +287,7 @@ int main(void) {
             stats.failed++;
             ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
           } else {
-            ulog_debug("Uploaded %d bytes with LoRaWAN.");
+            ulog_debug("Uploaded %d bytes with LoRaWAN.", len);
 
             stats.bytes += len;
           }
@@ -302,7 +303,7 @@ int main(void) {
       ret = lorawan_heartbeat();
       if (ret < 0) {
         stats.failed++;
-        ulog_error("Error sending heartbeat (error: %d)");
+        ulog_error("Error sending heartbeat (error: %d)", ret);
       } else {
         stats.heartbeat++;
         ulog_debug("Heartbeat sent");
