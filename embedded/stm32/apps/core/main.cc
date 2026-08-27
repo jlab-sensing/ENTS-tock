@@ -116,7 +116,7 @@ int main(void) {
 
   // start service after connected
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
-
+#ifdef TEST_USER_CONFIG
   // Print warning when using TEST_USER_CONFIG
   ulog_warn("TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
