@@ -26,9 +26,9 @@ extern "C" {
 #endif
 #ifndef ALIA_H
 #define ALIA_H
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /**
  * @def ALIA_STD_DEV_WINDOW_SAMPLES
