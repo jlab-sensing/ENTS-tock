@@ -88,19 +88,22 @@ message RepeatedSensorResponses {
 
 message SensorMeasurement {
   /** Metadata for the measurement */
-  Metadata meta = 1;
+  uint32 cell_id = 1;
+  uint32 logger_id = 2;
+  uint32 ts = 3;
 
   /** Type of sensor measurement */
-  SensorType type = 2;
+  SensorType type = 4;
 
   oneof value {
-    uint32 unsigned_int = 3;
-    int32 signed_int = 4;
-    double decimal = 5;
+    uint32 unsigned_int = 5;
+    int32 signed_int = 6;
+    double decimal = 7;
   }
-
+  
   /** Index of the measurement */
-  uint32 idx = 6;
+  uint32 idx = 8;
+  uint32 rle_count = 9;
 }
 
 message RepeatedSensorMeasurements {
