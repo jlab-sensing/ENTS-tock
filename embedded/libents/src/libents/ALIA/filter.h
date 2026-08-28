@@ -48,8 +48,8 @@ extern "C" {
  * (base_heartbeat_hours, doubling_hours, max_heartbeat_hours).
  */
 typedef struct ALIAUserConfig {
-  uint32_t sample_rate; /**< Sampling rate, in samples/second, used to size the
-                           startup window. */
+  uint32_t sample_rate; /**< Sampling *period*, in seconds between samples, used
+                           to size the startup window.  */
   double sensor_resolution; /**< Fixed sensor precision; floors the adaptive
                                event threshold so noise below this level never
                                triggers a report. */
@@ -93,13 +93,21 @@ typedef struct {
  * std dev window for std_dev_window_hours at a set sample_rate
  *
  * @details
- * Unitl this many samples have been collected, the rolling window std dev is
- * not representative of std_dev_window_hours of data.
+ * Until this many samples have been collected, the rolling window std dev is
+ * not representative of std_dev_window_hours of data, so should_log() falls
+ * back to the sensor_resolution floor for its event threshold.
  */
-// calculate number of statup samples needed for stdDevWindowHours
+// calculate number of startup samples needed for stdDevWindowHours
 static inline void numSamplesInStartup(struct ALIAUserConfig *cfg) {
-  cfg->num_startup_samples =
-      (cfg->std_dev_window_hours * 3600) / cfg->sample_rate;
+  if (cfg->sample_rate == 0) {
+    cfg->num_startup_samples = 0;
+    return;
+  }
+  uint32_t needed = (cfg->std_dev_window_hours * 3600) / cfg->sample_rate;
+  if (needed > ALIA_STD_DEV_WINDOW_SAMPLES) {
+    needed = ALIA_STD_DEV_WINDOW_SAMPLES;
+  }
+  cfg->num_startup_samples = needed;
 }
 
 /**
@@ -112,11 +120,20 @@ typedef struct RunState {
 
 /**
  * @struct HeartbeatState
- * @brief Tracks the state needed to evaluate both ALIA triggers: the
- *        last transmitted event and whether any value has been logged
- *        yet.
+ * @brief Tracks the state needed to evaluate both ALIA triggers.
+ *
+ * @details
+ * The two timestamps are deliberately distinct. @ref last_tx_ts answers "how
+ * long since we last said anything?" and so gates the heartbeat. @ref
+ * last_event_ts answers "how long has the signal been calm?" and so drives the
+ * exponential backoff.
  */
 typedef struct HeartbeatState {
+  /** epoch() of the most recent transmission of any kind (event or
+   *  heartbeat). Drives the heartbeat elapsed-time check. */
+  uint32_t last_tx_ts;
+  /** epoch() of the most recent *event-triggered* transmission. Drives
+   *  backoff(); deliberately NOT updated by heartbeat-only transmissions. */
   uint32_t last_event_ts;
   bool has_logged;
   double last_transmitted_value;
@@ -205,6 +222,20 @@ double welford_get_variance(const WelfordState *state);
 bool welford_window_is_full(const WelfordState *state);
 
 /**
+ * @brief Returns whether enough samples have been collected for the rolling
+ *        stddev to represent config->std_dev_window_hours of data.
+ *
+ * @details
+ * Until this returns true, should_log() ignores the (unrepresentative) stddev
+ * and uses config->sensor_resolution as the event threshold.
+ * @param state Pointer to the WelfordState to query.
+ * @param config Pointer to the user-configured ALIA parameters.
+ * @return true once state->count >= config->num_startup_samples.
+ */
+bool alia_startup_complete(const WelfordState *state,
+                           const ALIAUserConfig *config);
+
+/**
  * @brief Global ALIA configuration instance.
  *
  * @details
@@ -217,6 +248,13 @@ extern struct ALIAUserConfig global_ALIAConfig;
  * @brief Core ALIA decision function: determines whether a new sensor
  *        reading should be transmitted, combining the event and
  *        heartbeat triggers.
+ *
+ * @details
+ * Owns all of heartbeatState. On a transmit decision it records the reading as
+ * the new baseline in heartbeatState->last_transmitted_value; callers must not
+ * maintain that field themselves. Always feeds @p data into the rolling
+ * window, transmitted or not, so the stddev reflects the true signal rather
+ * than only the reported subset.
  *
  * @param data New sensor reading to evaluate.
  * @param state Pointer to the Welford sliding-window statistics state.

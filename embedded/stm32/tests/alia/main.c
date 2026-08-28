@@ -31,14 +31,19 @@ ALIAUserConfig config;
 
 void setUp(void) {
   welford_init(&welfordState);
+  heartbeatState.last_tx_ts = 0;
   heartbeatState.last_event_ts = 0;
   heartbeatState.has_logged = false;
+  heartbeatState.last_transmitted_value = 0.0;
   runState.run_count = 0;
   config.event_delta_threshold = 2;
   config.sensor_resolution = 0.1;
   config.base_heartbeat_hours = 1;
   config.doubling_hours = 6;
   config.max_heartbeat_hours = 24;
+  config.sample_rate = 0;
+  config.std_dev_window_hours = 0;
+  config.num_startup_samples = 0;
 }
 
 void tearDown(void) {}
@@ -244,9 +249,130 @@ void test_should_log_LargeDeviation_TriggersEvent(void) {
 
 void test_should_log_HeartbeatElapsed_TriggersEvenWithoutDeviation(void) {
   should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
-  heartbeatState.last_event_ts -= (config.max_heartbeat_hours * 3600 + 1);
+  uint32_t age = config.max_heartbeat_hours * 3600 + 1;
+  heartbeatState.last_tx_ts -= age;
+  heartbeatState.last_event_ts -= age;
   bool result =
       should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+  TEST_ASSERT_TRUE(result);
+}
+
+// ==== regression: heartbeats must not reset the backoff clock ====
+
+void test_should_log_HeartbeatDoesNotResetBackoffClock(void) {
+  should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+  uint32_t seeded_event_ts = heartbeatState.last_event_ts;
+
+  uint32_t age = config.max_heartbeat_hours * 3600 + 1;
+  heartbeatState.last_tx_ts -= age;
+  heartbeatState.last_event_ts -= age;
+  uint32_t aged_event_ts = heartbeatState.last_event_ts;
+
+  bool result =
+      should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+  TEST_ASSERT_TRUE(result);
+
+  TEST_ASSERT_EQUAL_UINT32(aged_event_ts, heartbeatState.last_event_ts);
+  TEST_ASSERT_NOT_EQUAL(aged_event_ts, heartbeatState.last_tx_ts);
+  (void)seeded_event_ts;
+}
+
+void test_should_log_EventResetsBackoffClock(void) {
+  should_log(50.0, &welfordState, &heartbeatState, &runState, &config);
+  uint32_t age = 10 * 3600;
+  heartbeatState.last_tx_ts -= age;
+  heartbeatState.last_event_ts -= age;
+  uint32_t aged_event_ts = heartbeatState.last_event_ts;
+
+  bool result =
+      should_log(9999.0, &welfordState, &heartbeatState, &runState, &config);
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_NOT_EQUAL(aged_event_ts, heartbeatState.last_event_ts);
+  TEST_ASSERT_EQUAL_UINT32(heartbeatState.last_tx_ts,
+                           heartbeatState.last_event_ts);
+}
+
+// ==== regression: should_log owns last_transmitted_value ====
+
+void test_should_log_UpdatesLastTransmittedValue(void) {
+  should_log(42.5, &welfordState, &heartbeatState, &runState, &config);
+  ASSERT_DOUBLE_EQUAL(42.5, heartbeatState.last_transmitted_value);
+
+  should_log(42.5, &welfordState, &heartbeatState, &runState, &config);
+  ASSERT_DOUBLE_EQUAL(42.5, heartbeatState.last_transmitted_value);
+
+  should_log(9999.0, &welfordState, &heartbeatState, &runState, &config);
+  ASSERT_DOUBLE_EQUAL(9999.0, heartbeatState.last_transmitted_value);
+}
+
+// ==== regression: sub-hour resolution in the time math ====
+
+void test_backoff_HasSubHourResolution(void) {
+  heartbeatState.has_logged = true;
+  heartbeatState.last_event_ts = 0;
+  double at_1799 = backoff(&heartbeatState, &config, 1799);
+  double at_3599 = backoff(&heartbeatState, &config, 3599);
+  TEST_ASSERT_TRUE(at_3599 > at_1799);
+  TEST_ASSERT_TRUE(at_1799 > (double)config.base_heartbeat_hours);
+}
+
+void test_backoff_GrowsWithFractionalDoublingPeriods(void) {
+  heartbeatState.has_logged = true;
+  heartbeatState.last_event_ts = 0;
+  uint32_t now = (config.doubling_hours * 3600) / 2;
+  double result = backoff(&heartbeatState, &config, now);
+  ASSERT_DOUBLE_WITHIN(1e-6, config.base_heartbeat_hours * sqrt(2.0), result);
+}
+
+// ==== startup gating ====
+
+void test_numSamplesInStartup_ComputesFromPeriodAndWindow(void) {
+  ALIAUserConfig cfg = config;
+  cfg.sample_rate = 300;          // one sample every 5 minutes
+  cfg.std_dev_window_hours = 12;  // 12h / 5min == 144 samples
+  numSamplesInStartup(&cfg);
+  TEST_ASSERT_EQUAL_UINT32(144, cfg.num_startup_samples);
+}
+
+void test_numSamplesInStartup_ClampsToWindowCapacity(void) {
+  ALIAUserConfig cfg = config;
+  cfg.sample_rate = 300;
+  cfg.std_dev_window_hours = 240;  // would need 2880 samples
+  numSamplesInStartup(&cfg);
+  TEST_ASSERT_EQUAL_UINT32(ALIA_STD_DEV_WINDOW_SAMPLES,
+                           cfg.num_startup_samples);
+}
+
+void test_numSamplesInStartup_ZeroSampleRateDoesNotDivideByZero(void) {
+  ALIAUserConfig cfg = config;
+  cfg.sample_rate = 0;
+  cfg.std_dev_window_hours = 12;
+  numSamplesInStartup(&cfg);
+  TEST_ASSERT_EQUAL_UINT32(0, cfg.num_startup_samples);
+}
+
+void test_alia_startup_complete_TracksSampleCount(void) {
+  config.num_startup_samples = 10;
+  for (int i = 0; i < 9; i++) {
+    welford_push(&welfordState, 1.0);
+  }
+  TEST_ASSERT_FALSE(alia_startup_complete(&welfordState, &config));
+  welford_push(&welfordState, 1.0);
+  TEST_ASSERT_TRUE(alia_startup_complete(&welfordState, &config));
+}
+
+void test_should_log_DuringStartup_UsesResolutionFloor(void) {
+  config.num_startup_samples = 100;
+  should_log(0.0, &welfordState, &heartbeatState, &runState, &config);
+  for (int i = 0; i < 10; i++) {
+    should_log((i % 2) ? 100.0 : -100.0, &welfordState, &heartbeatState,
+               &runState, &config);
+  }
+  TEST_ASSERT_FALSE(alia_startup_complete(&welfordState, &config));
+
+  heartbeatState.last_transmitted_value = 10.0;
+  bool result =
+      should_log(10.5, &welfordState, &heartbeatState, &runState, &config);
   TEST_ASSERT_TRUE(result);
 }
 
@@ -279,12 +405,24 @@ int main(void) {
   RUN_TEST(test_backoff_ZeroElapsed_ReturnsBaseHeartbeat);
   RUN_TEST(test_backoff_GrowsWithElapsedTime);
   RUN_TEST(test_backoff_CapsAtMaxHeartbeat);
+  RUN_TEST(test_backoff_HasSubHourResolution);
+  RUN_TEST(test_backoff_GrowsWithFractionalDoublingPeriods);
 
   RUN_TEST(test_should_log_FirstCall_ReturnsTrue);
   RUN_TEST(test_should_log_NoEventNoHeartbeat_ReturnsFalse);
   RUN_TEST(test_should_log_LargeDeviation_TriggersEvent);
   RUN_TEST(test_should_log_HeartbeatElapsed_TriggersEvenWithoutDeviation);
   RUN_TEST(test_should_log_AlwaysUpdatesWindow);
+
+  RUN_TEST(test_should_log_HeartbeatDoesNotResetBackoffClock);
+  RUN_TEST(test_should_log_EventResetsBackoffClock);
+  RUN_TEST(test_should_log_UpdatesLastTransmittedValue);
+
+  RUN_TEST(test_numSamplesInStartup_ComputesFromPeriodAndWindow);
+  RUN_TEST(test_numSamplesInStartup_ClampsToWindowCapacity);
+  RUN_TEST(test_numSamplesInStartup_ZeroSampleRateDoesNotDivideByZero);
+  RUN_TEST(test_alia_startup_complete_TracksSampleCount);
+  RUN_TEST(test_should_log_DuringStartup_UsesResolutionFloor);
 
   return UNITY_END();
 }

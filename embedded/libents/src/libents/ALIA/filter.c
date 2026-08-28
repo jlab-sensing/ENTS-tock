@@ -75,21 +75,29 @@ bool welford_window_is_full(const WelfordState *state) {
   return true;
 }
 
+/** @see alia_startup_complete */
+bool alia_startup_complete(const WelfordState *state,
+                           const ALIAUserConfig *config) {
+  return state->count >= config->num_startup_samples;
+}
+
 /** @see backoff */
 double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
                uint32_t now) {
-  double calm_hours = 0;
+  double calm_hours = 0.0;
 
-  if (!heartbeatState->has_logged) {
-    calm_hours = 0.0;
-  } else {
-    calm_hours = (now - heartbeatState->last_event_ts) / 3600;
+  if (heartbeatState->has_logged) {
+       calm_hours = (now - heartbeatState->last_event_ts) / 3600.0;
   }
-  if (config->base_heartbeat_hours *
-          pow(2, (calm_hours / config->doubling_hours)) <
-      config->max_heartbeat_hours) {
-    return config->base_heartbeat_hours *
-           pow(2, (calm_hours / config->doubling_hours));
+
+  if (config->doubling_hours == 0) {
+    return config->max_heartbeat_hours;
+  }
+
+  double interval =
+      config->base_heartbeat_hours * pow(2, calm_hours / config->doubling_hours);
+  if (interval < config->max_heartbeat_hours) {
+    return interval;
   }
   return config->max_heartbeat_hours;
 }
@@ -98,13 +106,19 @@ double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
 bool should_log(double data, WelfordState *state,
                 HeartbeatState *heartbeatState, RunState *runState,
                 ALIAUserConfig *config) {
+  uint32_t time = epoch();
+
   // if first value send it
   bool event_fired;
   if (heartbeatState->has_logged) {
     double deviation = fabs(data - heartbeatState->last_transmitted_value);
-    double threshold =
-        (welford_get_stddev(state) * config->event_delta_threshold);
-    if (threshold < config->sensor_resolution) {
+    double threshold;
+    if (alia_startup_complete(state, config)) {
+      threshold = welford_get_stddev(state) * config->event_delta_threshold;
+      if (threshold < config->sensor_resolution) {
+        threshold = config->sensor_resolution;
+      }
+    } else {
       threshold = config->sensor_resolution;
     }
     double epsilon = 1e-9;
@@ -112,12 +126,12 @@ bool should_log(double data, WelfordState *state,
   } else {
     event_fired = false;
   }
-  uint32_t time = epoch();
+
   bool heartbeat_fired;
   if (!heartbeatState->has_logged) {
     heartbeat_fired = true;
   } else {
-    double elapsed_hours = (time - heartbeatState->last_event_ts) / 3600;
+    double elapsed_hours = (time - heartbeatState->last_tx_ts) / 3600.0;
     double interval = backoff(heartbeatState, config, time);
     heartbeat_fired = elapsed_hours >= interval;
   }
@@ -126,8 +140,12 @@ bool should_log(double data, WelfordState *state,
   welford_push(state, data);
 
   if (should_transmit) {
-    heartbeatState->last_event_ts = time;
+    heartbeatState->last_tx_ts = time;
+    if (event_fired || !heartbeatState->has_logged) {
+      heartbeatState->last_event_ts = time;
+    }
     heartbeatState->has_logged = true;
+    heartbeatState->last_transmitted_value = data;
     runState->run_count = 0;
   } else {
     runState->run_count += 1;

@@ -29,6 +29,9 @@ endif
 
 #Option to enable ALIA Algorithm
 ALIA_ENABLED ?= 1
+ifeq ($(ALIA_ENABLED), 1)
+	override CPPFLAGS += -DALIA_ENABLED
+endif
 
 # ignore old () rather than reinterpret because we are forced to compile cc
 # from RadioLib

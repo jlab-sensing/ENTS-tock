@@ -62,6 +62,7 @@ static int upload_interval = 60000;
  */
 static void ipc_callback(int pid, int len, int buf, void* ud);
 
+#ifndef ALIA_ENABLED
 /**
  * @brief Gets a formatted sensor measurement payload.
  *
@@ -75,6 +76,7 @@ static void ipc_callback(int pid, int len, int buf, void* ud);
  * @return len Number of bytes in buffer.
  */
 static int get_payload(uint8_t* buffer, int size);
+#endif  // ALIA_ENABLED
 
 /**
  * @brief Callback to add prefix to ulog messages.
@@ -84,6 +86,39 @@ static int get_payload(uint8_t* buffer, int size);
  * @param prefix_size Size of prefix buffer.
  */
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size);
+
+#ifdef ALIA_ENABLED
+/**
+ * @brief Extracts the numeric payload of a SensorMeasurement as a double.
+ *
+ * The value is a protobuf oneof, so the active arm has to be selected on
+ * which_value rather than read directly.
+ *
+ * @param meas Pointer to the decoded measurement.
+ * @param out Pointer to receive the value.
+ * @return true if a value arm was set, false if the oneof is empty.
+ */
+static bool measurement_value(const SensorMeasurement* meas, double* out);
+
+/**
+ * @brief Runs one freshly received measurement through ALIA and uploads it if
+ *        ALIA decides it is worth transmitting.
+ *
+ * Suppressed readings are dropped; the run of suppressed samples they belong
+ * to is carried as rle_count on the next transmitted measurement.
+ *
+ * @param buf Pointer to the encoded SensorMeasurement.
+ * @param len Length of buf.
+ * @param welfordState Rolling window statistics state.
+ * @param heartbeatState Heartbeat/backoff state.
+ * @param runState Run-length state.
+ * @param config ALIA parameters.
+ */
+static void alia_process(const uint8_t* buf, uint8_t len,
+                         WelfordState* welfordState,
+                         HeartbeatState* heartbeatState, RunState* runState,
+                         ALIAUserConfig* config);
+#endif  // ALIA_ENABLED
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
   (void)ev;
@@ -123,20 +158,27 @@ int main(void) {
 #endif  // TEST_USER_CONFIG
 
 #ifdef ALIA_ENABLED
-  WelfordState welfordState;
-  HeartbeatState heartbeatState;
-  RunState runState;
-  ALIAUserConfig config;
+  WelfordState welfordState = {};
+  HeartbeatState heartbeatState = {};
+  RunState runState = {};
+  ALIAUserConfig config = {};
 
   welford_init(&welfordState);
+  heartbeatState.last_tx_ts = 0;
   heartbeatState.last_event_ts = 0;
   heartbeatState.has_logged = false;
+  heartbeatState.last_transmitted_value = 0.0;
   runState.run_count = 0;
   config.event_delta_threshold = 2;
   config.sensor_resolution = 0.1;
   config.base_heartbeat_hours = 1;
   config.doubling_hours = 6;
   config.max_heartbeat_hours = 24;
+  // sample_rate is a period in seconds. These two size the startup window:
+  // 12h / 5min == 144 == ALIA_STD_DEV_WINDOW_SAMPLES.
+  config.sample_rate = 300;
+  config.std_dev_window_hours = 12;
+  numSamplesInStartup(&config);
 #endif
   // Initialize controller interface
   ControllerInit();
@@ -208,11 +250,23 @@ int main(void) {
       // }
       // printf("\n");
 
+#ifdef ALIA_ENABLED
+      // ALIA has to see the measurement here, on the iteration it actually
+      // arrives. This branch continues below, so anything downstream would
+      // only ever observe a stale meas_buffer on a later timeout iteration.
+      //
+      // ALIA also decides transmission per reading, so the fifo is bypassed:
+      // an admitted reading uploads immediately and a suppressed one is
+      // dropped, represented by the run length on the next transmission.
+      alia_process(meas_buffer, meas_buffer_length, &welfordState,
+                   &heartbeatState, &runState, &config);
+#else
       // store in buffer
       ret = fifo_put(meas_buffer, meas_buffer_length);
       if (ret < 0) {
         ulog_error("Could not store measurement in buffer");
       }
+#endif
       stats.meas++;
 
       // indicate data has been processed and trigger client
@@ -227,49 +281,9 @@ int main(void) {
     // Upload data
     //
 
+#ifndef ALIA_ENABLED
     uint16_t meas_in_buffer = fifo_buffer_len();
     // batch into minium of 4 measurements
-#ifdef ALIA_ENABLED
-    if (cmd == 2) {
-      SensorMeasurement meas = {};
-      ret = DecodeSensorMeasurement(meas_buffer, meas_buffer_length, &meas);
-      if (ret < 0) {
-        ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
-      } else {
-        double value = meas.value;  // match upcoming changes to sensor
-                                    // measurement name with proto
-        uint32_t rle = runState.run_count;
-        bool transmit = should_log(value, &welfordState, &heartbeatState,
-                                   &runState, &config);
-
-        if (transmit) {
-          heartbeatState.last_transmitted_value = value;
-          meas.rle_count = rle;
-          uint8_t buffer[60] = {};
-          int len = 0;
-          Metadata meta = {};
-          SensorMeasurement single[1] = {meas};
-
-          ret = EncodeRepeatedSensorMeasurements(meta, single, 1, buffer,
-                                                 sizeof(buffer), (size_t*)&len);
-          if (ret < 0) {
-            ulog_error("Could not encode single measurement (error %d)", ret);
-          } else {
-            ulog_debug("Uploading %d bytes (single triggering measurement)",
-                       len);
-            stats.total++;
-            ret = lorawan_upload(buffer, len);
-            if (ret < 0) {
-              stats.failed++;
-              ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
-            } else {
-              stats.bytes += len;
-            }
-          }
-        }
-      }
-    }
-#else
     if (meas_in_buffer > 1) {
       // batch into minium of 4 measurements
       while (meas_in_buffer > 1) {
@@ -375,6 +389,79 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
   }
 }
 
+#ifdef ALIA_ENABLED
+static bool measurement_value(const SensorMeasurement* meas, double* out) {
+  switch (meas->which_value) {
+    case SensorMeasurement_unsigned_int_tag:
+      *out = (double)meas->value.unsigned_int;
+      return true;
+    case SensorMeasurement_signed_int_tag:
+      *out = (double)meas->value.signed_int;
+      return true;
+    case SensorMeasurement_decimal_tag:
+      *out = meas->value.decimal;
+      return true;
+    default:
+      return false;
+  }
+}
+
+static void alia_process(const uint8_t* buf, uint8_t len,
+                         WelfordState* welfordState,
+                         HeartbeatState* heartbeatState, RunState* runState,
+                         ALIAUserConfig* config) {
+  ulog_trace("alia_process");
+
+  SensorMeasurement meas = {};
+  int ret = DecodeSensorMeasurement(buf, len, &meas);
+  if (ret < 0) {
+    ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
+    return;
+  }
+
+  double value = 0.0;
+  if (!measurement_value(&meas, &value)) {
+    ulog_error("Measurement has no value set, skipping ALIA");
+    return;
+  }
+
+  // Read the run before should_log resets it.
+  uint32_t rle = runState->run_count;
+
+  if (!should_log(value, welfordState, heartbeatState, runState, config)) {
+    ulog_debug("ALIA suppressed measurement (run length %u)",
+               (unsigned)runState->run_count);
+    return;
+  }
+
+  meas.rle_count = rle;
+
+  uint8_t buffer[60] = {};
+  size_t encoded_len = 0;
+  Metadata meta = {};
+  SensorMeasurement single[1] = {meas};
+
+  ret = EncodeRepeatedSensorMeasurements(meta, single, 1, buffer,
+                                         sizeof(buffer), &encoded_len);
+  if (ret < 0) {
+    ulog_error("Could not encode single measurement (error %d)", ret);
+    return;
+  }
+
+  ulog_debug("Uploading %d bytes (single triggering measurement)",
+             (int)encoded_len);
+  stats.total++;
+  ret = lorawan_upload(buffer, encoded_len);
+  if (ret < 0) {
+    stats.failed++;
+    ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+    return;
+  }
+  stats.bytes += (int)encoded_len;
+}
+#endif  // ALIA_ENABLED
+
+#ifndef ALIA_ENABLED
 static int get_payload(uint8_t* buffer, int size) {
   ulog_trace("get_payload");
 
@@ -443,3 +530,4 @@ static int get_payload(uint8_t* buffer, int size) {
   }
   return len;
 }
+#endif  // ALIA_ENABLED
