@@ -95,6 +95,7 @@ typedef struct _SensorMeasurement {
     } value;
     /* * Index of the measurement */
     uint32_t idx;
+    uint32_t rle_count;
 } SensorMeasurement;
 
 typedef struct _RepeatedSensorMeasurements {
@@ -135,12 +136,12 @@ extern "C" {
 #define Metadata_init_default                    {0, 0, 0}
 #define SensorResponse_init_default              {0, _SensorError_MIN}
 #define RepeatedSensorResponses_init_default     {0, {SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default, SensorResponse_init_default}}
-#define SensorMeasurement_init_default           {false, Metadata_init_default, _SensorType_MIN, 0, {0}, 0}
+#define SensorMeasurement_init_default           {false, Metadata_init_default, _SensorType_MIN, 0, {0}, 0, 0}
 #define RepeatedSensorMeasurements_init_default  {false, Metadata_init_default, _SensorType_MIN, 0, {SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default, SensorMeasurement_init_default}}
 #define Metadata_init_zero                       {0, 0, 0}
 #define SensorResponse_init_zero                 {0, _SensorError_MIN}
 #define RepeatedSensorResponses_init_zero        {0, {SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero, SensorResponse_init_zero}}
-#define SensorMeasurement_init_zero              {false, Metadata_init_zero, _SensorType_MIN, 0, {0}, 0}
+#define SensorMeasurement_init_zero              {false, Metadata_init_zero, _SensorType_MIN, 0, {0}, 0, 0}
 #define RepeatedSensorMeasurements_init_zero     {false, Metadata_init_zero, _SensorType_MIN, 0, {SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero, SensorMeasurement_init_zero}}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -156,6 +157,7 @@ extern "C" {
 #define SensorMeasurement_signed_int_tag         4
 #define SensorMeasurement_decimal_tag            5
 #define SensorMeasurement_idx_tag                6
+#define SensorMeasurement_rle_count_tag          7
 #define RepeatedSensorMeasurements_meta_tag      1
 #define RepeatedSensorMeasurements_type_tag      2
 #define RepeatedSensorMeasurements_measurements_tag 3
@@ -186,7 +188,8 @@ X(a, STATIC,   SINGULAR, UENUM,    type,              2) \
 X(a, STATIC,   ONEOF,    UINT32,   (value,unsigned_int,value.unsigned_int),   3) \
 X(a, STATIC,   ONEOF,    INT32,    (value,signed_int,value.signed_int),   4) \
 X(a, STATIC,   ONEOF,    DOUBLE,   (value,decimal,value.decimal),   5) \
-X(a, STATIC,   SINGULAR, UINT32,   idx,               6)
+X(a, STATIC,   SINGULAR, UINT32,   idx,               6) \
+X(a, STATIC,   SINGULAR, UINT32,   rle_count,         7)
 #define SensorMeasurement_CALLBACK NULL
 #define SensorMeasurement_DEFAULT NULL
 #define SensorMeasurement_meta_MSGTYPE Metadata
@@ -215,10 +218,10 @@ extern const pb_msgdesc_t RepeatedSensorMeasurements_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define Metadata_size                            18
-#define RepeatedSensorMeasurements_size          678
+#define RepeatedSensorMeasurements_size          774
 #define RepeatedSensorResponses_size             160
 #define SENSOR_PB_H_MAX_SIZE                     RepeatedSensorMeasurements_size
-#define SensorMeasurement_size                   39
+#define SensorMeasurement_size                   45
 #define SensorResponse_size                      8
 
 #ifdef __cplusplus

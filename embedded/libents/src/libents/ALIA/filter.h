@@ -98,7 +98,7 @@ typedef struct {
  * back to the sensor_resolution floor for its event threshold.
  */
 // calculate number of startup samples needed for stdDevWindowHours
-static inline void numSamplesInStartup(struct ALIAUserConfig *cfg) {
+static inline void numSamplesInStartup(struct ALIAUserConfig* cfg) {
   if (cfg->sample_rate == 0) {
     cfg->num_startup_samples = 0;
     return;
@@ -163,7 +163,7 @@ typedef struct {
  * @param state Pointer to the WelfordState to initialize; all fields
  *              are zeroed.
  */
-void welford_init(WelfordState *state);
+void welford_init(WelfordState* state);
 
 /**
  * @brief Pushes a new sample into the fixed-size sliding window,
@@ -171,7 +171,7 @@ void welford_init(WelfordState *state);
  * @param state Pointer to the WelfordState to update.
  * @param x New sensor sample to incorporate.
  */
-void welford_push(WelfordState *state, double x);
+void welford_push(WelfordState* state, double x);
 
 /**
  * @brief Adds a new sample to the rolling window statistics without
@@ -180,7 +180,7 @@ void welford_push(WelfordState *state, double x);
  * @param state Pointer to the WelfordState to update.
  * @param x New sensor sample to incorporate.
  */
-void welford_add(WelfordState *state, double x);
+void welford_add(WelfordState* state, double x);
 
 /**
  * @brief Removes the oldest sample from the rolling window statistics.
@@ -191,35 +191,35 @@ void welford_add(WelfordState *state, double x);
  *
  * @param state Pointer to the WelfordState to update.
  */
-void welford_remove(WelfordState *state);
+void welford_remove(WelfordState* state);
 
 /**
  * @brief Returns the standard deviation of the current sliding window.
  * @param state Pointer to the WelfordState to query.
  * @return Standard deviation, or 0.0 if fewer than 2 samples are held.
  */
-double welford_get_stddev(const WelfordState *state);
+double welford_get_stddev(const WelfordState* state);
 
 /**
  * @brief Returns the mean of the current sliding window.
  * @param state Pointer to the WelfordState to query.
  * @return Mean of samples currently in the window.
  */
-double welford_get_mean(const WelfordState *state);
+double welford_get_mean(const WelfordState* state);
 
 /**
  * @brief Returns the variance of the current sliding window.
  * @param state Pointer to the WelfordState to query.
  * @return Variance of samples currently in the window.
  */
-double welford_get_variance(const WelfordState *state);
+double welford_get_variance(const WelfordState* state);
 
 /**
  * @brief Returns whether the sliding window has reached full capacity.
  * @param state Pointer to the WelfordState to query.
  * @return true if the sliding window contains ALIA_STD_DEV_WINDOW_SAMPLES
  */
-bool welford_window_is_full(const WelfordState *state);
+bool welford_window_is_full(const WelfordState* state);
 
 /**
  * @brief Returns whether enough samples have been collected for the rolling
@@ -232,8 +232,8 @@ bool welford_window_is_full(const WelfordState *state);
  * @param config Pointer to the user-configured ALIA parameters.
  * @return true once state->count >= config->num_startup_samples.
  */
-bool alia_startup_complete(const WelfordState *state,
-                           const ALIAUserConfig *config);
+bool alia_startup_complete(const WelfordState* state,
+                           const ALIAUserConfig* config);
 
 /**
  * @brief Global ALIA configuration instance.
@@ -264,9 +264,9 @@ extern struct ALIAUserConfig global_ALIAConfig;
  * @param config Pointer to the user-configured ALIA parameters.
  * @return true if this reading should be transmitted, false otherwise.
  */
-bool should_log(double data, WelfordState *state,
-                HeartbeatState *heartbeatState, RunState *runState,
-                ALIAUserConfig *config);
+bool should_log(double data, WelfordState* state,
+                HeartbeatState* heartbeatState, RunState* runState,
+                ALIAUserConfig* config);
 
 /**
  * @brief Computes the current adaptive heartbeat interval, in hours,
@@ -278,7 +278,7 @@ bool should_log(double data, WelfordState *state,
  * @return Heartbeat interval to wait before the next forced
  *         transmission, in hours, capped at max_heartbeat_hours.
  */
-double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
+double backoff(HeartbeatState* heartbeatState, ALIAUserConfig* config,
                uint32_t now);
 #endif
 #ifdef __cplusplus

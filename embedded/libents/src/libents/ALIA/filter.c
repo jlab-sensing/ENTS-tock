@@ -11,7 +11,7 @@
 #include "../util/time.h"
 
 /** @see welford_init */
-void welford_init(WelfordState *state) {
+void welford_init(WelfordState* state) {
   state->head = 0;
   state->count = 0;
   state->mean = 0.0;
@@ -19,7 +19,7 @@ void welford_init(WelfordState *state) {
 }
 
 /** @see welford_add */
-void welford_add(WelfordState *state, double x) {
+void welford_add(WelfordState* state, double x) {
   state->sensorMeasurements[state->head] = x;
   state->head = (state->head + 1) % ALIA_STD_DEV_WINDOW_SAMPLES;
   state->count += 1;
@@ -29,7 +29,7 @@ void welford_add(WelfordState *state, double x) {
 }
 
 /** @see welford_remove */
-void welford_remove(WelfordState *state) {
+void welford_remove(WelfordState* state) {
   state->count -= 1;
   double old_mean = state->mean;
   state->mean -=
@@ -39,7 +39,7 @@ void welford_remove(WelfordState *state) {
 }
 
 /** @see welford_push*/
-void welford_push(WelfordState *state, double x) {
+void welford_push(WelfordState* state, double x) {
   if (state->count < ALIA_STD_DEV_WINDOW_SAMPLES) {
     welford_add(state, x);
   } else {
@@ -49,7 +49,7 @@ void welford_push(WelfordState *state, double x) {
 }
 
 /** @see welford_get_stddev */
-double welford_get_stddev(const WelfordState *state) {
+double welford_get_stddev(const WelfordState* state) {
   if (state->count < 2) {
     return 0.0;
   }
@@ -57,10 +57,10 @@ double welford_get_stddev(const WelfordState *state) {
 }
 
 /** @see welford_get_mean */
-double welford_get_mean(const WelfordState *state) { return state->mean; }
+double welford_get_mean(const WelfordState* state) { return state->mean; }
 
 /** @see welford_get_variance */
-double welford_get_variance(const WelfordState *state) {
+double welford_get_variance(const WelfordState* state) {
   if (state->count < 2) {
     return 0.0;
   }
@@ -68,7 +68,7 @@ double welford_get_variance(const WelfordState *state) {
 }
 
 /** @see welford_window_is_full */
-bool welford_window_is_full(const WelfordState *state) {
+bool welford_window_is_full(const WelfordState* state) {
   if (state->count < ALIA_STD_DEV_WINDOW_SAMPLES) {
     return false;
   }
@@ -76,26 +76,26 @@ bool welford_window_is_full(const WelfordState *state) {
 }
 
 /** @see alia_startup_complete */
-bool alia_startup_complete(const WelfordState *state,
-                           const ALIAUserConfig *config) {
+bool alia_startup_complete(const WelfordState* state,
+                           const ALIAUserConfig* config) {
   return state->count >= config->num_startup_samples;
 }
 
 /** @see backoff */
-double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
+double backoff(HeartbeatState* heartbeatState, ALIAUserConfig* config,
                uint32_t now) {
   double calm_hours = 0.0;
 
   if (heartbeatState->has_logged) {
-       calm_hours = (now - heartbeatState->last_event_ts) / 3600.0;
+    calm_hours = (now - heartbeatState->last_event_ts) / 3600.0;
   }
 
   if (config->doubling_hours == 0) {
     return config->max_heartbeat_hours;
   }
 
-  double interval =
-      config->base_heartbeat_hours * pow(2, calm_hours / config->doubling_hours);
+  double interval = config->base_heartbeat_hours *
+                    pow(2, calm_hours / config->doubling_hours);
   if (interval < config->max_heartbeat_hours) {
     return interval;
   }
@@ -103,9 +103,9 @@ double backoff(HeartbeatState *heartbeatState, ALIAUserConfig *config,
 }
 
 /** @see should_log */
-bool should_log(double data, WelfordState *state,
-                HeartbeatState *heartbeatState, RunState *runState,
-                ALIAUserConfig *config) {
+bool should_log(double data, WelfordState* state,
+                HeartbeatState* heartbeatState, RunState* runState,
+                ALIAUserConfig* config) {
   uint32_t time = epoch();
 
   // if first value send it
