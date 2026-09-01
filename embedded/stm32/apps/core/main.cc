@@ -4,6 +4,8 @@
 #include <libents/proto/sensor.h>
 #include <libents/storage/fifo.h>
 #include <libents/user_config.h>
+#include <libents/util/time.h>
+#include <libents/util/uptime.h>
 #include <libtock-sync/services/alarm.h>
 #include <libtock/kernel/ipc.h>
 #include <libtock/tock.h>
@@ -54,6 +56,29 @@ static int upload_interval = 60000;
 
 /** Time before user config webserver is turned off */
 static const int userconfig_timeout_ms = 300 * 1000;
+
+/**
+ * Send the device health counters once every this many uploads.
+ *
+ * The LoRaWAN payload budget is 60 bytes and a SensorMeasurement runs roughly
+ * 15 to 25 encoded, so sending all five counters every batch would crowd out
+ * real measurements.
+ */
+#define UPTIME_REPORT_EVERY 12
+
+/** stats.total at the last health report, drives the report interval. */
+static int last_uptime_report = 0;
+
+/**
+ * @brief Queue the device health counters for upload.
+ *
+ * Encodes each counter as an ordinary SensorMeasurement and pushes it into the
+ * same FIFO the sensor apps use, so it rides the existing batching and uplink
+ * with no special handling anywhere downstream.
+ *
+ * @return Number of counters queued.
+ */
+static int report_uptime(void);
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -128,6 +153,21 @@ int main(void) {
   // Initialize controller interface
   ControllerInit();
 
+  // Count this boot and start the session timer. Deliberately before the
+  // network comes up: an unclean boot has to be recorded even if the node
+  // never manages to join, since a node stuck in a join loop is exactly the
+  // failure these counters exist to catch.
+  ents_uptime_status up_status = ents_uptime_init();
+  if (up_status != ENTS_UPTIME_OK) {
+    ulog_error("Uptime tracking unavailable (error: %d)", (int)up_status);
+  } else {
+    ents_uptime_stats up = {};
+    ents_uptime_get(&up);
+    ulog_info("Boot %lu, %lu unclean, previous shutdown %s",
+              (unsigned long)up.boot_count, (unsigned long)up.unclean_boots,
+              up.previous_clean ? "clean" : "UNCLEAN");
+  }
+
   // Get update configuration from server
   UserConfigUpdateFromServer();
 
@@ -160,10 +200,28 @@ int main(void) {
     }
   }
 
+  // The clock is only trustworthy now. On the measured hardware the RTC reads
+  // 2000-01-01 until this point, so this is where an outage across the reset
+  // becomes measurable, not in the boot sequence.
+  if (ents_uptime_time_synced() == ENTS_UPTIME_OK) {
+    ents_uptime_stats up = {};
+    ents_uptime_get(&up);
+    if (up.downtime_seconds > 0) {
+      ulog_info("Measured downtime so far: %lu s",
+                (unsigned long)up.downtime_seconds);
+    }
+  }
+
   network_ready = true;
 
   while (1) {
     ulog_trace("main loop");
+
+    // Fold elapsed time into the counters and persist on its own schedule.
+    // The loop is guaranteed to run at least every upload_interval, which is
+    // far inside both the 74 hour tick counter wrap and the FRAM persist
+    // interval, so no separate alarm is needed to keep the count honest.
+    ents_uptime_tick();
 
     ret = libtocksync_alarm_yield_for_with_timeout(&has_data, upload_interval);
     if (ret == 0) {
@@ -206,6 +264,12 @@ int main(void) {
     //
     // Upload data
     //
+
+    // Queue the health counters occasionally so they ride the next batch.
+    if (stats.total - last_uptime_report >= UPTIME_REPORT_EVERY) {
+      last_uptime_report = stats.total;
+      report_uptime();
+    }
 
     uint16_t meas_in_buffer = fifo_buffer_len();
 
@@ -311,6 +375,60 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
   } else {
     ulog_error("IPC command %d not implemented.", buffer[0]);
   }
+}
+
+static int report_uptime(void) {
+  ents_uptime_stats up = {};
+  if (ents_uptime_get(&up) != ENTS_UPTIME_OK) {
+    return 0;
+  }
+
+  const UserConfiguration* uc = UserConfigGet();
+  if (uc == NULL) {
+    ulog_warn("No user config, cannot label uptime counters");
+    return 0;
+  }
+
+  Metadata meta = {};
+  meta.cell_id = uc->cell_id;
+  meta.logger_id = uc->logger_id;
+  meta.ts = epoch();
+
+  // Boot counters change rarely, so they are worth sending every time this
+  // runs. The two second counters are the ones that move constantly.
+  const struct {
+    SensorType type;
+    uint32_t value;
+  } counters[] = {
+      {SensorType_DEVICE_BOOT_COUNT, up.boot_count},
+      {SensorType_DEVICE_UNCLEAN_BOOTS, up.unclean_boots},
+      {SensorType_DEVICE_UPTIME, up.session_seconds},
+      {SensorType_DEVICE_CUMULATIVE_UPTIME, up.cumulative_seconds},
+      {SensorType_DEVICE_DOWNTIME, up.downtime_seconds},
+  };
+
+  int queued = 0;
+  for (size_t i = 0; i < sizeof(counters) / sizeof(counters[0]); i++) {
+    uint8_t buffer[64] = {};
+    size_t len = sizeof(buffer);
+
+    if (EncodeUint32Measurement(meta, counters[i].value, counters[i].type,
+                                buffer, &len) != SENSOR_OK) {
+      ulog_error("Could not encode uptime counter %d", (int)counters[i].type);
+      continue;
+    }
+    if (fifo_put(buffer, (uint8_t)len) < 0) {
+      // Buffer full is not fatal here. Health counters are the first thing that
+      // should be dropped when the FIFO is under pressure from real data.
+      ulog_warn("Buffer full, dropping uptime counter %d",
+                (int)counters[i].type);
+      continue;
+    }
+    queued++;
+  }
+
+  ulog_debug("Queued %d uptime counters", queued);
+  return queued;
 }
 
 static int get_payload(uint8_t* buffer, int size) {

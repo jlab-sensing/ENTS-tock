@@ -10,6 +10,7 @@ from ents.proto.sensor import (
     get_sensor_data,
     update_repeated_metadata,
 )
+from ents.proto.sensor_pb2 import SensorType
 
 
 class TestProtoSensor(unittest.TestCase):
@@ -199,6 +200,56 @@ class TestProtoSensor(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             _ = update_repeated_metadata(meas_in)
+
+    def test_sensor_metadata_is_complete(self):
+        """Every SensorType must have name and unit metadata.
+
+        A missing entry is not a small gap. get_sensor_data() raises KeyError,
+        parse_sensor_measurement() propagates it, and dirtviz's
+        process_generic_measurement() turns that into a 400 for the entire
+        uplink batch. One unmapped measurement therefore discards every real
+        reading batched alongside it.
+
+        NONE is excluded: it is the unset default, not a real measurement.
+        """
+
+        missing = []
+
+        for type_name, number in SensorType.items():
+            if type_name == "NONE":
+                continue
+            try:
+                meta = get_sensor_data(type_name)
+            except KeyError:
+                missing.append(f"{type_name} ({number})")
+                continue
+            self.assertIn("name", meta, f"{type_name} has no measurement name")
+            self.assertIn("unit", meta, f"{type_name} has no unit")
+            self.assertTrue(meta["name"], f"{type_name} has an empty name")
+
+        self.assertEqual(
+            missing,
+            [],
+            f"SensorType values with no metadata entry: {missing}. Add them to "
+            "SENSOR_DATA in ents/proto/sensor.py, or uplinks carrying them are "
+            "rejected in full by the backend.",
+        )
+
+    def test_device_counters(self):
+        """The uptime counters specifically, since they gate that feature."""
+
+        expected = {
+            "DEVICE_UPTIME": ("Uptime", "s"),
+            "DEVICE_CUMULATIVE_UPTIME": ("Cumulative Uptime", "s"),
+            "DEVICE_BOOT_COUNT": ("Boot Count", "count"),
+            "DEVICE_UNCLEAN_BOOTS": ("Unclean Boots", "count"),
+            "DEVICE_DOWNTIME": ("Downtime", "s"),
+        }
+
+        for type_name, (meas_name, unit) in expected.items():
+            meta = get_sensor_data(type_name)
+            self.assertEqual(meta["name"], meas_name)
+            self.assertEqual(meta["unit"], unit)
 
     def test_get_sensor_data(self):
         """Tests get_sensor_data function."""

@@ -46,6 +46,31 @@ enum SensorType {
 
   /** PCAP02 measurements */
   PCAP02_CAPACITANCE = 19;
+
+  /**
+   * Device health counters.
+   *
+   * Not sensor readings. They ride SensorMeasurement because that carries them
+   * over the existing uplink and ingest, and reaches the generic /sensor/
+   * endpoint with no new route or client method. All are plain counts or
+   * seconds, so they use the unsigned_int arm of the value oneof.
+   *
+   * Adding a value here also requires an entry in SENSOR_DATA in
+   * python/src/ents/proto/sensor.py, or the backend rejects the whole uplink.
+   *
+   * @see UPTIME_TRACKING_DESIGN.md
+   */
+
+  /** Seconds since the device last booted */
+  DEVICE_UPTIME = 20;
+  /** Seconds powered on, summed over every boot */
+  DEVICE_CUMULATIVE_UPTIME = 21;
+  /** Number of boots, including the current one */
+  DEVICE_BOOT_COUNT = 22;
+  /** Boots that followed a reset or brownout rather than a clean shutdown */
+  DEVICE_UNCLEAN_BOOTS = 23;
+  /** Seconds spent powered off, summed over every measured outage */
+  DEVICE_DOWNTIME = 24;
 }
 
 enum SensorError {

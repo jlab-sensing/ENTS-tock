@@ -81,13 +81,23 @@ class BackendClient:
 
         return params
 
-    def power_data(self, cell: Cell, start: datetime, end: datetime) -> pd.DataFrame:
+    def power_data(
+        self,
+        cell: Cell,
+        start: datetime,
+        end: datetime,
+        resample: str | None = None,
+    ) -> pd.DataFrame:
         """Gets power data for a specific cell by name.
 
         Args:
             cell: The Cell object for which to get power data.
             start: The start date of the data.
             end: The end date of the data.
+            resample: Server side resampling. Omitted by default, which the API
+                treats as hourly buckets regardless of how often the node
+                actually uploads. Pass "none" for the raw measurements, which
+                is what anything reasoning about arrival times needs.
 
         Returns:
             A pandas DataFrame containing the power data.
@@ -96,6 +106,8 @@ class BackendClient:
         endpoint = f"/power/{cell.id}"
 
         params = self.time_to_params(start, end)
+        if resample is not None:
+            params["resample"] = resample
 
         data = self.get(endpoint, params=params)
 
@@ -104,13 +116,20 @@ class BackendClient:
 
         return data_df
 
-    def teros_data(self, cell: Cell, start: datetime, end: datetime) -> pd.DataFrame:
+    def teros_data(
+        self,
+        cell: Cell,
+        start: datetime,
+        end: datetime,
+        resample: str | None = None,
+    ) -> pd.DataFrame:
         """Gets teros data for a specific cell
 
         Args:
             cell: The Cell object for which to get teros data.
             start: The start date of the data.
             end: The end date of the data.
+            resample: Server side resampling. See power_data().
 
         Returns:
             A pandas DataFrame containing the teros data with columns vwc_raw,
@@ -120,6 +139,8 @@ class BackendClient:
         endpoint = f"/teros/{cell.id}"
 
         params = self.time_to_params(start, end)
+        if resample is not None:
+            params["resample"] = resample
 
         data = self.get(endpoint, params=params)
 
@@ -145,6 +166,7 @@ class BackendClient:
             meas: The measurement type (e.g., "v", "i", "vwc", "temp", "ec").
             start: The start date of the data.
             end: The end date of the data.
+            resample: Server side resampling. "none" for the raw measurements.
 
         Returns:
             A pandas DataFrame containing the sensor data.
@@ -156,6 +178,7 @@ class BackendClient:
             "cellId": cell.id,
             "name": name,
             "measurement": meas,
+            "resample": resample,
         }
 
         params = params | self.time_to_params(start, end)
