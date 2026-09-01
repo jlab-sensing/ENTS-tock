@@ -40,6 +40,10 @@ void ModuleMicroSD::OnReceive(const Esp32Command& cmd) {
       Log.traceln("Calling USERCONFIG");
       UserConfig(cmd);
       break;
+    case MicroSDCommand_Type_LOG:
+      Log.traceln("Calling LOG");
+      WriteLog(cmd);
+      break;
     default:
       Log.warningln("MicroSD command type not found!");
       break;
@@ -411,6 +415,76 @@ void ModuleMicroSD::UserConfig(const Esp32Command& cmd) {
           }
           dataFile.close();
         }
+      }
+    }
+  }
+
+  // encode command in buffer
+  this->request_buffer_len = EncodeMicroSDCommand(&microsd_cmd, request_buffer,
+                                                  sizeof(request_buffer));
+}
+
+void ModuleMicroSD::WriteLog(const Esp32Command& cmd) {
+  // init return microSD command
+  MicroSDCommand microsd_cmd = MicroSDCommand_init_zero;
+  microsd_cmd.type = MicroSDCommand_Type_LOG;
+
+  Log.traceln("ModuleMicroSD::WriteLog");
+
+  // Base filename for log
+  const char* base = cmd.command.microsd_command.filename;
+
+  if (!microsd_detect_card()) {
+    Log.error("Aborting log to micro SD card.\r\n");
+    microsd_cmd.rc = MicroSDCommand_ReturnCode_ERROR_MICROSD_NOT_INSERTED;
+  } else {
+    SD.end();
+    if (!SD.begin(chipSelect_pin)) {
+      Log.error(
+          "Failed to begin, make sure that a FAT32 formatted SD card is "
+          "inserted. Aborting log to micro SD card.\r\n");
+      microsd_cmd.rc =
+          MicroSDCommand_ReturnCode_ERROR_FILE_SYSTEM_NOT_MOUNTABLE;
+    } else {
+      Log.verbose("microsd_command.log: %s\r\n",
+                  cmd.command.microsd_command.data.log);
+
+      // boot index
+      int start_idx = 0;
+      char logFileFilename[32] = {};
+
+      // find non-existant bootnumber
+      while (1) {
+        snprintf(logFileFilename, sizeof(logFileFilename), "/%s.%d.txt", base,
+                 start_idx);
+
+        // check if sd card exsits
+        if (!SD.exists(logFileFilename)) {
+          break;
+        } else {
+          Log.verbose("File name \"%s\" already exsits! Trying next index.");
+        }
+
+        // try next index
+        start_idx++;
+      }
+
+      // Open file, preventing overwrites
+      File logFile = SD.open(logFileFilename, FILE_APPEND);
+
+      if (!logFile) {
+        Log.error("Failed to open '%s' with '%s'\r\n", logFileFilename,
+                  FILE_APPEND);
+
+        microsd_cmd.rc = MicroSDCommand_ReturnCode_ERROR_FILE_NOT_OPENED;
+        strncpy(microsd_cmd.filename, logFileFilename,
+                sizeof(microsd_cmd.filename));
+      } else {
+        // save and close file
+        logFile.println(cmd.command.microsd_command.data.log);
+        logFile.close();
+
+        Log.trace("Wrote to and closed '%s'\r\n", logFileFilename);
       }
     }
   }
