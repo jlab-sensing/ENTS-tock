@@ -450,23 +450,27 @@ void ModuleMicroSD::WriteLog(const Esp32Command& cmd) {
                   cmd.command.microsd_command.data.log);
 
       // boot index
-      int start_idx = 0;
-      char logFileFilename[32] = {};
+      static char logFileFilename[32] = "";
 
-      // find non-existant bootnumber
-      while (1) {
-        snprintf(logFileFilename, sizeof(logFileFilename), "/%s.%d.txt", base,
-                 start_idx);
+      // Find the next boot index for filename
+      if (strlen(logFileFilename) == 0) {
+        int start_idx = 0;
 
-        // check if sd card exsits
-        if (!SD.exists(logFileFilename)) {
-          break;
-        } else {
-          Log.verbose("File name \"%s\" already exsits! Trying next index.");
+        // find non-existant bootnumber
+        while (1) {
+          snprintf(logFileFilename, sizeof(logFileFilename), "/%s.%d.txt", base,
+                   start_idx);
+
+          // check if sd card exsits
+          if (!SD.exists(logFileFilename)) {
+            break;
+          } else {
+            Log.verbose("File name \"%s\" already exsits! Trying next index.");
+          }
+
+          // try next index
+          start_idx++;
         }
-
-        // try next index
-        start_idx++;
       }
 
       // Open file, preventing overwrites
