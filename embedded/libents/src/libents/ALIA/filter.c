@@ -81,6 +81,47 @@ bool alia_startup_complete(const WelfordState* state,
   return state->count >= config->num_startup_samples;
 }
 
+/** @see alia_registry_init */
+void alia_registry_init(ALIARegistry* reg) {
+  for (size_t i = 0; i < ALIA_MAX_STREAMS; i++) {
+    reg->streams[i].in_use = false;
+    reg->streams[i].key = 0;
+  }
+}
+
+/** @see alia_stream_get */
+ALIAStream* alia_stream_get(ALIARegistry* reg, uint32_t key,
+                            const ALIAUserConfig* defaults,
+                            double sensor_resolution) {
+  for (size_t i = 0; i < ALIA_MAX_STREAMS; i++) {
+    if (reg->streams[i].in_use && reg->streams[i].key == key) {
+      return &reg->streams[i];
+    }
+  }
+
+  // Not seen before
+  for (size_t i = 0; i < ALIA_MAX_STREAMS; i++) {
+    if (reg->streams[i].in_use) {
+      continue;
+    }
+    ALIAStream* stream = &reg->streams[i];
+    stream->key = key;
+    stream->in_use = true;
+    welford_init(&stream->welford);
+    stream->heartbeat.last_tx_ts = 0;
+    stream->heartbeat.last_event_ts = 0;
+    stream->heartbeat.has_logged = false;
+    stream->heartbeat.last_transmitted_value = 0.0;
+    stream->run.run_count = 0;
+    stream->config = *defaults;
+    stream->config.sensor_resolution = sensor_resolution;
+    numSamplesInStartup(&stream->config);
+    return stream;
+  }
+
+  return NULL;
+}
+
 /** @see backoff */
 double backoff(HeartbeatState* heartbeatState, ALIAUserConfig* config,
                uint32_t now) {

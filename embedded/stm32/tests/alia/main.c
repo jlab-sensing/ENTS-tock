@@ -50,7 +50,7 @@ void tearDown(void) {}
 
 // ---- naive reference helpers, used to sanity-check the incremental math ----
 
-static double naive_mean(const double *values, size_t n) {
+static double naive_mean(const double* values, size_t n) {
   double sum = 0.0;
   for (size_t i = 0; i < n; i++) {
     sum += values[i];
@@ -58,7 +58,7 @@ static double naive_mean(const double *values, size_t n) {
   return sum / (double)n;
 }
 
-static double naive_sample_variance(const double *values, size_t n) {
+static double naive_sample_variance(const double* values, size_t n) {
   if (n < 2) {
     return 0.0;
   }
@@ -382,6 +382,116 @@ void test_should_log_AlwaysUpdatesWindow(void) {
   TEST_ASSERT_EQUAL(count_before + 1, welfordState.count);
 }
 
+// ==== ALIARegistry: per-stream state isolation ====
+
+void test_alia_registry_init_ReleasesAllSlots(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  for (size_t i = 0; i < ALIA_MAX_STREAMS; i++) {
+    TEST_ASSERT_FALSE(reg.streams[i].in_use);
+  }
+}
+
+void test_alia_stream_get_SameKeyReturnsSameSlot(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  ALIAUserConfig seed = config;
+
+  ALIAStream* first = alia_stream_get(&reg, 10, &seed, 0.1);
+  ALIAStream* again = alia_stream_get(&reg, 10, &seed, 0.1);
+  TEST_ASSERT_NOT_NULL(first);
+  TEST_ASSERT_EQUAL_PTR(first, again);
+}
+
+void test_alia_stream_get_DistinctKeysGetDistinctSlots(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  ALIAUserConfig seed = config;
+
+  ALIAStream* a = alia_stream_get(&reg, 10, &seed, 0.1);
+  ALIAStream* b = alia_stream_get(&reg, 9, &seed, 0.1);
+  ALIAStream* c = alia_stream_get(&reg, 11, &seed, 0.1);
+  TEST_ASSERT_TRUE(a != b && b != c && a != c);
+}
+
+void test_alia_stream_get_SeedsResolutionPerStream(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+
+  ALIAUserConfig seed = config;
+
+  ALIAStream* temp = alia_stream_get(&reg, 10, &seed, 1.0);
+  ALIAStream* pres = alia_stream_get(&reg, 9, &seed, 10.0);
+
+  ASSERT_DOUBLE_EQUAL(1.0, temp->config.sensor_resolution);
+  ASSERT_DOUBLE_EQUAL(10.0, pres->config.sensor_resolution);
+}
+
+void test_alia_stream_get_ReseedDoesNotDisturbRunningStream(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+
+  ALIAUserConfig seed = config;
+  ALIAStream* stream = alia_stream_get(&reg, 10, &seed, 1.0);
+  should_log(42.0, &stream->welford, &stream->heartbeat, &stream->run,
+             &stream->config);
+  size_t count_before = stream->welford.count;
+
+  ALIAStream* again = alia_stream_get(&reg, 10, &seed, 999.0);
+
+  TEST_ASSERT_EQUAL_PTR(stream, again);
+  ASSERT_DOUBLE_EQUAL(1.0, again->config.sensor_resolution);
+  TEST_ASSERT_EQUAL(count_before, again->welford.count);
+}
+
+void test_alia_stream_get_AppliesStartupSampleCount(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  ALIAUserConfig seed = config;
+  seed.num_startup_samples = 0;
+
+  ALIAStream* stream = alia_stream_get(&reg, 10, &seed, 0.1);
+  ALIAUserConfig expected = seed;
+  numSamplesInStartup(&expected);
+  TEST_ASSERT_EQUAL(expected.num_startup_samples,
+                    stream->config.num_startup_samples);
+}
+
+void test_alia_stream_get_WhenFullReturnsNullAndKeepsStreams(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  ALIAUserConfig seed = config;
+
+  for (uint32_t k = 0; k < ALIA_MAX_STREAMS; k++) {
+    TEST_ASSERT_NOT_NULL(alia_stream_get(&reg, k, &seed, 0.1));
+  }
+
+  TEST_ASSERT_NULL(alia_stream_get(&reg, ALIA_MAX_STREAMS, &seed, 0.1));
+  for (uint32_t k = 0; k < ALIA_MAX_STREAMS; k++) {
+    TEST_ASSERT_TRUE(reg.streams[k].in_use);
+    TEST_ASSERT_EQUAL(k, reg.streams[k].key);
+  }
+}
+
+void test_alia_stream_get_StreamsDoNotShareStatistics(void) {
+  static ALIARegistry reg;
+  alia_registry_init(&reg);
+  ALIAUserConfig seed = config;
+
+  ALIAStream* small = alia_stream_get(&reg, 10, &seed, 0.1);
+  ALIAStream* large = alia_stream_get(&reg, 9, &seed, 0.1);
+
+  for (int i = 0; i < 20; i++) {
+    welford_push(&small->welford, 22.0 + (i % 2));
+    welford_push(&large->welford, 101325.0 + (i % 2));
+  }
+
+  ASSERT_DOUBLE_WITHIN(1e-6, 22.5, welford_get_mean(&small->welford));
+  ASSERT_DOUBLE_WITHIN(1e-6, 101325.5, welford_get_mean(&large->welford));
+  ASSERT_DOUBLE_WITHIN(1e-6, welford_get_stddev(&small->welford),
+                       welford_get_stddev(&large->welford));
+}
+
 int main(void) {
   UNITY_BEGIN();
 
@@ -423,6 +533,15 @@ int main(void) {
   RUN_TEST(test_numSamplesInStartup_ZeroSampleRateDoesNotDivideByZero);
   RUN_TEST(test_alia_startup_complete_TracksSampleCount);
   RUN_TEST(test_should_log_DuringStartup_UsesResolutionFloor);
+
+  RUN_TEST(test_alia_registry_init_ReleasesAllSlots);
+  RUN_TEST(test_alia_stream_get_SameKeyReturnsSameSlot);
+  RUN_TEST(test_alia_stream_get_DistinctKeysGetDistinctSlots);
+  RUN_TEST(test_alia_stream_get_SeedsResolutionPerStream);
+  RUN_TEST(test_alia_stream_get_ReseedDoesNotDisturbRunningStream);
+  RUN_TEST(test_alia_stream_get_AppliesStartupSampleCount);
+  RUN_TEST(test_alia_stream_get_WhenFullReturnsNullAndKeepsStreams);
+  RUN_TEST(test_alia_stream_get_StreamsDoNotShareStatistics);
 
   return UNITY_END();
 }

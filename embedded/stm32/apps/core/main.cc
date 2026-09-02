@@ -103,21 +103,22 @@ static bool measurement_value(const SensorMeasurement* meas, double* out);
 /**
  * @brief Runs one freshly received measurement through ALIA and uploads it if
  *        ALIA decides it is worth transmitting.
- *
- * Suppressed readings are dropped; the run of suppressed samples they belong
- * to is carried as rle_count on the next transmitted measurement.
- *
  * @param buf Pointer to the encoded SensorMeasurement.
  * @param len Length of buf.
- * @param welfordState Rolling window statistics state.
- * @param heartbeatState Heartbeat/backoff state.
- * @param runState Run-length state.
- * @param config ALIA parameters.
+ * @param registry Per-stream ALIA state, keyed by sensor type.
+ * @param defaults ALIA parameters used to create a new sensor stream.
  */
 static void alia_process(const uint8_t* buf, uint8_t len,
-                         WelfordState* welfordState,
-                         HeartbeatState* heartbeatState, RunState* runState,
-                         ALIAUserConfig* config);
+                         ALIARegistry* registry,
+                         const ALIAUserConfig* defaults);
+
+/**
+ * @brief Smallest change worth reporting for a given sensor type.
+
+ * @param type Sensor type of the measurement.
+ * @return Resolution for a sensor
+ */
+static double resolution_for(SensorType type);
 #endif  // ALIA_ENABLED
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
@@ -158,27 +159,19 @@ int main(void) {
 #endif  // TEST_USER_CONFIG
 
 #ifdef ALIA_ENABLED
-  WelfordState welfordState = {};
-  HeartbeatState heartbeatState = {};
-  RunState runState = {};
-  ALIAUserConfig config = {};
+  // One slot per measurement stream. A multi-quantity sensor reports each
+  // quantity as its own SensorType, and those carry different units, so they
+  // must not share a statistics window.
+  ALIARegistry alia_registry;
+  alia_registry_init(&alia_registry);
 
-  welford_init(&welfordState);
-  heartbeatState.last_tx_ts = 0;
-  heartbeatState.last_event_ts = 0;
-  heartbeatState.has_logged = false;
-  heartbeatState.last_transmitted_value = 0.0;
-  runState.run_count = 0;
-  config.event_delta_threshold = 2;
-  config.sensor_resolution = 0.1;
-  config.base_heartbeat_hours = 1;
-  config.doubling_hours = 6;
-  config.max_heartbeat_hours = 24;
-  // sample_rate is a period in seconds. These two size the startup window:
-  // 12h / 5min == 144 == ALIA_STD_DEV_WINDOW_SAMPLES.
-  config.sample_rate = 300;
-  config.std_dev_window_hours = 12;
-  numSamplesInStartup(&config);
+  ALIAUserConfig alia_defaults = {};
+  alia_defaults.event_delta_threshold = 2;
+  alia_defaults.base_heartbeat_hours = 1;
+  alia_defaults.doubling_hours = 6;
+  alia_defaults.max_heartbeat_hours = 24;
+  alia_defaults.sample_rate = 10;
+  alia_defaults.std_dev_window_hours = 12;
 #endif
   // Initialize controller interface
   ControllerInit();
@@ -258,8 +251,8 @@ int main(void) {
       // ALIA also decides transmission per reading, so the fifo is bypassed:
       // an admitted reading uploads immediately and a suppressed one is
       // dropped, represented by the run length on the next transmission.
-      alia_process(meas_buffer, meas_buffer_length, &welfordState,
-                   &heartbeatState, &runState, &config);
+      alia_process(meas_buffer, meas_buffer_length, &alia_registry,
+                   &alia_defaults);
 #else
       // store in buffer
       ret = fifo_put(meas_buffer, meas_buffer_length);
@@ -406,10 +399,22 @@ static bool measurement_value(const SensorMeasurement* meas, double* out) {
   }
 }
 
+static double resolution_for(SensorType type) {
+  switch (type) {
+    case SensorType_BME280_TEMP:
+      return 0.01;
+    case SensorType_BME280_PRESSURE:
+      return 0.18;
+    case SensorType_BME280_HUMIDITY:
+      return 0.008;
+    default:
+      return 0.1;
+  }
+}
+
 static void alia_process(const uint8_t* buf, uint8_t len,
-                         WelfordState* welfordState,
-                         HeartbeatState* heartbeatState, RunState* runState,
-                         ALIAUserConfig* config) {
+                         ALIARegistry* registry,
+                         const ALIAUserConfig* defaults) {
   ulog_trace("alia_process");
 
   SensorMeasurement meas = {};
@@ -425,13 +430,24 @@ static void alia_process(const uint8_t* buf, uint8_t len,
     return;
   }
 
-  // Read the run before should_log resets it.
-  uint32_t rle = runState->run_count;
+  ALIAStream* stream =
+      alia_stream_get(registry, meas.type, defaults, resolution_for(meas.type));
 
-  if (!should_log(value, welfordState, heartbeatState, runState, config)) {
-    ulog_debug("ALIA suppressed measurement (run length %u)",
-               (unsigned)runState->run_count);
-    return;
+  uint32_t rle = 0;
+  if (stream != NULL) {
+    // Read the run before should_log resets it.
+    rle = stream->run.run_count;
+
+    if (!should_log(value, &stream->welford, &stream->heartbeat, &stream->run,
+                    &stream->config)) {
+      ulog_debug("ALIA suppressed type %d (run length %u)", (int)meas.type,
+                 (unsigned)stream->run.run_count);
+      return;
+    }
+  } else {
+    // Out of slots
+    ulog_warn("ALIA has no free stream slot for type %d; uploading unfiltered",
+              (int)meas.type);
   }
 
   meas.rle_count = rle;

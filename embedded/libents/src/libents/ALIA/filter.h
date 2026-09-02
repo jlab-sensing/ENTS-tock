@@ -280,6 +280,56 @@ bool should_log(double data, WelfordState* state,
  */
 double backoff(HeartbeatState* heartbeatState, ALIAUserConfig* config,
                uint32_t now);
+
+/**
+ * @def ALIA_MAX_STREAMS
+ * @brief Max number of streams that can be tracked with algorithm. i.e bme280
+ * has three streams
+ */
+#define ALIA_MAX_STREAMS 3
+
+/**
+ * @struct ALIAStream
+ * @brief All associated states for a single stream.
+ */
+typedef struct ALIAStream {
+  uint32_t key;
+  bool in_use;
+  WelfordState welford;
+  HeartbeatState heartbeat;
+  RunState run;
+  ALIAUserConfig config;
+} ALIAStream;
+
+/**
+ * @struct ALIARegistry
+ * @brief Array of all the stream's and their associated states.
+ */
+typedef struct ALIARegistry {
+  ALIAStream streams[ALIA_MAX_STREAMS];
+} ALIARegistry;
+
+/**
+ * @brief Releases every slot in the registry.
+ * @param reg Pointer to the registry to initialize.
+ */
+void alia_registry_init(ALIARegistry* reg);
+
+/**
+ * @brief Looks up the slot associated with the key in the reg. If not present,
+ * assigns that key to a new spot in the reg.
+ *
+ * @param reg Pointer to the registry to search.
+ * @param key SensorType identifying the stream.
+ * @param defaults Configuration to seed a newly claimed slot with. Its
+ *                 sensor_resolution field is ignored.
+ * @param sensor_resolution Resolution floor in this stream's own units.
+ * @return Pointer to the slot, or NULL if all slots are claimed by other
+ *         streams.
+ */
+ALIAStream* alia_stream_get(ALIARegistry* reg, uint32_t key,
+                            const ALIAUserConfig* defaults,
+                            double sensor_resolution);
 #endif
 #ifdef __cplusplus
 }
