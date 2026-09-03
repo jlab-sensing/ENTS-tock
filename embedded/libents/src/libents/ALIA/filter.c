@@ -5,7 +5,6 @@
  *        interface and full function documentation.
  */
 #include "filter.h"
-
 #include <math.h>
 
 #include "../util/time.h"
@@ -134,9 +133,11 @@ double backoff(HeartbeatState* heartbeatState, ALIAUserConfig* config,
   if (config->doubling_hours == 0) {
     return config->max_heartbeat_hours;
   }
-
-  double interval = config->base_heartbeat_hours *
-                    pow(2, calm_hours / config->doubling_hours);
+  uint32_t exponent = calm_hours / config->doubling_hours;
+  uint32_t interval = config->base_heartbeat_hours;
+  for (uint32_t i = 0; i < exponent && interval < config->max_heartbeat_hours; i++) {
+    interval *= 2;
+  }
   if (interval < config->max_heartbeat_hours) {
     return interval;
   }
