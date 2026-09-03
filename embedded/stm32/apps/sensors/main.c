@@ -262,10 +262,56 @@ int main() {
         ulog_info("Measured Teros12");
         measure_sensor(Teros12Measure);
       }
-      // if (sensor == EnabledSensor_Teros21) {
-      //   measure_sensor(Teros21Measure);
-      //   ulog_info("Teros21");
-      // }
+      if (sensor == EnabledSensor_Teros21) {
+
+
+
+        // TODO (jmadden173): Partially ported code for multiple sensors
+        //const UserConfiguration *cfg = UserConfigGet();
+        //uint32_t sensor_index = cfg->enabled_sensors_multiple[idx].index;
+
+        //// SDI-12 spec 1.4: 0-9 (48-57), A-Z (65-90), a-z (97-122)
+        //char sdi12_address = '0';
+
+        //switch (sensor_index) {
+        //  case 0 ... 9:  // default address is '0'. Also fix common user error of not
+        //                 // putting the ascii decimal for '0'-'9'.
+        //    sdi12_address = sensor_index + '0';
+        //    break;
+        //  case '0' ... '9':
+        //  case 'A' ... 'Z':
+        //  case 'a' ... 'z':
+        //    sdi12_address = sensor_index;
+        //    break;
+        //  default:
+        //    APP_LOG(TS_ON, VLEVEL_H,
+        //            "Invalid SDI-12 address provided in the userconfig index field: "
+        //            "0x%X ('%c')\r\n",
+        //            sensor_index, sensor_index);
+        //    return -1;
+        //    break;
+        //}
+        
+        
+        
+        //// metadata
+        //Metadata meta = Metadata_init_zero;
+        //meta.ts = ts.Seconds;
+        //meta.logger_id = cfg->logger_id;
+        //if (cfg->enabled_sensors_multiple[idx].cell_id != 0) {
+        //  meta.cell_id = cfg->enabled_sensors_multiple[idx].cell_id;
+        //} else {
+        //  meta.cell_id = cfg->cell_id;
+        //}
+
+        Teros12Measure('0');
+        measure_sensor(Teros21MeasureVWC);
+        measure_sensor(Teros21MeasureVWCRaw);
+        measure_sensor(Teros21MeasureTemp);
+        measure_sensor(Teros21MeasureEC);
+
+        ulog_info("Teros21");
+      }
       if (sensor == EnabledSensor_BME280) {
         if (!init) {
           BME280Init();

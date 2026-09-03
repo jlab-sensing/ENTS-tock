@@ -1,111 +1,251 @@
-#include "teros21.h"
+#include "teros12.h"
 
-#include "sensor.h"
-#include "sensors.h"
-#include "userConfig.h"
+#include <stdlib.h>
+#include <math.h>
 
-SDI12Status Teros21ParseMeasurement(const char *buffer, Teros21Data *data) {
-  char addr = 0;
-  float matric_pot = 0.;
-  float temp = 0.;
+#include <libtock-sync/peripherals/sdi12.h>
+#include <libtock-sync/services/alarm.h>
 
-  // parse string
-  int rc = sscanf(buffer, "%1c-%f%f", &addr, &matric_pot, &temp);
-  if (rc < 3) {
-    return SDI12_PARSING_ERROR;
+#include "../proto/sensor.h"
+
+
+enum {
+  BUFFER_SIZE = 32
+};
+
+
+static Teros12Data teros12_data = {};
+
+
+/**
+ * @brief Parse measurement string from Teros21 sensor
+ *
+ * The buffer is expected to be the following format. [+-] can either be a + or
+ * - sign.:
+ * a+<calibratedCountsVWC>[+-]<temperature>+<electricalConductivity>
+ *
+ * Example real world values:
+ * 0+1846.16+22.3+1
+ *
+ * @param buffer Raw measurement string
+ * @param data Pointer to the data structure to store the measurement
+ * @return SDI12Status
+ */
+int Teros12ParseMeasurement(const char *buffer);
+
+
+/**
+ * @brief Parses a string
+ */
+static double parse_double(const char* str) {
+  // buffer for storing "integer string"
+  char buffer[BUFFER_SIZE] = {};
+ 
+  int decimal_points = 0;
+
+  // Copy without .
+  int j = 0;
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] != '.') {
+      buffer[j++] = str[i];
+      // once decimal detected add until end
+      if (decimal_points > 0) {
+        decimal_points++;
+      }
+    } else {
+      // decimal detected
+      decimal_points++;
+    }
   }
 
-  // assign data to struct
-  data->addr = addr;
-  data->matric_pot = -1 * matric_pot;
-  data->temp = temp;
+  // remove the decimal point itself
+  decimal_points--;
 
-  return SDI12_OK;
+  // make cstring
+  buffer[j] = '\0';
+
+  int num_int = atoi(buffer);
+  double num_double = (double) num_int;
+  num_double /= pow(10, decimal_points);
+
+  return num_double;
 }
 
-SDI12Status Teros21GetMeasurement(char addr, Teros21Data *data) {
-  // buffer to store measurement
-  char buffer[18];
 
-  // status messages
-  SDI12Status status = SDI12_OK;
+int Teros12ParseMeasurement(const char *buffer) {
 
-  // get measurement string
-  // Measured 130ms experimentally, set to 200 ms to be safe
-  SDI12_Measure_TypeDef measurement_info;
-  status = SDI12GetMeasurement((uint8_t)addr, &measurement_info, buffer, 1000);
-  if (status != SDI12_OK) {
-    return status;
+  // find start of measurement
+  char* addr = strpbrk(buffer, "!") + 1;
+  if (addr == NULL) {
+    return -1;
+  }
+  teros12_data.addr = *addr;
+
+
+  // find vwc 
+  char* vwc_start = addr + 2;
+  char* vwc_end = strpbrk(vwc_start, "+-") - 1;
+  if (vwc_end == NULL) {
+    return -1;
+  }
+  const int vwc_str_size = 8;
+  char vwc_str[vwc_str_size] = {};
+  strncpy(vwc_str, vwc_start, vwc_end - vwc_start + 1);
+  teros12_data.vwc = parse_double(vwc_str);
+  
+
+  // find temperature (with +/-)
+  char* temp_start = vwc_end + 1;
+  char* temp_end = strpbrk(temp_start + 1, "+") - 1;
+  if (temp_end == NULL) {
+    return -1;
+  }
+  const int temp_str_size = 6;
+  char temp_str[temp_str_size] = {};
+  strncpy(temp_str, temp_start, temp_end - temp_start + 1);
+  teros12_data.temp = parse_double(temp_str);
+
+  // find ec
+  char* ec_start = temp_end + 2;
+  char* ec_end = strpbrk(ec_start, "\r\n") - 1;
+  if (ec_end == NULL) {
+    return -1;
+  }
+  char ec_str[4] = {};
+  strncpy(ec_str, ec_start, ec_end - ec_start);
+  teros12_data.ec = (unsigned int) atoi(ec_str);
+
+  return 0;
+}
+
+
+Teros12Data Teros12GetMeasurement(void) {
+  return teros12_data;
+}
+
+
+
+int Teros12Measure(char addr) {
+  int ret = 0;
+
+  uint8_t buffer[BUFFER_SIZE] = {};
+
+  //
+  // Send measure command and wait for service request
+  //
+  // The read length is hardcoded to the length of the BREAK, Command, and
+  // response length.
+  //
+  // \00M!00013\r\n0\r\n
+  //
+
+  const int meas_resp_len = 14;
+
+  uint8_t meas_cmd[] = "0M!";
+  meas_cmd[0] = (uint8_t) addr;
+
+
+  memset(buffer, 0, BUFFER_SIZE);
+  ret = libtocksync_sdi12_write_and_receive(meas_cmd, 3, buffer, meas_resp_len);
+  if (ret != RETURNCODE_SUCCESS) {
+    return -1;
+  }
+
+  // clear parity bit
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    buffer[i] &= 0x7F;
+  }
+
+  //
+  // Read measurement data
+  // The read length is hardcoded to the length of the BREAK, Command, and
+  // response length.
+  //
+  // \00D0!0+1837.02+19.1+0\r\n
+  //
+  //
+
+  const int read_resp_len = 23;
+
+  uint8_t read_cmd[] = "0D0!";
+  meas_cmd[0] = (uint8_t) addr;
+  
+  memset(buffer, 0, BUFFER_SIZE);
+  ret = libtocksync_sdi12_write_and_receive(read_cmd, 4, buffer, read_resp_len);
+  if (ret != RETURNCODE_SUCCESS) {
+    return -1;
+  }
+
+  // clear parity bit
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    buffer[i] &= 0x7F;
   }
 
   // parse measurement into data structure
-  status = Teros21ParseMeasurement(buffer, data);
-  if (status != SDI12_OK) {
-    return status;
-  }
+  ret = Teros12ParseMeasurement((char *) buffer + 1);
 
-  return status;
+  return ret;
 }
 
-size_t Teros21Measure(uint8_t *data, Metadata meta, uint32_t idx) {
-  Teros21Data sens_data = {};
-  SDI12Status status = SDI12_OK;
 
-  const UserConfiguration *cfg = UserConfigGet();
-  uint32_t sensor_index = cfg->enabled_sensors_multiple[idx].index;
-
-  // SDI-12 spec 1.4: 0-9 (48-57), A-Z (65-90), a-z (97-122)
-  char sdi12_address = '0';
-
-  switch (sensor_index) {
-    case 0 ... 9:  // default address is '0'. Also fix common user error of not
-                   // putting the ascii decimal for '0'-'9'.
-      sdi12_address = sensor_index + '0';
-      break;
-    case '0' ... '9':
-    case 'A' ... 'Z':
-    case 'a' ... 'z':
-      sdi12_address = sensor_index;
-      break;
-    default:
-      APP_LOG(TS_ON, VLEVEL_H,
-              "Invalid SDI-12 address provided in the userconfig index field: "
-              "0x%X ('%c')\r\n",
-              sensor_index, sensor_index);
-      return -1;
-      break;
-  }
-  status = Teros21GetMeasurement(sdi12_address, &sens_data);
-  if (status != SDI12_OK) {
-    return -1;
-  }
-
-  // metadata
-  Metadata meta = Metadata_init_zero;
-  meta.ts = ts.Seconds;
-  meta.logger_id = cfg->logger_id;
-  if (cfg->enabled_sensors_multiple[idx].cell_id != 0) {
-    meta.cell_id = cfg->enabled_sensors_multiple[idx].cell_id;
-  } else {
-    meta.cell_id = cfg->cell_id;
-  }
+uint8_t Teros12MeasureVWC(uint8_t* data, Metadata meta, uint32_t idx) {
+  (void) idx;
 
   size_t data_len = 0;
-  SensorStatus sen_status = SENSOR_OK;
 
-  // matric potential
-  sen_status =
-      EncodeDoubleMeasurement(meta, sens_data.matric_pot,
-                              SensorType_TEROS21_MATRIC_POT, data, &data_len);
-  if (sen_status != SENSOR_OK) {
+  // calibration equation for mineral soils from Teros12 user manual and scale
+  // to percent scale
+  // https://publications.metergroup.com/Manuals/20587_TEROS11-12_Manual_Web.pdf?_gl=1*174xdyp*_gcl_au*MTIxODkwMzcuMTc0MTIwMjU3Nw..
+  double vwc_adj = (3.879e-4 * teros12_data.vwc) - 0.6956;
+  vwc_adj *= 100;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, vwc_adj, SensorType_TEROS12_VWC_ADJ, data, &data_len);
+  if (status != SENSOR_OK) {
     return -1;
   }
-  SensorsAddMeasurement(data, data_len);
 
-  // temperature
-  sen_status = EncodeDoubleMeasurement(
-      meta, sens_data.temp, SensorType_TEROS21_TEMP, data, &data_len);
-  if (sen_status != SENSOR_OK) {
+  return data_len;
+}
+
+
+uint8_t Teros12MeasureVWCRaw(uint8_t* data, Metadata meta, uint32_t idx) {
+  (void) idx;
+  
+  size_t data_len = 0;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, teros12_data.vwc, SensorType_TEROS12_VWC, data, &data_len);
+  if (status != SENSOR_OK) {
+    return -1;
+  }
+
+  return data_len;
+}
+
+uint8_t Teros12MeasureTemp(uint8_t* data, Metadata meta, uint32_t idx) {
+  (void) idx;
+  
+  size_t data_len = 0;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, teros12_data.temp, SensorType_TEROS12_TEMP, data, &data_len);
+  if (status != SENSOR_OK) {
+    return -1;
+  }
+
+  return data_len;
+}
+
+
+uint8_t Teros12MasureEC(uint8_t* data, Metadata meta, uint32_t idx) {
+  (void) idx;
+  
+  size_t data_len = 0;
+
+  SensorStatus status = SENSOR_OK;
+  status = EncodeDoubleMeasurement(meta, teros12_data.ec, SensorType_TEROS12_EC, data, &data_len);
+  if (status != SENSOR_OK) {
     return -1;
   }
 

@@ -2,16 +2,22 @@
  * @file teros12.h
  * @author John Madden <jmadden173@pm.me>
  * @brief Drivers for reading measurements from Teros12 sensor
+ *
+ * The implementation is based on the sdi12 example in
+ * `libtock-c/examples/sdi12`.
+ *
  * @date 2026-08-12
  */
 
 #pragma once
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+
+#include "../proto/sensor.pb.h"
 
 /**
  * @ingroup sdi12
@@ -30,49 +36,47 @@ extern "C" {
 
 typedef struct {
   char addr;
-  float vwc;
-  float temp;
+  double vwc;
+  double temp;
   unsigned int ec;
 } Teros12Data;
 
-/**
- * @brief Parse measurement string from Teros21 sensor
- *
- * The buffer is expected to be the following format. [+-] can either be a + or
- * - sign.:
- * a+<calibratedCountsVWC>[+-]<temperature>+<electricalConductivity>
- *
- * Example real world values:
- * 0+1846.16+22.3+1
- *
- * @param buffer Raw measurement string
- * @param data Pointer to the data structure to store the measurement
- * @return SDI12Status
- */
-SDI12Status Teros12ParseMeasurement(const char *buffer, Teros12Data *data);
+
 
 /**
- * @brief Read and parse a Teros12 measurement
+ * @brief Get the last measured data.
+ *
+ * @returns Last measurement
+ */
+Teros12Data Teros12GetMeasurement(void);
+
+
+/**
+ * @brief Reads measurement from sensor.
  *
  * @param addr Address of the sensor
- * @param data Pointer to the data structure to store the measurement
+ *
  * @return SDI12Status
  */
-SDI12Status Teros12GetMeasurement(char addr, Teros12Data *data);
+int Teros12Measure(char addr);
 
 /**
- * @brief Get measurement from Teros12 sensor
+ * \defgroup Teros12MeasureGroup Measurement functions for Teros12
  *
- * Measures a Teros12 at address 0 and encodes it into a serialized
- * measurement.
+ * @brief Gets measurements and encoded them.
  *
- * @param data Buffer to store measurement
- * @return Length of measurement
- *
- * @see SensorsPrototypeMeasure
- *
+ * Since you have to read all fields at once Teros12Measure must be called
+ * first to populate the measurement buffer. These functions grab those values
+ * and put them in the necessary measurement formats.
+ * 
+ * @see SensorPrototypeMeasure
+ * @{
  */
-size_t Teros12Measure(uint8_t *data, SysTime_t ts, uint32_t idx);
+uint8_t Teros12MeasureVWC(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t Teros12MeasureVWCRaw(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t Teros12MeasureTemp(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t Teros12MasureEC(uint8_t* data, Metadata meta, uint32_t idx);
+/** @} */
 
 /**
  * @}
