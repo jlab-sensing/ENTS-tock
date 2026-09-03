@@ -1,7 +1,6 @@
 #include "teros12.h"
 
 #include <stdlib.h>
-#include <math.h>
 
 #include <libtock-sync/peripherals/sdi12.h>
 #include <libtock-sync/services/alarm.h>
@@ -66,13 +65,23 @@ static double parse_double(const char* str) {
 
   int num_int = atoi(buffer);
   double num_double = (double) num_int;
-  num_double /= pow(10, decimal_points);
+  // loop division takes less space than pow from math.h
+  for (int i = 0; i < decimal_points; i++) {
+    num_double /= 10.;
+  }
 
   return num_double;
 }
 
 
 int Teros12ParseMeasurement(const char *buffer) {
+
+  // constants for array sizses
+  enum {
+    vwc_str_size = 8,
+    temp_str_size = 6,
+    ec_str_size = 4
+  };
 
   // find start of measurement
   char* addr = strpbrk(buffer, "!") + 1;
@@ -88,7 +97,6 @@ int Teros12ParseMeasurement(const char *buffer) {
   if (vwc_end == NULL) {
     return -1;
   }
-  const int vwc_str_size = 8;
   char vwc_str[vwc_str_size] = {};
   strncpy(vwc_str, vwc_start, vwc_end - vwc_start + 1);
   teros12_data.vwc = parse_double(vwc_str);
@@ -100,7 +108,6 @@ int Teros12ParseMeasurement(const char *buffer) {
   if (temp_end == NULL) {
     return -1;
   }
-  const int temp_str_size = 6;
   char temp_str[temp_str_size] = {};
   strncpy(temp_str, temp_start, temp_end - temp_start + 1);
   teros12_data.temp = parse_double(temp_str);
@@ -111,7 +118,7 @@ int Teros12ParseMeasurement(const char *buffer) {
   if (ec_end == NULL) {
     return -1;
   }
-  char ec_str[4] = {};
+  char ec_str[ec_str_size] = {};
   strncpy(ec_str, ec_start, ec_end - ec_start);
   teros12_data.ec = (unsigned int) atoi(ec_str);
 
@@ -197,7 +204,7 @@ uint8_t Teros12MeasureVWC(uint8_t* data, Metadata meta, uint32_t idx) {
   // to percent scale
   // https://publications.metergroup.com/Manuals/20587_TEROS11-12_Manual_Web.pdf?_gl=1*174xdyp*_gcl_au*MTIxODkwMzcuMTc0MTIwMjU3Nw..
   double vwc_adj = (3.879e-4 * teros12_data.vwc) - 0.6956;
-  vwc_adj *= 100;
+  vwc_adj *= 100.;
 
   SensorStatus status = SENSOR_OK;
   status = EncodeDoubleMeasurement(meta, vwc_adj, SensorType_TEROS12_VWC_ADJ, data, &data_len);
@@ -238,7 +245,7 @@ uint8_t Teros12MeasureTemp(uint8_t* data, Metadata meta, uint32_t idx) {
 }
 
 
-uint8_t Teros12MasureEC(uint8_t* data, Metadata meta, uint32_t idx) {
+uint8_t Teros12MeasureEC(uint8_t* data, Metadata meta, uint32_t idx) {
   (void) idx;
   
   size_t data_len = 0;

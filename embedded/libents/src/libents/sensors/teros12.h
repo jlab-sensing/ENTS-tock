@@ -75,7 +75,7 @@ int Teros12Measure(char addr);
 uint8_t Teros12MeasureVWC(uint8_t* data, Metadata meta, uint32_t idx);
 uint8_t Teros12MeasureVWCRaw(uint8_t* data, Metadata meta, uint32_t idx);
 uint8_t Teros12MeasureTemp(uint8_t* data, Metadata meta, uint32_t idx);
-uint8_t Teros12MasureEC(uint8_t* data, Metadata meta, uint32_t idx);
+uint8_t Teros12MeasureEC(uint8_t* data, Metadata meta, uint32_t idx);
 /** @} */
 
 /**

@@ -1,6 +1,7 @@
 #include <libents/proto/sensor.h>
 #include <libents/sensors/ads1219.h>
 #include <libents/sensors/bme280/bme280_sensor.h>
+#include <libents/sensors/teros12.h>
 #include <libents/user_config.h>
 #include <libents/util/time.h>
 #include <libtock-sync/services/alarm.h>
@@ -259,11 +260,6 @@ int main() {
         ulog_info("Measured current");
       }
       if (sensor == EnabledSensor_Teros12) {
-        ulog_info("Measured Teros12");
-        measure_sensor(Teros12Measure);
-      }
-      if (sensor == EnabledSensor_Teros21) {
-
 
 
         // TODO (jmadden173): Partially ported code for multiple sensors
@@ -305,13 +301,17 @@ int main() {
         //}
 
         Teros12Measure('0');
-        measure_sensor(Teros21MeasureVWC);
-        measure_sensor(Teros21MeasureVWCRaw);
-        measure_sensor(Teros21MeasureTemp);
-        measure_sensor(Teros21MeasureEC);
+        measure_sensor(Teros12MeasureVWC);
+        measure_sensor(Teros12MeasureVWCRaw);
+        measure_sensor(Teros12MeasureTemp);
+        measure_sensor(Teros12MeasureEC);
 
-        ulog_info("Teros21");
+        ulog_info("Measured Teros12");
       }
+      //if (sensor == EnabledSensor_Teros21) {
+
+      //  ulog_info("Teros21");
+      //}
       if (sensor == EnabledSensor_BME280) {
         if (!init) {
           BME280Init();
