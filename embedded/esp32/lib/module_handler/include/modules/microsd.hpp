@@ -48,6 +48,8 @@ class ModuleMicroSD : public ModuleHandler::Module {
  private:
   void Save(const Esp32Command& cmd);
   void UserConfig(const Esp32Command& cmd);
+  // NOTE not named Log() to avoid shadowing the global ArduinoLog instance
+  void WriteLog(const Esp32Command& cmd);
 
   /** Buffer for i2c requests */
   uint8_t request_buffer[MicroSDCommand_size] = {};

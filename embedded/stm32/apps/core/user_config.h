@@ -48,3 +48,5 @@ void UserConfigStop(uint32_t retry_ms);
  * @return Current state.
  */
 int UserConfigCurrentStatus(void);
+
+void UserConfigUpdateFromServer(void);

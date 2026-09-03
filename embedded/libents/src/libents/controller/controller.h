@@ -54,6 +54,20 @@ void ControllerDeinit(void);
 void ControllerWakeup(void);
 
 /**
+ * @brief Resets the controller interface.
+ *
+ * Toggles the enable pin for the esp32.
+ *
+ * 100ms delay between off and on seems to be sufficient.
+ *
+ * A delay is necessary to give the ESP32 enough time to initialize.
+ * Not recommended to go below 500 ms. ESP32 may fail to receive a
+ * subsequent command when there is <500 ms delay between ESP32_EN
+ * being enabled and the next I2C transaction with the ESP32.
+ */
+void ControllerDeviceReset(void);
+
+/**
  * @}
  */
 

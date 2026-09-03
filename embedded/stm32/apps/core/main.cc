@@ -2,6 +2,7 @@
 
 #include <libents/ALIA/filter.h>
 #include <libents/controller/controller.h>
+#include <libents/controller/modules/microsd.h>
 #include <libents/proto/sensor.h>
 #include <libents/storage/fifo.h>
 #include <libents/user_config.h>
@@ -14,6 +15,12 @@
 #include "lorawan.h"
 #include "user_config.h"
 
+/** Must match the MicroSDCommand.log field, which is 240 bytes (239 chars plus
+ * the NUL). Anything smaller truncates the line here, before the proto sees it,
+ * and ulog_event_to_cstr() writes "LEVEL FILE:LINE: MESSAGE" into this buffer,
+ * so a long __FILE__ eats into the space left for the message. */
+#define LOG_LINE_SIZE 240
+
 /** Stats for uploads */
 typedef struct {
   /** Total number of bytes */
@@ -25,7 +32,7 @@ typedef struct {
   /** Total number of measurements */
   int meas;
   /** Number of heartbeats */
-  int heartbeat;
+  int heartbeats;
 } upload_stats;
 
 upload_stats stats = {};
@@ -52,6 +59,9 @@ static int timesync_retry_delay_ms = 10000;
 
 /** Time between upload intervals. */
 static int upload_interval = 60000;
+
+/** Time before user config webserver is turned off */
+static const int userconfig_timeout_ms = 300 * 1000;
 
 /**
  * @brief Callback when receiving data for upload from individual apps.
@@ -127,6 +137,34 @@ void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
   snprintf(prefix, prefix_size, "Core\t");
 }
 
+/**
+ * @brief microlog output handler that forwards a log line to the esp32.
+ *
+ * @param ev Event to format.
+ * @param arg Unused user argument from ulog_output_add().
+ */
+static void microsd_log_output(ulog_event* ev, void* arg) {
+  (void)arg;
+
+  // Guard against recursion. If anything reached from ControllerMicroSDLog()
+  // ever logs, that log would re-enter this handler and recurse forever.
+  static bool busy = false;
+  if (busy) {
+    return;
+  }
+  busy = true;
+
+  // static to keep 128 bytes off the stack, matching microlog's own examples.
+  // Safe despite being shared state because the busy guard above prevents
+  // re-entry.
+  static char line[LOG_LINE_SIZE];
+  if (ulog_event_to_cstr(ev, line, sizeof(line)) == ULOG_STATUS_OK) {
+    ControllerMicroSDLog(line, "core");
+  }
+
+  busy = false;
+}
+
 int main(void) {
   // Setup logging level and prefix
   ulog_output_level_set_all(ULOG_LEVEL_TRACE);
@@ -176,19 +214,22 @@ int main(void) {
   // Initialize controller interface
   ControllerInit();
 
-  // UserConfigStatus uc_status = UserConfigLoad();
-  //// start user config interface
-  // if (uc_status == USERCONFIG_OK) {
-  //   // print current user config
-  //   ulog_info("Current user configuration:");
-  //   ulog_info("---------------------------");
-  //   UserConfigPrint();
-  // } else {
-  //   ulog_error("Could not load user config.");
-  // }
+  // Setup sd card output
+  ulog_output_id sd_output =
+      ulog_output_add(microsd_log_output, NULL, ULOG_LEVEL_INFO);
+  if (sd_output == ULOG_OUTPUT_INVALID) {
+    // Almost always means ULOG_BUILD_EXTRA_OUTPUTS was not set when microlog
+    // was compiled, see embedded/external/microlog/Makefile.
+    ulog_error("Could not register microSD log output");
+    return 1;
+  }
 
-  // Load user config and start webservice with timeotu
-  UserConfigStart(120 * 1000);
+  // Get update configuration from server
+  UserConfigUpdateFromServer();
+
+  // Reset esp32 and start webserver
+  ControllerDeviceReset();
+  UserConfigStart(userconfig_timeout_ms);
 
   // return codes
   int ret = 0;
@@ -312,7 +353,7 @@ int main(void) {
         stats.failed++;
         ulog_error("Error sending heartbeat (error: %d)", ret);
       } else {
-        stats.heartbeat++;
+        stats.heartbeats++;
         ulog_debug("Heartbeat sent");
       }
     }
@@ -323,9 +364,9 @@ int main(void) {
     //
     if (!(stats.total % 6)) {
       ulog_info(
-          "total uploads: %d\tfailed uploads: %d\tmeasurements: %d\tbytes: "
-          "%d\t",
-          stats.total, stats.failed, stats.meas, stats.bytes);
+          "total uploads: %d  failed uploads: %d  measurements: %d  bytes: "
+          "%d  heartbeats: %d",
+          stats.total, stats.failed, stats.meas, stats.bytes, stats.heartbeats);
     }
   }
 }

@@ -64,3 +64,15 @@ Run the following. `sync` ensures the paths match whats listed in `.gitmodules`.
 git submodule sync --recursive
 git submodule update --init --recursive --force
 ```
+
+### Why are logs not being saved to SD card
+
+Check esp32 logs for errors relating to the SD card. Ensure the SD card is **FAT32** formatted. The disk partition can be reformatted with the following command.
+
+```
+mkfs.fat -F 32 /dev/[PARTITION]
+```
+
+### Why are SD cards being truncated?
+
+Only a max of **240 bytes** can be logged at once.
