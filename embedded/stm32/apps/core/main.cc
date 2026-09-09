@@ -1,5 +1,6 @@
 /* vim: set sw=2 expandtab tw=80: */
 
+#include <libents/ALIA/filter.h>
 #include <libents/controller/controller.h>
 #include <libents/controller/modules/microsd.h>
 #include <libents/proto/sensor.h>
@@ -71,6 +72,7 @@ static const int userconfig_timeout_ms = 300 * 1000;
  */
 static void ipc_callback(int pid, int len, int buf, void* ud);
 
+#ifndef ALIA_ENABLED
 /**
  * @brief Gets a formatted sensor measurement payload.
  *
@@ -84,6 +86,7 @@ static void ipc_callback(int pid, int len, int buf, void* ud);
  * @return len Number of bytes in buffer.
  */
 static int get_payload(uint8_t* buffer, int size);
+#endif  // ALIA_ENABLED
 
 /**
  * @brief Callback to add prefix to ulog messages.
@@ -93,6 +96,40 @@ static int get_payload(uint8_t* buffer, int size);
  * @param prefix_size Size of prefix buffer.
  */
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size);
+
+#ifdef ALIA_ENABLED
+/**
+ * @brief Extracts the numeric payload of a SensorMeasurement as a double.
+ *
+ * The value is a protobuf oneof, so the active arm has to be selected on
+ * which_value rather than read directly.
+ *
+ * @param meas Pointer to the decoded measurement.
+ * @param out Pointer to receive the value.
+ * @return true if a value arm was set, false if the oneof is empty.
+ */
+static bool measurement_value(const SensorMeasurement* meas, double* out);
+
+/**
+ * @brief Runs one freshly received measurement through ALIA and uploads it if
+ *        ALIA decides it is worth transmitting.
+ * @param buf Pointer to the encoded SensorMeasurement.
+ * @param len Length of buf.
+ * @param registry Per-stream ALIA state, keyed by sensor type.
+ * @param defaults ALIA parameters used to create a new sensor stream.
+ */
+static void alia_process(const uint8_t* buf, uint8_t len,
+                         ALIARegistry* registry,
+                         const ALIAUserConfig* defaults);
+
+/**
+ * @brief Smallest change worth reporting for a given sensor type.
+
+ * @param type Sensor type of the measurement.
+ * @return Resolution for a sensor
+ */
+static double resolution_for(SensorType type);
+#endif  // ALIA_ENABLED
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
   (void)ev;
@@ -154,12 +191,26 @@ int main(void) {
 
   // start service after connected
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
-
-  // Print warning when using TEST_USER_CONFIG
 #ifdef TEST_USER_CONFIG
+  // Print warning when using TEST_USER_CONFIG
   ulog_warn("TEST_USER_CONFIG is enabled!\n");
 #endif  // TEST_USER_CONFIG
 
+#ifdef ALIA_ENABLED
+  // One slot per measurement stream. A multi-quantity sensor reports each
+  // quantity as its own SensorType, and those carry different units, so they
+  // must not share a statistics window.
+  ALIARegistry alia_registry;
+  alia_registry_init(&alia_registry);
+
+  ALIAUserConfig alia_defaults = {};
+  alia_defaults.event_delta_threshold = 2;
+  alia_defaults.base_heartbeat_hours = 1;
+  alia_defaults.doubling_hours = 6;
+  alia_defaults.max_heartbeat_hours = 24;
+  alia_defaults.sample_rate = 10;
+  alia_defaults.std_dev_window_hours = 12;
+#endif
   // Initialize controller interface
   ControllerInit();
 
@@ -233,11 +284,23 @@ int main(void) {
       // }
       // printf("\n");
 
+#ifdef ALIA_ENABLED
+      // ALIA has to see the measurement here, on the iteration it actually
+      // arrives. This branch continues below, so anything downstream would
+      // only ever observe a stale meas_buffer on a later timeout iteration.
+      //
+      // ALIA also decides transmission per reading, so the fifo is bypassed:
+      // an admitted reading uploads immediately and a suppressed one is
+      // dropped, represented by the run length on the next transmission.
+      alia_process(meas_buffer, meas_buffer_length, &alia_registry,
+                   &alia_defaults);
+#else
       // store in buffer
       ret = fifo_put(meas_buffer, meas_buffer_length);
       if (ret < 0) {
         ulog_error("Could not store measurement in buffer");
       }
+#endif
       stats.meas++;
 
       // indicate data has been processed and trigger client
@@ -252,8 +315,9 @@ int main(void) {
     // Upload data
     //
 
+#ifndef ALIA_ENABLED
     uint16_t meas_in_buffer = fifo_buffer_len();
-
+    // batch into minium of 4 measurements
     if (meas_in_buffer > 1) {
       // batch into minium of 4 measurements
       while (meas_in_buffer > 1) {
@@ -271,7 +335,7 @@ int main(void) {
             stats.failed++;
             ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
           } else {
-            ulog_debug("Uploaded %d bytes with LoRaWAN.");
+            ulog_debug("Uploaded %d bytes with LoRaWAN.", len);
 
             stats.bytes += len;
           }
@@ -287,13 +351,14 @@ int main(void) {
       ret = lorawan_heartbeat();
       if (ret < 0) {
         stats.failed++;
-        ulog_error("Error sending heartbeat (error: %d)");
+        ulog_error("Error sending heartbeat (error: %d)", ret);
       } else {
         stats.heartbeats++;
         ulog_debug("Heartbeat sent");
       }
     }
 
+#endif
     //
     // print stats
     //
@@ -358,6 +423,102 @@ static void ipc_callback(int pid, int len, int buf, void* ud) {
   }
 }
 
+#ifdef ALIA_ENABLED
+static bool measurement_value(const SensorMeasurement* meas, double* out) {
+  switch (meas->which_value) {
+    case SensorMeasurement_unsigned_int_tag:
+      *out = (double)meas->value.unsigned_int;
+      return true;
+    case SensorMeasurement_signed_int_tag:
+      *out = (double)meas->value.signed_int;
+      return true;
+    case SensorMeasurement_decimal_tag:
+      *out = meas->value.decimal;
+      return true;
+    default:
+      return false;
+  }
+}
+
+static double resolution_for(SensorType type) {
+  switch (type) {
+    case SensorType_BME280_TEMP:
+      return 0.01;
+    case SensorType_BME280_PRESSURE:
+      return 0.18;
+    case SensorType_BME280_HUMIDITY:
+      return 0.008;
+    default:
+      return 0.1;
+  }
+}
+
+static void alia_process(const uint8_t* buf, uint8_t len,
+                         ALIARegistry* registry,
+                         const ALIAUserConfig* defaults) {
+  ulog_trace("alia_process");
+
+  SensorMeasurement meas = {};
+  int ret = DecodeSensorMeasurement(buf, len, &meas);
+  if (ret < 0) {
+    ulog_error("Could not decode measurement for ALIA (error: %d)", ret);
+    return;
+  }
+
+  double value = 0.0;
+  if (!measurement_value(&meas, &value)) {
+    ulog_error("Measurement has no value set, skipping ALIA");
+    return;
+  }
+
+  ALIAStream* stream =
+      alia_stream_get(registry, meas.type, defaults, resolution_for(meas.type));
+
+  uint32_t rle = 0;
+  if (stream != NULL) {
+    // Read the run before should_log resets it.
+    rle = stream->run.run_count;
+
+    if (!should_log(value, &stream->welford, &stream->heartbeat, &stream->run,
+                    &stream->config)) {
+      ulog_debug("ALIA suppressed type %d (run length %u)", (int)meas.type,
+                 (unsigned)stream->run.run_count);
+      return;
+    }
+  } else {
+    // Out of slots
+    ulog_warn("ALIA has no free stream slot for type %d; uploading unfiltered",
+              (int)meas.type);
+  }
+
+  meas.rle_count = rle;
+
+  uint8_t buffer[60] = {};
+  size_t encoded_len = 0;
+  Metadata meta = {};
+  SensorMeasurement single[1] = {meas};
+
+  ret = EncodeRepeatedSensorMeasurements(meta, single, 1, buffer,
+                                         sizeof(buffer), &encoded_len);
+  if (ret < 0) {
+    ulog_error("Could not encode single measurement (error %d)", ret);
+    return;
+  }
+
+  ulog_debug("Uploading %d bytes (single triggering measurement)",
+             (int)encoded_len);
+  stats.total++;
+  ret = lorawan_upload(buffer, encoded_len);
+  if (ret < 0) {
+    stats.failed++;
+    ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+    return;
+  }
+  stats.bytes += (int)encoded_len;
+}
+#endif  // ALIA_ENABLED
+
+#ifndef ALIA_ENABLED
 static int get_payload(uint8_t* buffer, int size) {
   ulog_trace("get_payload");
 
@@ -426,3 +587,4 @@ static int get_payload(uint8_t* buffer, int size) {
   }
   return len;
 }
+#endif  // ALIA_ENABLED

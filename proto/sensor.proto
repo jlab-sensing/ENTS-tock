@@ -101,6 +101,7 @@ message SensorMeasurement {
 
   /** Index of the measurement */
   uint32 idx = 6;
+  uint32 rle_count = 7;
 }
 
 message RepeatedSensorMeasurements {

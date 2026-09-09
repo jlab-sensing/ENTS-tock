@@ -139,9 +139,10 @@ uint8_t BME280MeasureTemperature(uint8_t* data, Metadata meta, uint32_t idx) {
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
 
+  float temp_data = ((float)sens_data.temperature) / 100.0;
   // temperature
-  sen_status = EncodeDoubleMeasurement(meta, sens_data.temperature,
-                                       SensorType_BME280_TEMP, data, &data_len);
+  sen_status = EncodeDoubleMeasurement(meta, temp_data, SensorType_BME280_TEMP,
+                                       data, &data_len);
   if (sen_status != SENSOR_OK) {
     return -1;
   }
@@ -162,9 +163,10 @@ uint8_t BME280MeasurePressure(uint8_t* data, Metadata meta, uint32_t idx) {
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
 
+  float pres_data = ((float)sens_data.pressure) / 1000.0;
   // pressure
   sen_status = EncodeDoubleMeasurement(
-      meta, sens_data.pressure, SensorType_BME280_PRESSURE, data, &data_len);
+      meta, pres_data, SensorType_BME280_PRESSURE, data, &data_len);
   if (sen_status != SENSOR_OK) {
     return -1;
   }
@@ -184,10 +186,11 @@ uint8_t BME280MeasureHumidity(uint8_t* data, Metadata meta, uint32_t idx) {
 
   SensorStatus sen_status = SENSOR_OK;
   size_t data_len = 0;
+  float hum_data = ((float)sens_data.humidity) / 1000.0;
 
   // humidity
   sen_status = EncodeDoubleMeasurement(
-      meta, sens_data.humidity, SensorType_BME280_HUMIDITY, data, &data_len);
+      meta, hum_data, SensorType_BME280_HUMIDITY, data, &data_len);
   if (sen_status != SENSOR_OK) {
     return -1;
   }
