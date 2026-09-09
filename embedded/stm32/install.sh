@@ -23,10 +23,10 @@ echo ""
 echo "${bold}Installing core${normal}"
 pushd $APP_DIR/core
 if [ "${DEV-}" == "true" ]; then
+	make install
+else
 	make
 	tockloader install -a $APP_ADDR
-else
-	make install
 fi
 popd
 
@@ -34,19 +34,19 @@ echo ""
 echo "${bold}Installing sensors${normal}"
 pushd $APP_DIR/sensors
 if [ "${DEV-}" == "true" ]; then
+	make install
+else
 	make
 	tockloader install -a $APP_ADDR
-else
-	make install
 fi
 popd
 
 echo ""
 echo "${bold}Board info${normal}"
 if [ "${DEV-}" == "true" ]; then
-	tockloader info -a $APP_ADDR
-else
 	tockloader info
+else
+	tockloader info -a $APP_ADDR
 fi
 
 echo ""
