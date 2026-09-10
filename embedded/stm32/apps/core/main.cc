@@ -448,6 +448,12 @@ static double resolution_for(SensorType type) {
       return 0.18;
     case SensorType_BME280_HUMIDITY:
       return 0.008;
+    case SensorType_TEROS12_VWC_ADJ:
+      return 0.001;
+    case SensorType_TEROS12_TEMP:
+      return 0.1;
+    case SensorType_TEROS12_EC:
+      return 1;
     default:
       return 0.1;
   }

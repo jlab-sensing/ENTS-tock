@@ -302,7 +302,6 @@ int main() {
 
         Teros12Measure('0');
         measure_sensor(Teros12MeasureVWC);
-        measure_sensor(Teros12MeasureVWCRaw);
         measure_sensor(Teros12MeasureTemp);
         measure_sensor(Teros12MeasureEC);
 
