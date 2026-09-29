@@ -129,6 +129,15 @@ static void alia_process(const uint8_t* buf, uint8_t len,
  * @return Resolution for a sensor
  */
 static double resolution_for(SensorType type);
+
+/**
+ * @brief Sigma multiplier (alpha) for the event detector, per sensor type, given the sensor type.
+ *
+ * @param type Sensor type of the measurement.
+ * @param fallback Alpha to use for a sensor type with no measured value.
+ * @return Alpha for the stream.
+ */
+static uint32_t threshold_for(SensorType type, uint32_t fallback);
 #endif  // ALIA_ENABLED
 
 void ulog_prefix_handler(ulog_event* ev, char* prefix, size_t prefix_size) {
@@ -205,11 +214,12 @@ int main(void) {
 
   ALIAUserConfig alia_defaults = {};
   alia_defaults.event_delta_threshold = 2;
-  alia_defaults.base_heartbeat_hours = 1;
+  alia_defaults.base_heartbeat_hours = 2;
   alia_defaults.doubling_hours = 6;
   alia_defaults.max_heartbeat_hours = 24;
-  alia_defaults.sample_rate = 10;
+  alia_defaults.sample_rate = 300;
   alia_defaults.std_dev_window_hours = 12;
+  numSamplesInStartup(&alia_defaults);
 #endif
   // Initialize controller interface
   ControllerInit();
@@ -223,6 +233,19 @@ int main(void) {
     ulog_error("Could not register microSD log output");
     return 1;
   }
+
+#ifdef ALIA_ENABLED
+  ulog_info(
+      "ALIA defaults: alpha=%u heartbeat=%u/%u/%u hr sample_rate=%u s "
+      "window=%u hr startup=%u samples",
+      (unsigned)alia_defaults.event_delta_threshold,
+      (unsigned)alia_defaults.base_heartbeat_hours,
+      (unsigned)alia_defaults.doubling_hours,
+      (unsigned)alia_defaults.max_heartbeat_hours,
+      (unsigned)alia_defaults.sample_rate,
+      (unsigned)alia_defaults.std_dev_window_hours,
+      (unsigned)alia_defaults.num_startup_samples);
+#endif  // ALIA_ENABLED
 
   // Get update configuration from server
   UserConfigUpdateFromServer();
@@ -445,17 +468,40 @@ static double resolution_for(SensorType type) {
     case SensorType_BME280_TEMP:
       return 0.01;
     case SensorType_BME280_PRESSURE:
-      return 0.18;
+      return 0.00018;
     case SensorType_BME280_HUMIDITY:
       return 0.008;
     case SensorType_TEROS12_VWC_ADJ:
-      return 0.001;
+      return 0.1;
     case SensorType_TEROS12_TEMP:
       return 0.1;
     case SensorType_TEROS12_EC:
       return 1;
+    case SensorType_TEROS12_VWC:
+      return 1;
     default:
       return 0.1;
+  }
+}
+
+static uint32_t threshold_for(SensorType type, uint32_t fallback) {
+  switch (type) {
+    case SensorType_BME280_TEMP:
+      return 2;
+    case SensorType_BME280_PRESSURE:
+      return 1;
+    case SensorType_BME280_HUMIDITY:
+      return 2;
+    case SensorType_TEROS12_VWC_ADJ:
+      return 3;
+    case SensorType_TEROS12_VWC:
+      return 3;
+    case SensorType_TEROS12_TEMP:
+      return 2;
+    case SensorType_TEROS12_EC:
+      return 2;
+    default:
+      return fallback;
   }
 }
 
@@ -477,8 +523,23 @@ static void alia_process(const uint8_t* buf, uint8_t len,
     return;
   }
 
-  ALIAStream* stream =
-      alia_stream_get(registry, meas.type, defaults, resolution_for(meas.type));
+  ALIAUserConfig stream_defaults = *defaults;
+  stream_defaults.event_delta_threshold =
+      threshold_for(meas.type, defaults->event_delta_threshold);
+
+  ALIAStream* stream = alia_stream_get(registry, meas.type, &stream_defaults,
+                                       resolution_for(meas.type));
+  if (stream != NULL && stream->welford.count == 0) {
+    ulog_info(
+        "ALIA stream type=%d alpha=%u resolution=%u ppm heartbeat=%u/%u/%u hr "
+        "startup=%u samples",
+        (int)meas.type, (unsigned)stream->config.event_delta_threshold,
+        (unsigned)(stream->config.sensor_resolution * 1000000.0),
+        (unsigned)stream->config.base_heartbeat_hours,
+        (unsigned)stream->config.doubling_hours,
+        (unsigned)stream->config.max_heartbeat_hours,
+        (unsigned)stream->config.num_startup_samples);
+  }
 
   uint32_t rle = 0;
   if (stream != NULL) {
