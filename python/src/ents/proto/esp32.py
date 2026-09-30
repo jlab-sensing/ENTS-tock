@@ -74,11 +74,12 @@ def encode_page_command(req: str, fd: int, bs: int = 0, n: int = 0) -> message:
 def encode_test_command(state: str, data: int) -> message:
     """Encodes a command for testing modules library
 
-    The following is of valid strings for state:
-        "receive": Data is received by the module
-        "receive_request": Data is received by the module indicating data for
-                           subsequent request
-        "request": Data is sent my the module
+    Valid strings for ``state``:
+
+    - ``receive``: Data is received by the module
+    - ``receive_request``: Data is received by the module, indicating data for
+      a subsequent request
+    - ``request``: Data is sent by the module
 
     Args:
         state (str): State command string

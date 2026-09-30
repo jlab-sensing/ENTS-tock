@@ -36,6 +36,12 @@ dev = [
   "build",
 ]
 
+docs = [
+  "sphinx",
+  "myst-parser",
+  "furo",
+]
+
 [project.scripts]
 ents = "ents.cli:entry"
 

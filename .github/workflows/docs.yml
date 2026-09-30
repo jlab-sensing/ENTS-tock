@@ -1,0 +1,64 @@
+---
+name: docs
+
+env:
+  TERM: xterm
+  python_version: "3.x"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# Allow one deployment at a time, and let a newer push supersede an in-flight
+# one rather than queueing behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+          show-progress: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.python_version }}
+
+      - name: Install doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+
+      - name: Install python docs dependencies
+        working-directory: ./python
+        run: pip install -e .[docs]
+
+      - name: Assemble the site
+        run: ./docs.sh
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/build
+
+  # Publishing only happens for main. A pull request still builds, so a change
+  # that breaks the docs is caught before it merges, but does not deploy.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

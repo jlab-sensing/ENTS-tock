@@ -1,0 +1,43 @@
+/**
+ * @page stm32
+ *
+ * Documentation of code for the stm32 microcontroller.
+ *
+ * - @subpage stm32_install
+ * - @subpage stm32_adding_new_sensors
+ * - @subpage stm32_contrib
+ * - @subpage stm32_hello_world
+ */
+
+/**
+ * @page stm32_install STM32 Installation
+ */
+
+/**
+ * @page stm32_hello_world Hello World
+ *
+ *
+ */
+
+/**
+ * @page stm32_adding_new_sensors Adding new sensors
+ *
+ * Adding new sensors involves writting driver code, adding protobuf sensor
+ * definitions, adding protobuf user configuration. @see core/main.c
+ */
+
+/**
+ * @page stm32_contrib Adding new code
+ *
+ *
+ */
+
+/**
+ * @defgroup stm32 stm32
+ *
+ * The stm32 side of a node: the Tock applications and the libents library
+ * they are built against.
+ *
+ * Referenced by @ref controller, @ref userConfig, @ref util and the sensor
+ * drivers, none of which had a parent group to hang off before this existed.
+ */

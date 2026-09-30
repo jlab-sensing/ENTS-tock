@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 - Add install script for tock kernel [#51](i51)
 - Added LoRaWAN heartbeat and `Makefile` vars for static params [#53](i53)
 - Reset on downlink to `fport = 4` [#52](i52)
+- Doxygen and Sphinx documentation builds, published to GitHub Pages [#80](i80)
 
 [i25]: https://github.com/jlab-sensing/ENTS-tock/pull/25
 [i28]: https://github.com/jlab-sensing/ENTS-tock/pull/28
@@ -24,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 [i51]: https://github.com/jlab-sensing/ENTS-tock/pull/51
 [i52]: https://github.com/jlab-sensing/ENTS-tock/issues/52
 [i53]: https://github.com/jlab-sensing/ENTS-tock/pull/53
+[i80]: https://github.com/jlab-sensing/ENTS-tock/pull/80
 
 ## [3.0.0] - 2026-06-19
 
