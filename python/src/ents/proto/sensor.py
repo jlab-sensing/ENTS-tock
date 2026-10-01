@@ -153,8 +153,37 @@ def get_sensor_data(meas_type: int) -> dict:
             "name": "Capacitance Ratio",
             "unit": "pF/pF",
         },
+        # Device health counters. Not sensor readings, but they ride
+        # SensorMeasurement so they reach the generic ingest and the /sensor/
+        # endpoint with no new route. See UPTIME_TRACKING_DESIGN.md.
+        SensorType.DEVICE_UPTIME: {
+            "name": "Uptime",
+            "unit": "s",
+        },
+        SensorType.DEVICE_CUMULATIVE_UPTIME: {
+            "name": "Cumulative Uptime",
+            "unit": "s",
+        },
+        SensorType.DEVICE_BOOT_COUNT: {
+            "name": "Boot Count",
+            "unit": "count",
+        },
+        SensorType.DEVICE_UNCLEAN_BOOTS: {
+            "name": "Unclean Boots",
+            "unit": "count",
+        },
+        SensorType.DEVICE_DOWNTIME: {
+            "name": "Downtime",
+            "unit": "s",
+        },
     }
 
+    # Deliberately a bare lookup, so a SensorType with no entry here fails
+    # loudly rather than being stored under a blank name. Note the blast
+    # radius: dirtviz's process_generic_measurement() catches this and rejects
+    # the WHOLE uplink batch with a 400, so a missing entry loses the real
+    # sensor data riding alongside it, not just the unknown measurement.
+    # test_sensor_metadata_is_complete guards against that.
     meta = SENSOR_DATA[SensorType.Value(meas_type)]
     return meta
 
