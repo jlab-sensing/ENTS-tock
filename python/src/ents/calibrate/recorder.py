@@ -606,12 +606,13 @@ class Recorder:
             samples: Number of samples taken at each voltage
 
         Returns:
-            Dictionary in the following pandas compatable format:
-            {
-                "expected": [],
-                "actual": [],
-                "meas": [],
-            }
+            Dictionary in a pandas compatible format::
+
+                {
+                    "expected": [],
+                    "actual": [],
+                    "meas": [],
+                }
         """
 
         data = {
@@ -649,12 +650,13 @@ class Recorder:
             samples: Number of samples taken at each voltage
 
         Returns:
-            Dictionary in the following pandas compatable format:
-            {
-                "expected": [],
-                "actual": [],
-                "meas": [],
-            }
+            Dictionary in a pandas compatible format::
+
+                {
+                    "expected": [],
+                    "actual": [],
+                    "meas": [],
+                }
         """
 
         data = {

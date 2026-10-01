@@ -1,3 +1,22 @@
 /**
+ * @page esp32
+ *
+ * Documentation of code for the esp32 microcontroller.
+ *
+ * @section links Useful Links
+ * - Datasheet: https://documentation.espressif.com/esp32-c3_datasheet_en.pdf
+ * - arduino-esp32 APIs: https://docs.espressif.com/projects/arduino-esp32/en/latest/libraries.html#apis
+ * - ardiuno-esp32 GitHub: https://github.com/espressif/arduino-esp32
+ * **Check the version and match that to the GitHub sources**
+ *
+ *
+ * - @subpage esp32_install
+ */
+
+/**
+ * @page esp32_install ESP32 Installation
+ */
+
+/**
  * @defgroup esp32 esp32
  */
