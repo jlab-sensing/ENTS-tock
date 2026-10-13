@@ -32,7 +32,9 @@ endif
 override CPPFLAGS += -Wno-old-style-cast
 
 # Which files to compile.
-CXX_SRCS := user_config.cc lorawan.cc main.cc
+# Excluding demangle_stub.cc will remove a size optimization that disables run
+# time c++ name mangling for exception printing.
+CXX_SRCS := user_config.cc lorawan.cc main.cc demangle_stub.cc
 
 # Include userland master makefile. Contains rules and flags for actually
 # building the application.
