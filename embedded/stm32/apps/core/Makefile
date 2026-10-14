@@ -27,6 +27,12 @@ ifeq ($(LORAWAN_DEV), 1)
 	override CPPFLAGS += -DRADIOLIB_LORAWAN_NWK_KEY=B8,2D,91,3F,AF,B0,99,EE,2E,3B,BE,9B,31,96,C1,09
 endif
 
+#Option to enable ALIA Algorithm
+ALIA_ENABLED ?= 1
+ifeq ($(ALIA_ENABLED), 1)
+	override CPPFLAGS += -DALIA_ENABLED
+endif
+
 # ignore old () rather than reinterpret because we are forced to compile cc
 # from RadioLib
 override CPPFLAGS += -Wno-old-style-cast

@@ -20,7 +20,8 @@ $(LIBNAME)_DIR := $(TOCK_USERLAND_BASE_DIR)/../$(LIBNAME)
 SRC_DIR = $($(LIBNAME)_DIR)/src/$(LIBNAME)
 
 # Or let make find them automatically:
-$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/controller/*.c)
+$(LIBNAME)_SRCS := $(wildcard $(SRC_DIR)/ALIA/*.c)
+$(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/controller/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/controller/modules/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/proto/*.c)
 $(LIBNAME)_SRCS += $(wildcard $(SRC_DIR)/sensors/*.c)
