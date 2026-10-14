@@ -1,0 +1,9 @@
+/**
+ * @page libents
+ *
+ * Shared code for both stm32 and esp32 microcontrollers
+ */
+
+/**
+ * @defgroup libents libents
+ */

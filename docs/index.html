@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENTS-tock documentation</title>
+<style>
+  :root {
+    --bg: #fbfbfa;
+    --surface: #fff;
+    --ink: #1a1c1b;
+    --muted: #5d6764;
+    --faint: #8a9491;
+    --rule: #e0e4e2;
+    --accent: #146b5c;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111413; --surface: #181d1c; --ink: #e8edeb; --muted: #9fabA8;
+      --faint: #76817e; --rule: #28302e; --accent: #4fbfa8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .4rem; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin: 0 0 2.5rem; }
+  h2 {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--faint); font-weight: 600; margin: 2.5rem 0 .75rem;
+    border-top: 1px solid var(--rule); padding-top: 1rem;
+  }
+  .cards { display: grid; gap: 1px; background: var(--rule);
+           border: 1px solid var(--rule); }
+  a.card {
+    background: var(--surface); padding: 1.1rem 1.25rem; display: block;
+    text-decoration: none; color: inherit;
+  }
+  a.card:hover { background: var(--bg); }
+  a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .card strong { display: block; color: var(--accent); margin-bottom: .2rem; }
+  .card span { color: var(--muted); font-size: .92rem; }
+  code { font-family: var(--mono); font-size: .88em; }
+  footer {
+    margin-top: 3rem; border-top: 1px solid var(--rule); padding-top: 1rem;
+    color: var(--faint); font-size: .85rem;
+  }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>ENTS-tock</h1>
+  <p class="sub">
+    Environmental NeTworked Sensor firmware on Tock OS, and the python package
+    that talks to it.
+  </p>
+
+  <h2>I want to&hellip;</h2>
+  <div class="cards">
+    <a class="card" href="python/usage.html">
+      <strong>Get data out of DirtViz</strong>
+      <span>Query a cell, decode a payload, plot a series.</span>
+    </a>
+    <a class="card" href="python/development.html">
+      <strong>Work on the python package</strong>
+      <span>Environment setup, running tests and linters, adding a SensorType.</span>
+    </a>
+    <a class="card" href="embedded/index.html">
+      <strong>Read the firmware source</strong>
+      <span>libents and the Tock applications, plus the esp32 coprocessor.</span>
+    </a>
+    <a class="card" href="embedded/pages.html">
+      <strong>Find a README</strong>
+      <span>Every README in the repository, in one browsable list.</span>
+    </a>
+  </div>
+
+  <h2>Reference</h2>
+  <div class="cards">
+    <a class="card" href="embedded/index.html">
+      <strong>Embedded API &middot; Doxygen</strong>
+      <span>
+        Generated from the headers. Grouped as <code>stm32</code> and
+        <code>esp32</code> rather than by directory.
+      </span>
+    </a>
+    <a class="card" href="python/api.html">
+      <strong>ents package &middot; Sphinx</strong>
+      <span>Generated from the docstrings.</span>
+    </a>
+  </div>
+
+  <footer>
+    Built from
+    <a href="https://github.com/jlab-sensing/ENTS-tock">jlab-sensing/ENTS-tock</a>
+    on every push to <code>main</code>. To build it yourself see
+    <code>embedded/doxygen/README.md</code> and <code>python/docs/README.md</code>.
+  </footer>
+
+</div>
+</body>
+</html>

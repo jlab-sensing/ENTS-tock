@@ -247,15 +247,14 @@ def update_repeated_metadata(meas: dict) -> dict:
 def encode_sensor_response(resp_dict: dict) -> bytes:
     """Encodes a sensor response message.
 
-    {
-        responses: [
-            {
-                status: int,
-                message: str,
-            },
-            ...
-        ]
-    }
+    Shaped like::
+
+        {
+            "responses": [
+                {"status": int, "message": str},
+                ...
+            ]
+        }
 
     Args:
         resp_dict: Sensor response dictionary.
@@ -273,15 +272,14 @@ def encode_sensor_response(resp_dict: dict) -> bytes:
 def decode_sensor_response(data: bytes) -> dict:
     """Decodes a sensor response message.
 
-    {
-        responses: [
-            {
-                status: int,
-                message: str,
-            },
-            ...
-        ]
-    }
+    Shaped like::
+
+        {
+            "responses": [
+                {"status": int, "message": str},
+                ...
+            ]
+        }
 
     Args:
         data: Byte array of SensorResponse message.

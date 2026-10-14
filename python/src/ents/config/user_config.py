@@ -7,6 +7,7 @@ Upload Method (WiFi or LoRa), Upload Interval, Enabled Sensors, and Calibration 
 for voltage and current (V/I Slope and Offset).
 
 Key features:
+
 - **Save and Load**: Users can save configurations to a file or load previous configurations for easy reuse.
 - **Real-time Configuration**: By pressing the "Send Configuration" button, the settings are serialized with Protobuf
   and transmitted over UART to the STM32 for direct application.

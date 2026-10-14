@@ -1,0 +1,10 @@
+/**
+ * @mainpage Embedded Documentation
+ *
+ * Welcome to the docuemntation for the embedded firmware of the ENTS project.
+ * This documentation is for c/c++ sources and is meant to assist developers.
+ *
+ * - @subpage stm32
+ * - @subpage esp32
+ * - @subpage libents
+ */

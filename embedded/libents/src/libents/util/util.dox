@@ -1,0 +1,6 @@
+/**
+ * @ingroup stm32
+ * @defgroup util Utilities
+ *
+ * Small shared helpers that are not tied to any one peripheral.
+ */

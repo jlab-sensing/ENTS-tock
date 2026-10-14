@@ -8,6 +8,11 @@ extern "C" {
 #include <stdint.h>
 
 /**
+ * @ingroup util
+ * @{
+ */
+
+/**
  * @brief Gets the current unix epoch timestamp.
  *
  * @see rtc_date_to_epoch
@@ -41,6 +46,8 @@ uint32_t rtc_date_to_epoch(const libtock_rtc_date_t* date);
  * @param date Output date
  */
 void epoch_to_rtc_date(uint32_t epoch, libtock_rtc_date_t* date);
+
+/** @} */
 
 #ifdef __cplusplus
 }
