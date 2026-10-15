@@ -1,4 +1,5 @@
 [![ci](https://github.com/jlab-sensing/ENTS-tock/actions/workflows/ci.yml/badge.svg)](https://github.com/jlab-sensing/ENTS-tock/actions/workflows/ci.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14066/badge)](https://www.bestpractices.dev/projects/14066)
 
 # ENTS-tock
 
