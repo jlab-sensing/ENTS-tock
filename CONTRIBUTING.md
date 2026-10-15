@@ -12,6 +12,12 @@ provided within the repository.
 
 This repository is primarily based on [libtock-c](https://github.com/tock/libtock-c) and the TockOS project. We recommend following the getting started guide at https://book.tockos.org/ to familiarize yourself with the build system. The website itself is a good reference for understanding how the system works.
 
+## Testing
+
+When you add major new functionality, add tests for it to the automated test
+suites: `python/tests/` for the ents package and `embedded/stm32/tests/` for
+the firmware. CI runs all suites on every pull request.
+
 ## Remove Development Instance
 
 We host a remote development environment so that contributors don't need physical access to the hardware. The development instance has the necessary packages installed for development. Previously we've had issues getting hardware to contributors outside of the United States.
