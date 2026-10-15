@@ -11,7 +11,7 @@ Please report vulnerabilities privately — do not open a public issue.
 
 - **Preferred:** use GitHub's private vulnerability reporting:
   <https://github.com/jlab-sensing/ENTS-tock/security/advisories/new>
-- **Alternatively:** email the maintainer at jtmadden@ucsc.edu
+- **Alternatively:** email the maintainer at ents-group@ucsc.edu
 
 Include a description of the issue, the affected version or commit, and steps
 to reproduce it if possible. We will acknowledge your report and work with you
