@@ -37,3 +37,10 @@ usage
 development
 api
 ```
+
+```{toctree}
+:hidden:
+:caption: ENTS-tock
+
+Docs home <https://jlab-sensing.github.io/ENTS-tock/>
+```

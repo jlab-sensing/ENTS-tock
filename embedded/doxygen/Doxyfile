@@ -875,7 +875,7 @@ FILE_VERSION_FILTER    =
 # DoxygenLayout.xml, Doxygen will parse it automatically even if the LAYOUT_FILE
 # tag is left empty.
 
-LAYOUT_FILE            =
+LAYOUT_FILE            = DoxygenLayout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files containing
 # the reference definitions. This must be a list of .bib files. The .bib
@@ -1033,7 +1033,8 @@ INPUT                  = ../ \
                          ../esp32/src \
                          ../esp32/README.md \
                          ../stm32/apps \
-                         ../stm32/examples
+                         ../stm32/examples \
+                         ../../docs
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1078,7 +1079,8 @@ FILE_PATTERNS          = *.c \
                          *.cpp \
                          *.h \
                          *.hpp \
-                         *.dox
+                         *.dox \
+                         *.md
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -1115,6 +1117,7 @@ EXCLUDE_PATTERNS       = */build/* \
                          */external/* \
                          */nanopb/* \
                          */unity/* \
+                         */extras/* \
                          *.pb.c \
                          *.pb.h \
                          */test/uptime/stubs/*
@@ -1212,7 +1215,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the Doxygen output.
 
-USE_MDFILE_AS_MAINPAGE =
+USE_MDFILE_AS_MAINPAGE = mainpage.md
 
 # If the IMPLICIT_DIR_DOCS tag is set to YES, any README.md file found in sub-
 # directories of the project's root, is used as the documentation for that sub-
@@ -1221,7 +1224,7 @@ USE_MDFILE_AS_MAINPAGE =
 # command in order to be used as directory documentation.
 # The default value is: YES.
 
-IMPLICIT_DIR_DOCS      = YES
+IMPLICIT_DIR_DOCS      = NO
 
 # The Fortran standard specifies that for fixed formatted Fortran code all
 # characters from position 72 are to be considered as comment. A common

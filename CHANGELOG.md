@@ -18,11 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 - Reset on downlink to `fport = 4` [#52](i52)
 - Size optimizations on `core` app [#83](i83)
 - Doxygen and Sphinx documentation builds, published to GitHub Pages [#80](i80)
+- Docs site improvements: getting started guide, documentation map, and navigation [#50](i50)
 
 [i25]: https://github.com/jlab-sensing/ENTS-tock/pull/25
 [i28]: https://github.com/jlab-sensing/ENTS-tock/pull/28
 [i44]: https://github.com/jlab-sensing/ENTS-tock/pull/44
 [i46]: https://github.com/jlab-sensing/ENTS-tock/pull/46
+[i50]: https://github.com/jlab-sensing/ENTS-tock/issues/50
 [i51]: https://github.com/jlab-sensing/ENTS-tock/pull/51
 [i52]: https://github.com/jlab-sensing/ENTS-tock/issues/52
 [i53]: https://github.com/jlab-sensing/ENTS-tock/pull/53

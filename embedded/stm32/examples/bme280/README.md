@@ -1,4 +1,4 @@
-# Example: template
+# Example: bme280
 
 Demonstrates the following:
 - `microlog` library for effective console logging.
