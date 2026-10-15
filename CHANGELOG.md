@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 - Reset on downlink to `fport = 4` [#52](i52)
 - Size optimizations on `core` app [#83](i83)
 - Doxygen and Sphinx documentation builds, published to GitHub Pages [#80](i80)
+- Added `SECURITY.md` and documented test policy for OpenSSF badge criteria
 
 [i25]: https://github.com/jlab-sensing/ENTS-tock/pull/25
 [i28]: https://github.com/jlab-sensing/ENTS-tock/pull/28
