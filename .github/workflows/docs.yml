@@ -43,7 +43,7 @@ jobs:
       - name: Assemble the site
         run: ./docs.sh
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/build
 
