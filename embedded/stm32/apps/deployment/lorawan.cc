@@ -1,0 +1,285 @@
+/**
+ * @file lorawan.cc
+ *
+ * @author Tyler Potyondy
+ * @author John Madden (jmadden173@pm.me)
+ */
+
+#include "lorawan.h"
+
+#include <libents/storage/fram.h>
+#include <libents/util/time.h>
+#include <libtock-sync/services/alarm.h>
+#include <libtock/net/eui64.h>
+#include <ulog.h>
+
+#include "RadioLib.h"
+#include "config.h"
+
+// address in fram to store persistant buffer
+#define LORAWAN_NONCES_ADDR 2200
+
+// Amount of time between connection retries
+static const int retry_ms = 15000;
+
+// LoRaWAN upload port
+static const uint8_t upload_fport = 2;
+static const uint8_t heartbeat_fport = 3;
+static const uint8_t reset_fport = 4;
+static const uint8_t timesync_fport = 202;
+
+static TockRadioLibHal* hal;
+static Module* mod;
+static SX1262* tock_module;
+static LoRaWANNode* node;
+
+int lorawan_upload_fport(uint8_t* buffer, int length, int fport);
+
+// the entry point for the program
+int lorawan_init(void) {
+  ulog_trace("lorawan_setup");
+
+  hal = new TockRadioLibHal();
+  mod = new Module(hal, RADIOLIB_RADIO_NSS, RADIOLIB_RADIO_DIO_1,
+                   RADIOLIB_RADIO_RESET, RADIOLIB_RADIO_BUSY);
+  tock_module = new SX1262(mod);
+
+  // print const LoRaWANBand_t US915
+  ulog_info("Region: %d\t Sub Band: %d", Region->txSpans->numChannels,
+            Region->freqMin);
+
+  // create the LoRaWAN node
+  node = new LoRaWANNode(tock_module, Region, subBand);
+  // now we can create the radio module
+  // pinout corresponds to the SparkFun LoRa Thing Plus - expLoRaBLE
+  // NSS pin:   0
+  // DIO1 pin:  2
+  // NRST pin:  4
+  // BUSY pin:  1
+
+  // Setup the radio
+  if (tock_module == nullptr) {
+    ulog_fatal("Error when initializing tock module.");
+    return -1;
+  }
+  int state = tock_module->begin();
+
+  // check node?
+  if (node == nullptr) {
+    ulog_fatal("Error when initializing node.");
+    return -1;
+  }
+
+  // check final state
+  if (state != RADIOLIB_ERR_NONE) {
+    ulog_fatal("Initialization failed. State = %d.", state);
+    return -1;
+  }
+
+  return 0;
+}
+
+int lorawan_join(void) {
+  ulog_trace("lorawan_join");
+
+  // lorawan state codes
+  int state = 0;
+
+  // status code
+  int status = 0;
+
+#ifdef STATIC_DEV_EUI
+  ulog_info("Using DevEUI from #define.");
+
+  static const uint8_t devEUI_bytes[8] = FORMAT32_KEY(RADIOLIB_LORAWAN_DEV_EUI);
+  static const uint64_t devEUI = bytes_to_u64_be(devEUI_bytes);
+#else
+  ulog_info("Using DevEUI from flash.");
+
+  // check driver exists
+  if (!libtock_eui64_exists()) {
+    ulog_error("EUI64 driver does not exist!");
+  }
+
+  // get devEUI from flash
+  uint64_t devEUI = 0;
+  libtock_eui64_get(&devEUI);
+
+  uint8_t devEUI_bytes[8] = {};
+  u64_to_bytes_be(devEUI, devEUI_bytes);
+#endif  // RADIOLIB_LORAWAN_DEV_EUI
+
+  ulog_info("DevEUI: %02x %02x %02x %02x %02x %02x %02x %02x", devEUI_bytes[0],
+            devEUI_bytes[1], devEUI_bytes[2], devEUI_bytes[3], devEUI_bytes[4],
+            devEUI_bytes[5], devEUI_bytes[6], devEUI_bytes[7]);
+
+  uint8_t appKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_APP_KEY);
+  static const uint8_t joinEUI_bytes[8] =
+      FORMAT32_KEY(RADIOLIB_LORAWAN_JOIN_EUI);
+  static const uint64_t joinEUI = bytes_to_u64_be(joinEUI_bytes);
+
+  static const uint8_t nwkKey[16] = FORMAT_KEY(RADIOLIB_LORAWAN_NWK_KEY);
+
+  node->scanGuard = 100;
+
+  //
+  // Setup the OTAA session info
+  //
+  state = node->beginOTAA(joinEUI, devEUI, nwkKey, appKey);
+
+  if (state != RADIOLIB_ERR_NONE) {
+    ulog_fatal("LoRaWAN OTAA setup failed, code %d", state);
+    return 1;
+  }
+  ulog_debug("LoRaWAN OTAA setup success!");
+
+  // get pointer to the buffer
+  uint8_t persistant_nonces[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];
+  status = fram_read(LORAWAN_NONCES_ADDR, RADIOLIB_LORAWAN_NONCES_BUF_SIZE,
+                     persistant_nonces);
+
+  if (status < 0) {
+    ulog_error("Could not read nonces data from persistant storage.");
+  } else {
+    if (persistant_nonces[0] == 0x00) {
+      ulog_info("No nonces set");
+    } else {
+      state = node->setBufferNonces(persistant_nonces);
+      if (state < 0) {
+        if (state == RADIOLIB_ERR_NONCES_DISCARDED) {
+          ulog_error("LoRaWAN nonces is invalid. Resetting to 0.");
+          memset(persistant_nonces, 0, sizeof(persistant_nonces));
+        } else {
+          ulog_error("Could not set LoRaWAN nonces buffer. RadioLib state = %d",
+                     state);
+        }
+      }
+    }
+  }
+
+  //
+  // Initiate join request
+  //
+  state = node->activateOTAA();
+  while (state != RADIOLIB_ERR_NONE && state != RADIOLIB_LORAWAN_NEW_SESSION) {
+    ulog_error(
+        "LoRaWAN OTAA activation failed, code %d. Delaying %d seconds, then "
+        "retrying.",
+        state, retry_ms / 1000);
+    hal->delay(retry_ms);
+  }
+
+  ulog_debug("LoRaWAN OTAA activation success!");
+
+  uint8_t* current_nonces = node->getBufferNonces();
+  status = fram_write(LORAWAN_NONCES_ADDR, current_nonces,
+                      RADIOLIB_LORAWAN_NONCES_BUF_SIZE);
+  if (status < 0) {
+    ulog_error("Could not write nonces data from persistant storage.");
+  }
+
+  // set configuration for future uploads
+
+  // use ADR but set initial data rate
+  node->setADR(true);
+  node->setDatarate(2);
+
+  // TTN fair use
+  // node->setDutyCycle(true, 1250);
+  // dwell time limit for US
+  node->setDwellTime(true, 400);
+
+  return 0;
+}
+
+int lorawan_timesync(void) {
+  ulog_trace("lorawan_timesync");
+
+  int state = 0;
+
+  state = node->sendMacCommandReq(RADIOLIB_LORAWAN_MAC_DEVICE_TIME);
+  if (state < 0) {
+    ulog_error("Failed to queue DeviceTimeReq: %d", state);
+    return state;
+  }
+
+  state = node->sendReceive(nullptr, (size_t)0, timesync_fport);
+  if (state < 0) {
+    ulog_error("Timesync uplink failed: %d", state);
+    return state;
+  }
+
+  uint32_t unix_epoch = 0;
+  uint16_t ms = 0;
+  state = node->getMacDeviceTimeAns(&unix_epoch, &ms);
+  if (state < 0) {
+    ulog_error("No DeviceTimeAns received: %d", state);
+    return state;
+  }
+
+  ulog_info("Current unix epoch is %d", unix_epoch);
+  set_epoch(unix_epoch);
+
+  return 0;
+}
+
+int lorawan_upload_fport(uint8_t* buffer, int length, int fport) {
+  ulog_trace("lorawan_upload_fport");
+
+  int state = 0;
+
+  // Ensure there are no pending callbacks
+  yield_no_wait();
+
+  // Form payload to send
+  ulog_debug("Sending uplink of %lu bytes.", length, buffer);
+
+  // downlink data
+  uint8_t recv_data[16] = {};
+  size_t len_recv_data = 0;
+
+  // packet information
+  LoRaWANEvent_t up_event = {};
+  LoRaWANEvent_t down_event = {};
+
+  // state indicates there was a downlink received
+  state = node->sendReceive(buffer, (size_t)length, (uint8_t)fport, recv_data,
+                            &len_recv_data, false, &up_event, &down_event);
+  ulog_debug("LoRaWAN send/receive code %d.", state);
+  if (state < 0) {
+    ulog_error("Upload failed. LoRaWAN state %d", state);
+  } else if (state > 0) {
+    int down_fport = down_event.fPort;
+    ulog_debug("Received downlink (window number = %d, bytes = %d, fport = %d)",
+               state, len_recv_data, down_fport);
+    ulog_info("recv_data: %u", recv_data[0]);
+
+    // handle downlinks
+    switch (down_fport) {
+      case reset_fport:
+        ulog_info("Restarting");
+        tock_restart(0);
+        ulog_info("Failed to restart.");
+        break;
+      default:
+        ulog_warn("Downlink fport = %d not implemented", down_fport);
+        break;
+    }
+  } else {
+    ulog_debug("No downlink received");
+  }
+
+  return state;
+}
+
+int lorawan_upload(uint8_t* buffer, int length) {
+  ulog_trace("lorawan_upload");
+
+  return lorawan_upload_fport(buffer, length, upload_fport);
+}
+
+int lorawan_heartbeat(void) {
+  ulog_trace("lorawan_heartbeat");
+
+  return lorawan_upload_fport(NULL, 0, heartbeat_fport);
+}

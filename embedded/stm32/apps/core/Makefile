@@ -27,6 +27,14 @@ ifeq ($(LORAWAN_DEV), 1)
 	override CPPFLAGS += -DRADIOLIB_LORAWAN_NWK_KEY=B8,2D,91,3F,AF,B0,99,EE,2E,3B,BE,9B,31,96,C1,09
 endif
 
+# Pad the TBF so the Cortex-M MPU can protect the app's flash. Apps start at
+# 0x08018000, which is only 32 KiB aligned, so the kernel needs the TBF size to
+# be a multiple of 32 KiB. elf2tab only rounds to 16 KiB below 128 KiB, so a
+# larger footer (replacing libtock-c's default of 3000 bytes) pushes the app
+# to 128 KiB. Above 128 KiB elf2tab rounds to 32 KiB on its own.
+TBF_NO_FOOTER = 1
+ELF2TAB_ARGS += --minimum-footer-size 20480
+
 # ignore old () rather than reinterpret because we are forced to compile cc
 # from RadioLib
 override CPPFLAGS += -Wno-old-style-cast
