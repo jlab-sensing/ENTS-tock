@@ -18,6 +18,12 @@ EXTERN_LIBS += $(EXT_DIR)/bme280
 EXTERN_LIBS += $(EXT_DIR)/microlog
 EXTERN_LIBS += $(EXT_DIR)/nanopb
 
+# Keep the TBF at 32 KiB so it fits in the 32 KiB left after core (128 KiB) in
+# app flash. libtock-c's default 3000 byte footer pushes the app just past
+# 32 KiB, which elf2tab then rounds up to 64 KiB.
+TBF_NO_FOOTER = 1
+ELF2TAB_ARGS += --minimum-footer-size 1024
+
 # Which files to compile.
 C_SRCS := main.c
 
