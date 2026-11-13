@@ -12,6 +12,9 @@ UserConfigState state = USERCONFIG_STATE_OFF;
 
 static libtock_alarm_t alarm = {};
 
+/** Delay between stop attempts, kept static as the alarm callback reads it */
+static uint32_t stop_retry_ms = 0;
+
 /**
  * @brief Stops the user config webserver
  *
@@ -116,15 +119,18 @@ void UserConfigUpdateFromServer(void) {
 
 void UserConfigStop(uint32_t retry_ms) {
   state = USERCONFIG_STATE_STOPPING;
-  libtock_alarm_in_ms(retry_ms, UserConfigStopCallback, (void*)&retry_ms,
-                      &alarm);
+  stop_retry_ms = retry_ms;
+  libtock_alarm_in_ms(retry_ms, UserConfigStopCallback, NULL, &alarm);
 }
 
-void UserConfigStopCallback(uint32_t, uint32_t, void* ptr) {
-  ulog_info("Stopping UserConfig webserver...\t");
+void UserConfigStopCallback(uint32_t, uint32_t, void*) {
+  if (!UserConfigTryStop()) {
+    UserConfigStop(stop_retry_ms);
+  }
+}
 
-  // deference to retry delay
-  uint32_t retry_ms = *(uint32_t*)ptr;
+bool UserConfigTryStop(void) {
+  ulog_info("Stopping UserConfig webserver...\t");
 
   uint8_t clients = 0;
   ControllerWiFiHostInfo(NULL, NULL, NULL, &clients);
@@ -132,14 +138,13 @@ void UserConfigStopCallback(uint32_t, uint32_t, void* ptr) {
   // Handle if there are still clients connected
   if (clients > 0) {
     ulog_error("Error! %d clients still connected!", clients);
-    UserConfigStop(retry_ms);
-    return;
+    return false;
   }
 
   // Try to stop WiFI
   if (!ControllerWiFiStopHost()) {
     ulog_info("Error! Could not stop WiFi network!");
-    UserConfigStop(retry_ms);
+    return false;
   } else {
     state = USERCONFIG_STATE_OFF;
     ulog_info("Stopped!");
@@ -150,6 +155,8 @@ void UserConfigStopCallback(uint32_t, uint32_t, void* ptr) {
       ulog_info("Putting esp in deep sleep mode...");
       ControllerPowerSleep();
     }
+
+    return true;
   }
 }
 
