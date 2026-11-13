@@ -5,6 +5,7 @@
 #include <libents/proto/sensor.h>
 #include <libents/storage/fifo.h>
 #include <libents/user_config.h>
+#include <libents/util/time.h>
 #include <libtock-sync/services/alarm.h>
 #include <libtock/kernel/ipc.h>
 #include <libtock/tock.h>
@@ -13,6 +14,11 @@
 
 #include "lorawan.h"
 #include "user_config.h"
+#include "wifi.h"
+
+#ifdef HARDCODED_USER_CONFIG
+#include "hardcoded_user_config.h"
+#endif  // HARDCODED_USER_CONFIG
 
 /** Must match the MicroSDCommand.log field, which is 240 bytes (239 chars plus
  * the NUL). Anything smaller truncates the line here, before the proto sees it,
@@ -53,8 +59,20 @@ static bool has_data = false;
 
 static bool network_ready = false;
 
+/** Upload over WiFi when true, otherwise LoRaWAN. Set from the user config. */
+static bool use_wifi = false;
+
+/** Maximum LoRaWAN payload size. */
+static const int lorawan_payload_size = 60;
+
+/** Maximum WiFi payload size, limited by WiFiCommand.resp (222 bytes). */
+static const int wifi_payload_size = 200;
+
 /** Time between repeated timesync requests. */
 static int timesync_retry_delay_ms = 10000;
+
+/** Time between WiFi connection attempts. */
+static const int wifi_retry_delay_ms = 10000;
 
 /** Time between upload intervals. */
 static int upload_interval = 60000;
@@ -134,24 +152,6 @@ int main(void) {
   ulog_prefix_set_fn(ulog_prefix_handler);
   ulog_info("=== Core App Initialized ===");
 
-  // Load bytes into userconfig buffer
-  //
-  // Yes I am casting uint8_t to a uint16_t and it could overwrite the data
-  // buffer. I know at the time of writing this that the user config stays
-  // under 256 bytes as defined by protobuf.
-  UserConfigStatus uc_status =
-      UserConfigBytes(uc_buffer, (uint16_t*)&uc_buffer_length);
-  if (uc_status != USERCONFIG_OK) {
-    ulog_error("Could not load user config.");
-  }
-
-  // Option to print bytes to the buffer
-  // printf("uc_buffer[%u]:", uc_buffer_length);
-  // for (uint8_t i = 0; i < uc_buffer_length; i++) {
-  //  printf(" %02x", uc_buffer[i]);
-  //}
-  // printf("\n\n");
-
   // start service after connected
   ipc_register_service_callback("org.ents.core", ipc_callback, NULL);
 
@@ -173,37 +173,90 @@ int main(void) {
     return 1;
   }
 
+#ifdef HARDCODED_USER_CONFIG
+  // Overwrite the config in FRAM so the webserver and sensors app see it too
+  ulog_warn("HARDCODED_USER_CONFIG is enabled, ignoring webserver config");
+  if (UserConfigSave(&hardcoded_user_config) != USERCONFIG_OK ||
+      UserConfigLoad() != USERCONFIG_OK) {
+    ulog_error("Could not save hardcoded user config");
+  }
+  ulog_info("Hardcoded user configuration:");
+  ulog_info("-----------------------------");
+  UserConfigPrint();
+#else
   // Get update configuration from server
   UserConfigUpdateFromServer();
+#endif  // HARDCODED_USER_CONFIG
 
-  // Reset esp32 and start webserver
+  // Load bytes into userconfig buffer for the sensors app. Done after the
+  // config is updated so the sensors app gets the current config.
+  //
+  // Yes I am casting uint8_t to a uint16_t and it could overwrite the data
+  // buffer. I know at the time of writing this that the user config stays
+  // under 256 bytes as defined by protobuf.
+  UserConfigStatus uc_status =
+      UserConfigBytes(uc_buffer, (uint16_t*)&uc_buffer_length);
+  if (uc_status != USERCONFIG_OK) {
+    ulog_error("Could not load user config.");
+  }
+
+  // Option to print bytes to the buffer
+  // printf("uc_buffer[%u]:", uc_buffer_length);
+  // for (uint8_t i = 0; i < uc_buffer_length; i++) {
+  //  printf(" %02x", uc_buffer[i]);
+  //}
+  // printf("\n\n");
+
+  const UserConfiguration* cfg = UserConfigGet();
+  use_wifi = (cfg->Upload_method == Uploadmethod_WiFi);
+
+  // Reset esp32 and start webserver. With WiFi the main loop stops the
+  // webserver, as the alarm based autostop can interrupt a WiFi command.
   ControllerDeviceReset();
-  UserConfigStart(userconfig_timeout_ms);
+  UserConfigStart(use_wifi ? 0 : userconfig_timeout_ms);
 
   // return codes
   int ret = 0;
 
-  // Initialize LoRaWAN
+  if (use_wifi) {
+    ulog_info("Uploading with WiFi");
 
-  ret = lorawan_init();
-  if (ret < 0) {
-    return ret;
-  }
+    // Retry forever, the webserver stays up so the config can be fixed
+    while (wifi_init() < 0) {
+      ulog_info("Retrying in %d ms", wifi_retry_delay_ms);
+      libtocksync_alarm_delay_ms(wifi_retry_delay_ms);
+    }
 
-  ret = lorawan_join();
-  if (ret < 0) {
-    return ret;
-  }
-
-  while (1) {
-    ret = lorawan_timesync();
-    if (ret < 0) {
+    while (wifi_timesync() < 0) {
       ulog_info("Retrying in %d ms", timesync_retry_delay_ms);
       libtocksync_alarm_delay_ms(timesync_retry_delay_ms);
-    } else {
-      break;
+    }
+  } else {
+    ulog_info("Uploading with LoRaWAN");
+
+    ret = lorawan_init();
+    if (ret < 0) {
+      return ret;
+    }
+
+    ret = lorawan_join();
+    if (ret < 0) {
+      return ret;
+    }
+
+    while (1) {
+      ret = lorawan_timesync();
+      if (ret < 0) {
+        ulog_info("Retrying in %d ms", timesync_retry_delay_ms);
+        libtocksync_alarm_delay_ms(timesync_retry_delay_ms);
+      } else {
+        break;
+      }
     }
   }
+
+  // Time to stop the webserver when uploading with WiFi
+  uint32_t userconfig_stop_time = epoch() + userconfig_timeout_ms / 1000;
 
   network_ready = true;
 
@@ -249,6 +302,18 @@ int main(void) {
     }
 
     //
+    // Stop webserver
+    //
+
+    if (use_wifi && UserConfigCurrentStatus() == USERCONFIG_STATE_ON &&
+        epoch() >= userconfig_stop_time) {
+      if (!UserConfigTryStop()) {
+        // try again next loop
+        userconfig_stop_time = epoch() + upload_interval / 1000;
+      }
+    }
+
+    //
     // Upload data
     //
 
@@ -260,18 +325,32 @@ int main(void) {
         ulog_debug("Buffer has %d measurements", meas_in_buffer);
 
         // format payload
-        uint8_t buffer[60] = {};
-        int len = get_payload(buffer, sizeof(buffer));
+        uint8_t buffer[wifi_payload_size] = {};
+        int len = get_payload(
+            buffer, use_wifi ? wifi_payload_size : lorawan_payload_size);
         if (len != 0) {
           ulog_debug("Uploading %d bytes", len);
 
           stats.total++;
-          ret = lorawan_upload(buffer, len);
+          if (use_wifi) {
+            ret = wifi_upload(buffer, len);
+          } else {
+            ret = lorawan_upload(buffer, len);
+          }
+
           if (ret < 0) {
             stats.failed++;
-            ulog_error("Could not upload with LoRaWAN (error: %d)", ret);
+            ulog_error("Could not upload with %s (error: %d)",
+                       use_wifi ? "WiFi" : "LoRaWAN", ret);
+
+            // Reconnect and leave the rest of the buffer for the next upload
+            if (use_wifi) {
+              wifi_init();
+              break;
+            }
           } else {
-            ulog_debug("Uploaded %d bytes with LoRaWAN.");
+            ulog_debug("Uploaded %d bytes with %s.", len,
+                       use_wifi ? "WiFi" : "LoRaWAN");
 
             stats.bytes += len;
           }
@@ -279,6 +358,8 @@ int main(void) {
 
         meas_in_buffer = fifo_buffer_len();
       }
+    } else if (use_wifi) {
+      ulog_debug("Nothing to upload");
     } else {
       stats.total++;
 
@@ -287,7 +368,7 @@ int main(void) {
       ret = lorawan_heartbeat();
       if (ret < 0) {
         stats.failed++;
-        ulog_error("Error sending heartbeat (error: %d)");
+        ulog_error("Error sending heartbeat (error: %d)", ret);
       } else {
         stats.heartbeats++;
         ulog_debug("Heartbeat sent");
@@ -364,61 +445,82 @@ static int get_payload(uint8_t* buffer, int size) {
   // return codes
   int ret = 0;
 
-  int len = 0;
-
   Metadata meta = {};
   SensorMeasurement meas[8] = {};
+  const uint16_t max_meas = sizeof(meas) / sizeof(meas[0]);
 
   uint16_t length = fifo_buffer_len();
+  if (length > max_meas) {
+    length = max_meas;
+  }
 
-  uint16_t i = 0;
-  for (i = 0; i < length; i++) {
-    ret = fifo_peek(i, buffer, (uint8_t*)&len);
+  // Number of measurements in the payload
+  uint16_t count = 0;
+  // Number of measurements read from the buffer, including malformed ones
+  uint16_t consumed = 0;
+  // Size of the payload with count measurements
+  size_t payload_len = 0;
+  // Set when the next measurement does not fit in the payload
+  bool full = false;
+
+  for (consumed = 0; consumed < length; consumed++) {
+    uint8_t meas_len = 0;
+    ret = fifo_peek(consumed, buffer, &meas_len);
     if (ret < 0) {
       ulog_error("Could not read from buffer (error: %d)", ret);
-      continue;
+      break;
     }
-    ulog_debug("Read %d bytes from buffer", len);
+    ulog_debug("Read %d bytes from buffer", meas_len);
 
-    // decode measuremnet
-    ret = DecodeSensorMeasurement(buffer, len, &meas[i]);
+    // decode measuremnet, malformed measurements are dropped with the rest
+    ret = DecodeSensorMeasurement(buffer, meas_len, &meas[count]);
     if (ret < 0) {
       ulog_error("Could not decode measurement (error %d), malformed data?",
                  ret);
-      // TODO: Removed failing measurement. Can't use drop, need to remove
-      // specific index.
       continue;
     }
 
-    ret = RepeatedSensorMeasurementsSize(meta, meas, i + 1, (size_t*)&len);
+    size_t new_len = 0;
+    ret = RepeatedSensorMeasurementsSize(meta, meas, count + 1, &new_len);
     if (ret < 0) {
       ulog_error("Could not find size of payload (error %d)", ret);
-      continue;
+      break;
     }
-    ulog_debug("Size of repeated sensor measurements: %d", len);
+    ulog_debug("Size of repeated sensor measurements: %d", new_len);
 
-    // early stop when length exceeds size of buffer
-    if (len > size) {
-      ulog_debug("Over sensors size limit of %d. Removing last measurement.",
-                 size);
-
-      i--;
+    // stop before the measurement that exceeds the size of the buffer
+    if (new_len > (size_t)size) {
+      ulog_debug("Over sensors size limit of %d.", size);
+      full = true;
       break;
     }
 
-    PrintSensorMeasurement(&meas[i]);
+    PrintSensorMeasurement(&meas[count]);
+    payload_len = new_len;
+    count++;
   }
 
-  ret = EncodeRepeatedSensorMeasurements(meta, meas, i + 1, buffer, size,
-                                         (size_t*)&len);
-  if (ret < 0) {
-    ulog_error("Could not encode %d repeated measurements (error %d)", i, ret);
-    return 0;
+  // A single measurement larger than the payload can never be sent, drop it
+  // so it does not block the buffer
+  if (count == 0 && full) {
+    ulog_error("Measurement too large for a %d byte payload, dropping", size);
+    consumed = 1;
   }
 
-  // Clear uploaded measurements
-  // ulog_debug("%d measurements to drop");
-  for (uint16_t j = 0; j < i; j++) {
+  int len = 0;
+  if (count > 0) {
+    ret = EncodeRepeatedSensorMeasurements(meta, meas, count, buffer,
+                                           (size_t)size, &payload_len);
+    if (ret < 0) {
+      ulog_error("Could not encode %d repeated measurements (error %d)", count,
+                 ret);
+      return 0;
+    }
+    len = (int)payload_len;
+  }
+
+  // Clear uploaded and malformed measurements
+  for (uint16_t j = 0; j < consumed; j++) {
     ret = fifo_drop();
     if (ret < 0) {
       ulog_error("Could not remove measurement index %d from buffer", j);
