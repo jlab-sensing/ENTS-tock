@@ -27,3 +27,4 @@ make LORAWAN_DEV=0
 | --- | --- | --- | --- |
 | `LORAWAN_DEV` | bool | `0` | Hardcodes LoRaWAN MAC parameters to pre-setup device for testing. |
 | `TEST_USER_CONFIG` | bool | `0` | Hardcodes the user config for testing |
+| `HARDCODED_USER_CONFIG` | bool | `0` | Uses the user config in `hardcoded_user_config.h` instead of the webserver config. Run `make clean` after changing. |

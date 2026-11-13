@@ -17,6 +17,10 @@
 #include "lorawan.h"
 #include "user_config.h"
 
+#ifdef HARDCODED_USER_CONFIG
+#include "hardcoded_user_config.h"
+#endif  // HARDCODED_USER_CONFIG
+
 /** Must match the MicroSDCommand.log field, which is 240 bytes (239 chars plus
  * the NUL). Anything smaller truncates the line here, before the proto sees it,
  * and ulog_event_to_cstr() writes "LEVEL FILE:LINE: MESSAGE" into this buffer,
@@ -168,8 +172,20 @@ int main(void) {
     return 1;
   }
 
+#ifdef HARDCODED_USER_CONFIG
+  // Overwrite the config in FRAM so the webserver sees it too
+  ulog_warn("HARDCODED_USER_CONFIG is enabled, ignoring webserver config");
+  if (UserConfigSave(&hardcoded_user_config) != USERCONFIG_OK ||
+      UserConfigLoad() != USERCONFIG_OK) {
+    ulog_error("Could not save hardcoded user config");
+  }
+  ulog_info("Hardcoded user configuration:");
+  ulog_info("-----------------------------");
+  UserConfigPrint();
+#else
   // Get update configuration from server
   UserConfigUpdateFromServer();
+#endif  // HARDCODED_USER_CONFIG
 
   // Reset esp32 and start webserver
   ControllerDeviceReset();
